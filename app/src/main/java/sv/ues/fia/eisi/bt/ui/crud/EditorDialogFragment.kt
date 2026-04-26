@@ -1,0 +1,712 @@
+package sv.ues.fia.eisi.bt.ui.crud
+
+import android.os.Bundle
+import android.text.Editable
+import android.text.InputFilter
+import android.text.TextWatcher
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.viewModels
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.datepicker.MaterialDatePicker
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
+import sv.ues.fia.eisi.bt.R
+import sv.ues.fia.eisi.bt.data.repository.MainRepository
+import sv.ues.fia.eisi.bt.utils.Constants
+import sv.ues.fia.eisi.bt.utils.StyledToast
+import sv.ues.fia.eisi.bt.viewmodel.CrudViewModel
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+
+class EditorDialogFragment : DialogFragment() {
+
+    private val viewModel: CrudViewModel by viewModels({ requireParentFragment() })
+    private var tableName: String = ""
+    private var isEditMode: Boolean = false
+    private var itemData: List<String> = emptyList()
+
+    private lateinit var tilFieldsContainer: LinearLayout
+    private lateinit var btnSave: MaterialButton
+    private lateinit var btnCancel: MaterialButton
+    private lateinit var tvTitle: TextView
+    private lateinit var columns: List<String>
+    private lateinit var fkRefs: Map<String, MainRepository.FkReference>
+
+    private val dropDownFields = mutableMapOf<Int, Pair<String, MaterialAutoCompleteTextView>>()
+    private val textFields = mutableMapOf<Int, Pair<String, TextInputEditText>>()
+    private val nivelDestrezaFields = mutableMapOf<Int, String>()
+    private val estadoProcesoFields = mutableMapOf<Int, String>()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setStyle(STYLE_NORMAL, R.style.AestheticDialog)
+        arguments?.let {
+            tableName = it.getString(Constants.BUNDLE_TABLE_NAME, "")
+            isEditMode = it.getBoolean(Constants.BUNDLE_IS_EDIT_MODE, false)
+            val dataString = it.getString(Constants.BUNDLE_TABLE_DATA, "")
+            itemData = if (dataString.isNotBlank()) dataString.split(",") else emptyList()
+        }
+        columns = getColumnsForTable(tableName)
+        fkRefs = viewModel.getFkReferences(tableName)
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        return inflater.inflate(R.layout.dialog_editor, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        tvTitle = view.findViewById(R.id.tvTitle)
+        tilFieldsContainer = view.findViewById(R.id.tilFields)
+        btnSave = view.findViewById(R.id.btnSave)
+        btnCancel = view.findViewById(R.id.btnCancel)
+
+        setupTitle()
+        setupFields()
+        setupButtons()
+    }
+
+    private fun setupTitle() {
+        btnSave.text = if (isEditMode) getString(R.string.save) else getString(R.string.add)
+        tvTitle.text = if (isEditMode) "Editar $tableName" else "Nuevo $tableName"
+    }
+
+    private fun setupFields() {
+        tilFieldsContainer.removeAllViews()
+        dropDownFields.clear()
+        textFields.clear()
+        nivelDestrezaFields.clear()
+        estadoProcesoFields.clear()
+
+        if (columns.isEmpty()) {
+            columns = listOf("NOMBRE")
+        }
+
+        columns.drop(1).forEachIndexed { idx, column ->
+            val colIndex = idx + 1
+            val isFk = fkRefs.containsKey(column)
+            val isNivelDestreza = column == "NIVEL_DESTREZA"
+            val isEstadoProceso = column == "ESTADO_PROCESO"
+            
+            if (isFk) {
+                createDropdownField(idx, column, colIndex)
+            } else if (isNivelDestreza) {
+                createNivelDestrezaDropdown(idx, column, colIndex)
+            } else if (isEstadoProceso) {
+                createEstadoProcesoDropdown(idx, column, colIndex)
+            } else {
+                createTextInputField(idx, column, colIndex)
+            }
+        }
+    }
+
+    private fun createDropdownField(idx: Int, column: String, colIndex: Int) {
+        val fkRef = fkRefs[column] ?: return
+        
+        var parentId: String? = null
+        if (column == "ID_MUNICIPIO" && fkRefs.containsKey("ID_DEPARTAMENTO")) {
+            val parentAutoComplete = dropDownFields.entries.find { it.value.first == "ID_DEPARTAMENTO" }?.value?.second
+            parentId = getSelectedDropdownValue(parentAutoComplete)
+        }
+        if (column == "ID_DISTRITO" && fkRefs.containsKey("ID_MUNICIPIO")) {
+            val parentAutoComplete = dropDownFields.entries.find { it.value.first == "ID_MUNICIPIO" }?.value?.second
+            parentId = getSelectedDropdownValue(parentAutoComplete)
+        }
+
+        val options = if (parentId != null && parentId.isNotBlank()) {
+            val parentFk = fkRefs[if (column == "ID_MUNICIPIO") "ID_DEPARTAMENTO" else "ID_MUNICIPIO"]!!
+            viewModel.getFilteredOptions(fkRef.refTable, parentFk.fkColumn, parentId)
+        } else {
+            viewModel.getDropdownOptions(fkRef.refTable, fkRef.refDisplayColumn)
+        }
+
+        val til = TextInputLayout(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 0, 0, 24)
+            }
+            hint = column.replace("ID_", "").replace("_", " ")
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+        }
+
+val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setTextColor(android.graphics.Color.BLACK)
+            keyListener = null
+        }
+
+        val displayOptions = options.map { it.second }
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
+        autoComplete.setAdapter(adapter)
+        
+        autoComplete.setOnTouchListener { v, event ->
+            if (event.action == android.view.MotionEvent.ACTION_UP) {
+                autoComplete.showDropDown()
+            }
+            true
+        }
+
+        if (isEditMode && colIndex < itemData.size) {
+            val currentId = itemData[colIndex].trim()
+            val optionIndex = options.indexOfFirst { it.first == currentId }
+            if (optionIndex >= 0) {
+                autoComplete.setText(displayOptions[optionIndex], false)
+            }
+        }
+
+        autoComplete.setOnItemClickListener { _, _, position, _ ->
+            if (position < options.size) {
+                if (column == "ID_DEPARTAMENTO") {
+                    refreshDependentDropdown("ID_MUNICIPIO")
+                }
+                if (column == "ID_MUNICIPIO") {
+                    refreshDependentDropdown("ID_DISTRITO")
+                }
+            }
+        }
+
+        til.addView(autoComplete)
+        tilFieldsContainer.addView(til)
+        dropDownFields[colIndex] = Pair(column, autoComplete)
+    }
+
+    private fun createNivelDestrezaDropdown(idx: Int, column: String, colIndex: Int) {
+        val nivelOptions = listOf(
+            "1" to "Básico",
+            "2" to "Intermedio",
+            "3" to "Avanzado"
+        )
+        
+        val til = TextInputLayout(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 0, 0, 24)
+            }
+            hint = "Nivel Destreza"
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+        }
+
+        val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setTextColor(android.graphics.Color.BLACK)
+            keyListener = null
+        }
+
+        val displayOptions = nivelOptions.map { it.second }
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
+        autoComplete.setAdapter(adapter)
+        
+        autoComplete.setOnTouchListener { v, event ->
+            if (event.action == android.view.MotionEvent.ACTION_UP) {
+                autoComplete.showDropDown()
+            }
+            true
+        }
+
+        if (isEditMode && colIndex < itemData.size) {
+            val currentValue = itemData[colIndex].trim()
+            val optionIndex = nivelOptions.indexOfFirst { it.first == currentValue }
+            if (optionIndex >= 0) {
+                autoComplete.setText(displayOptions[optionIndex], false)
+            }
+        }
+
+        autoComplete.setOnItemClickListener { _, _, position, _ ->
+            if (position < nivelOptions.size) {
+                nivelDestrezaFields[colIndex] = nivelOptions[position].first
+            }
+        }
+
+        til.addView(autoComplete)
+        tilFieldsContainer.addView(til)
+        nivelDestrezaFields[colIndex]?.let { 
+            val idx = nivelOptions.indexOfFirst { pair -> pair.first == it }
+            if (idx >= 0) autoComplete.setText(displayOptions[idx], false)
+        }
+        dropDownFields[colIndex] = Pair(column, autoComplete)
+    }
+
+    private fun createEstadoProcesoDropdown(idx: Int, column: String, colIndex: Int) {
+        val estadoOptions = listOf(
+            "activo" to "Activo",
+            "en proceso" to "En Proceso",
+            "contratado" to "Contratado",
+            "rechazado" to "Rechazado"
+        )
+        
+        val til = TextInputLayout(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 0, 0, 24)
+            }
+            hint = "Estado Proceso"
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+        }
+
+        val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setTextColor(android.graphics.Color.BLACK)
+            keyListener = null
+        }
+
+        val displayOptions = estadoOptions.map { it.second }
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
+        autoComplete.setAdapter(adapter)
+        
+        autoComplete.setOnTouchListener { v, event ->
+            if (event.action == android.view.MotionEvent.ACTION_UP) {
+                autoComplete.showDropDown()
+            }
+            true
+        }
+
+        if (isEditMode && colIndex < itemData.size) {
+            val currentValue = itemData[colIndex].trim()
+            val optionIndex = estadoOptions.indexOfFirst { it.first == currentValue }
+            if (optionIndex >= 0) {
+                autoComplete.setText(displayOptions[optionIndex], false)
+            }
+        }
+
+        autoComplete.setOnItemClickListener { _, _, position, _ ->
+            if (position < estadoOptions.size) {
+                estadoProcesoFields[colIndex] = estadoOptions[position].first
+            }
+        }
+
+        til.addView(autoComplete)
+        tilFieldsContainer.addView(til)
+        dropDownFields[colIndex] = Pair(column, autoComplete)
+    }
+
+    private fun getSelectedDropdownValue(autoComplete: MaterialAutoCompleteTextView?): String? {
+        if (autoComplete == null) return null
+        val text = autoComplete.text.toString()
+        for ((idx, pair) in dropDownFields) {
+            if (pair.second == autoComplete) {
+                val fkRef = fkRefs[pair.first] ?: continue
+                val options = viewModel.getDropdownOptions(fkRef.refTable, fkRef.refDisplayColumn)
+                val index = options.indexOfFirst { it.second == text }
+                return if (index >= 0) options[index].first else null
+            }
+        }
+        return null
+    }
+
+    private fun refreshDependentDropdown(childColumn: String) {
+        val childInfo = dropDownFields.entries.find { it.value.first == childColumn } ?: return
+        val childIdx = childInfo.key
+        val childAutoComplete = childInfo.value.second
+        val childTil = childAutoComplete.parent as? TextInputLayout ?: return
+        
+        val parentFkColumn = when (childColumn) {
+            "ID_MUNICIPIO" -> "ID_DEPARTAMENTO"
+            "ID_DISTRITO" -> "ID_MUNICIPIO"
+            else -> return
+        }
+        val parentFk = fkRefs[parentFkColumn] ?: return
+        val parentAutoComplete = dropDownFields.entries.find { it.value.first == parentFkColumn }?.value?.second
+        val parentId = getSelectedDropdownValue(parentAutoComplete) ?: return
+
+        val newOptions = viewModel.getFilteredOptions(
+            fkRefs[childColumn]!!.refTable,
+            parentFk.fkColumn,
+            parentId
+        )
+        
+        val displayOptions = newOptions.map { it.second }
+        childAutoComplete.setAdapter(
+            ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
+        )
+        childAutoComplete.setText("", false)
+        childTil.hint = childColumn.replace("ID_", "").replace("_", " ")
+    }
+
+    private fun createTextInputField(idx: Int, column: String, colIndex: Int) {
+        val til = TextInputLayout(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 0, 0, 24)
+            }
+            hint = getHintText(column)
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+        }
+
+        val et = TextInputEditText(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setTextColor(android.graphics.Color.BLACK)
+            inputType = getInputType(column)
+            filters = getFilters(column)
+        }
+        
+        if (columns[colIndex].contains("FECHA")) {
+            et.isFocusable = false
+            et.isClickable = true
+            et.setOnClickListener { showDatePicker(et) }
+        }
+
+        if (isEditMode && colIndex < itemData.size) {
+            et.setText(itemData[colIndex].trim())
+        }
+
+        til.addView(et)
+        tilFieldsContainer.addView(til)
+        textFields[colIndex] = Pair(column, et)
+    }
+
+    private fun showDatePicker(editText: TextInputEditText) {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        
+        val currentText = editText.text?.toString() ?: ""
+        val initialMillis = if (currentText.isNotEmpty()) {
+            try {
+                dateFormat.parse(currentText)?.time ?: System.currentTimeMillis()
+            } catch (e: Exception) {
+                System.currentTimeMillis()
+            }
+        } else {
+            System.currentTimeMillis()
+        }
+        
+        val picker = MaterialDatePicker.Builder
+            .datePicker()
+            .setTitleText("Seleccionar fecha")
+            .setSelection(initialMillis)
+            .build()
+        
+        picker.addOnPositiveButtonClickListener { selection ->
+            val cal = Calendar.getInstance()
+            cal.timeInMillis = selection
+            editText.setText(dateFormat.format(cal.time))
+        }
+        
+        picker.show(parentFragmentManager, "date_picker")
+    }
+
+    private fun formatInput(column: String, text: String): String {
+        if (text.isEmpty()) return text
+        
+        val digits = text.filter { it.isDigit() }
+        
+        return when {
+            column.contains("NIT") && text.contains("-") -> text
+            column.contains("NIT") -> {
+                when (digits.length) {
+                    in 0..4 -> digits
+                    in 5..10 -> "${digits.substring(0, 4)}-${digits.substring(4)}"
+                    in 11..13 -> "${digits.substring(0, 4)}-${digits.substring(4, 10)}-${digits.substring(10)}"
+                    in 14..15 -> "${digits.substring(0, 4)}-${digits.substring(4, 10)}-${digits.substring(10, 13)}-${digits.substring(13)}"
+                    else -> digits
+                }
+            }
+            column.contains("TELEFONO") || column.contains("TEL") -> {
+                when (digits.length) {
+                    in 0..4 -> digits
+                    else -> "${digits.substring(0, 4)}-${digits.substring(4, minOf(8, digits.length))}"
+                }
+            }
+            else -> text
+        }
+    }
+
+    private fun getFilters(column: String): Array<InputFilter> {
+        val maxLength = when {
+            column.contains("TELEFONO") || column.contains("TEL") -> 8
+            column.contains("NIT") -> 15
+            column.contains("NUP") -> 14
+            column.contains("NUM_DOCUMENTO") -> 20
+            column.contains("CODIGO") || column.contains("CERTIFICACION") -> 30
+            column.contains("CONTACTO") -> 15
+            column.contains("NIVEL_DESTREZA") -> 1
+            column.contains("EXPERIENCIA_ANIOS") -> 2
+            column.contains("EDAD_MINIMA") || column.contains("EDAD_MAXIMA") -> 2
+            else -> 0
+        }
+
+        return if (maxLength > 0) arrayOf(InputFilter.LengthFilter(maxLength)) else emptyArray()
+    }
+
+    private fun getInputType(column: String): Int {
+        return when {
+            column.startsWith("ID_") || column.contains("NUP") ->
+                android.text.InputType.TYPE_CLASS_NUMBER
+            column.contains("NUM_") ->
+                android.text.InputType.TYPE_CLASS_TEXT
+            column.contains("FECHA") || column.contains("DATE") ->
+                android.text.InputType.TYPE_CLASS_TEXT
+            column.contains("EMAIL") -> 
+                android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+            column.contains("TELEFONO") || column.contains("TEL") || column.contains("CONTACTO") -> 
+                android.text.InputType.TYPE_CLASS_PHONE
+            column.contains("NIT") || column.contains("DOCUMENTO") -> 
+                android.text.InputType.TYPE_CLASS_TEXT
+            column.contains("PASSWORD") || column.contains("CONTRA") -> 
+                android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+            column.contains("EXPERIENCIA_ANIOS") || column.contains("EDAD_MIN") || column.contains("EDAD_MAX") || column.contains("NIVEL_DESTREZA") ->
+                android.text.InputType.TYPE_CLASS_NUMBER
+            column.contains("DESCRIPCION") || column.contains("DETALLE") -> 
+                android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            else -> android.text.InputType.TYPE_CLASS_TEXT
+        }
+    }
+
+    private fun getHintText(column: String): String {
+        return when (column.uppercase()) {
+            "NOMBRE", "NOMBRE_CATEGORIA", "NOMBRE_GENERO", "NOMBRE_TIPO", "NOMBRE_DEPARTAMENTO", "NOMBRE_MUNICIPIO", "NOMBRE_DISTRITO", "NOMBRE_HABILIDAD", "NOMBRE_EMPRESA", "NOMBRE_INSTITUCION", "NOMBRE_GRADO", "NOMBRE_RED" -> "Ingrese el nombre"
+            "APELLIDO" -> "Ingrese el apellido"
+            "EMAIL", "CORREO" -> "ejemplo@correo.com"
+            "TELEFONO", "TEL", "CONTACTO_DIRECTO" -> "Ingrese teléfono (ej: 2222-1111)"
+            "NIT" -> "Ingrese NIT (ej: 0614-111222-333-4)"
+            "NUP" -> "Ingrese NUP"
+            "NUM_DOCUMENTO", "CODIGO" -> "Ingrese número de documento"
+            "CONTACTO_REFERENCIA" -> "Ingrese contacto de referencia"
+            "PUESTO_TRABAJO" -> "Ingrese nombre del puesto"
+            "TITULO_PUESTO", "TITULO_OBTENIDO" -> "Ingrese el título"
+            "DESCRIPCION", "DESCRIPCION_OFERTA", "DESCRIPCION_REQUISITO" -> "Ingrese la descripción"
+            "EXPERIENCIA_ANIOS" -> "Ingrese años de experiencia"
+            "EDAD_MINIMA" -> "Ej: 18"
+            "EDAD_MAXIMA" -> "Ej: 45"
+            "NIVEL_DESTREZA" -> "1=Básico, 2=Intermedio, 3=Avanzado"
+            "FECHA_NACIMIENTO" -> "Fecha de nacimiento (AAAA-MM-DD)"
+            "FECHA_INICIO" -> "Fecha de inicio (AAAA-MM-DD)"
+            "FECHA_FIN" -> "Fecha de fin (AAAA-MM-DD)"
+            "FECHA_CERTIFICACION" -> "Fecha de certificación (AAAA-MM-DD)"
+            "FECHA_PUBLICACION" -> "Fecha de publicación (AAAA-MM-DD)"
+            "FECHA_CADUCIDAD" -> "Fecha de caducidad (AAAA-MM-DD)"
+            "FECHA_APLICACION" -> "Fecha de aplicación (AAAA-MM-DD)"
+            "FECHA_OBTENCION" -> "Fecha de obtención (AAAA-MM-DD)"
+            "ESTADO_PROCESO" -> "Ingrese estado (activo, en proceso, contratado, rechazado)"
+            "USERNAME", "USER" -> "Ingrese nombre de usuario"
+            "PASSWORD", "CONTRA" -> "Mínimo 8 caracteres"
+            "ROL" -> "postulante, empresa, admin"
+            "URL_PERFIL" -> "https://..."
+            "NOMBRE_CERTIFICACION" -> "Ingrese nombre de certificación"
+            "CODIGO_CERTIFICACION" -> "Ingrese código de certificación"
+            "DES_EXP_LABORAL", "DESC" -> "Ingrese descripción de experiencia"
+            else -> "Ingrese $column"
+        }
+    }
+
+private fun validateField(column: String, value: String): String? {
+        // Solo validar campos requeridos específicos
+        val requiredColumns = listOf("NOMBRE", "APELLIDO", "NOMBRE_EMPRESA", "NOMBRE_GENERO", 
+            "NOMBRE_TIPO", "NOMBRE_DEPARTAMENTO", "NOMBRE_MUNICIPIO", "NOMBRE_DISTRITO",
+            "NOMBRE_HABILIDAD", "NOMBRE_CATEGORIA", "NOMBRE_GRADO", "NOMBRE_RED",
+            "TITULO_PUESTO", "NOMBRE_CERTIFICACION", "PUESTO_TRABAJO", "TITULO_OBTENIDO")
+        
+        if (value.isBlank() && column.uppercase() in requiredColumns) {
+            return "El campo $column es requerido"
+        }
+        
+        if (value.isBlank()) return null  // Campo opcional vacío es válido
+        
+        when (column.uppercase()) {
+            "EMAIL", "CORREO" -> {
+                if (!android.util.Patterns.EMAIL_ADDRESS.matcher(value).matches()) {
+                    return "Correo electrónico inválido"
+                }
+            }
+            "NIT" -> {
+                // Validación simple - solo verificar que no esté vacío
+                if (value.length < 5) {
+                    return "NIT muy corto"
+                }
+            }
+            "FECHA_NACIMIENTO", "FECHA_INICIO", "FECHA_FIN", "FECHA_CERTIFICACION", "FECHA_PUBLICACION", "FECHA_CADUCIDAD", "FECHA_APLICACION", "FECHA_OBTENCION" -> {
+                if (!value.matches(Regex("""\d{4}-\d{2}-\d{2}"""))) {
+                    return "Formato fecha inválido (use AAAA-MM-DD)"
+                }
+            }
+            "NIVEL_DESTREZA" -> {
+                if (value.toIntOrNull() !in 1..3) {
+                    return "Nivel debe ser 1, 2 o 3"
+                }
+            }
+            "EDAD_MINIMA", "EDAD_MAXIMA" -> {
+                val edad = value.toIntOrNull()
+                if (edad == null || edad < 16 || edad > 100) {
+                    return "Edad debe estar entre 16 y 100"
+                }
+            }
+            "EXPERIENCIA_ANIOS" -> {
+                val años = value.toIntOrNull()
+                if (años == null || años < 0 || años > 50) {
+                    return "Años de experiencia inválidos"
+                }
+            }
+            "PASSWORD", "CONTRA" -> {
+                if (value.length < 8) {
+                    return "La contraseña debe tener al menos 8 caracteres"
+                }
+            }
+            "URL_PERFIL" -> {
+                if (!value.startsWith("http://") && !value.startsWith("https://")) {
+                    return "URL debe comenzar con http:// o https://"
+                }
+            }
+        }
+        return null
+    }
+
+    private fun getColumnsForTable(table: String): List<String> {
+        return when (table) {
+            "USUARIO" -> listOf("ID_USUARIO", "USERNAME", "PASSWORD", "ROL")
+            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_USUARIO", "ID_GENERO", "ID_DISTRITO", "ID_TIPO_DOCUMENTO", "NUM_DOCUMENTO", "NOMBRE", "APELLIDO", "EMAIL", "FECHA_NACIMIENTO")
+            "GENERO" -> listOf("ID_GENERO", "NOMBRE_GENERO")
+            "TIPO_DOCUMENTO" -> listOf("ID_TIPO_DOCUMENTO", "NOMBRE_TIPO")
+            "DEPARTAMENTO" -> listOf("ID_DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
+            "MUNICIPIO" -> listOf("ID_MUNICIPIO", "ID_DEPARTAMENTO", "NOMBRE_MUNICIPIO")
+            "DISTRITO" -> listOf("ID_DISTRITO", "ID_MUNICIPIO", "NOMBRE_DISTRITO")
+            "HABILIDAD" -> listOf("ID_HABILIDAD", "ID_CATEGORIA_HABILIDAD", "NOMBRE_HABILIDAD")
+            "CATEGORIA_HABILIDAD" -> listOf("ID_CATEGORIA_HABILIDAD", "NOMBRE_CATEGORIA")
+            "EMPRESA" -> listOf("ID_EMPRESA", "ID_DISTRITO", "NOMBRE_EMPRESA", "CONTACTO_DIRECTO", "NIT")
+            "INSTITUCION" -> listOf("ID_INSTITUCION", "NOMBRE_INSTITUCION")
+            "GRADO_ACADEMICO" -> listOf("ID_GRADO_ACADEMICO", "NOMBRE_GRADO")
+            "RED_SOCIAL" -> listOf("ID_RED_SOCIAL", "NOMBRE_RED", "LOGO_ICONO")
+            "OFERTA_ACADEMICA" -> listOf("ID_OFERTA_ACADEMICA", "ID_INSTITUCION", "ID_GRADO_ACADEMICO")
+            "OFERTA_TRABAJO" -> listOf("ID_OFERTA", "ID_EMPRESA", "ID_GRADO_ACADEMICO", "TITULO_PUESTO", "FECHA_PUBLICACION", "FECHA_CADUCIDAD", "EXPERIENCIA_ANIOS", "EDAD_MINIMA", "EDAD_MAXIMA", "DESCRIPCION_OFERTA_TRABAJO")
+            "CERTIFICACION" -> listOf("ID_CERTIFICACION", "ID_POSTULANTE", "ID_INSTITUCION", "NOMBRE_CERTIFICACION", "CODIGO_CERTIFICACION", "FECHA_CERTIFICACION")
+            "EXPERIENCIA_LABORAL" -> listOf("ID_EXPERIENCIA", "ID_POSTULANTE", "ID_EMPRESA", "PUESTO_TRABAJO", "FECHA_INICIO", "FECHA_FIN", "DES_EXP_LABORAL", "CONTACTO_REFERENCIA")
+            "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_OFERTA_ACADEMICA", "ID_POSTULANTE", "TITULO_OBTENIDO", "FECHA_OBTENCION")
+            "HABILIDAD_POSTULANTE" -> listOf("ID_HABILIDAD_POSTULANTE", "ID_HABILIDAD", "ID_POSTULANTE", "NIVEL_DESTREZA")
+            "POSTULACION" -> listOf("ID_POSTULACION", "ID_EMPRESA", "ID_OFERTA", "ID_POSTULANTE", "FECHA_APLICACION", "ESTADO_PROCESO")
+            "DETALLE_REQUISITO" -> listOf("ID_DETALLE", "ID_EMPRESA", "ID_OFERTA", "DESCRIPCION_REQUISITO")
+            "RED_SOCIAL_POSTULANTE" -> listOf("ID_RED_POSTUALNTE", "ID_POSTULANTE", "ID_RED_SOCIAL", "URL_PERFIL")
+            else -> listOf("ID", "NOMBRE")
+        }
+    }
+
+    private fun setupButtons() {
+        btnSave.setOnClickListener { saveData() }
+        btnCancel.setOnClickListener { dismiss() }
+    }
+
+    private fun saveData() {
+        val editableColumns = columns.drop(1)
+        val values = mutableListOf<String>()
+        var hasRequiredFk = false
+
+        for (col in editableColumns) {
+            val fkRef = fkRefs[col]
+            
+            if (col == "NIVEL_DESTREZA") {
+                val autoComplete = dropDownFields.entries.find { it.value.first == col }?.value?.second
+                val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
+                if (selectedText.isBlank()) {
+                    StyledToast.show(requireContext(), "Debe seleccionar un nivel de destreza")
+                    return
+                }
+                val nivelValue = when (selectedText) {
+                    "Básico" -> "1"
+                    "Intermedio" -> "2"
+                    "Avanzado" -> "3"
+                    else -> ""
+                }
+                values.add(nivelValue)
+            } else if (col == "ESTADO_PROCESO") {
+                val autoComplete = dropDownFields.entries.find { it.value.first == col }?.value?.second
+                val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
+                if (selectedText.isBlank()) {
+                    StyledToast.show(requireContext(), "Debe seleccionar un estado")
+                    return
+                }
+                val estadoValue = when (selectedText) {
+                    "Activo" -> "activo"
+                    "En Proceso" -> "en proceso"
+                    "Contratado" -> "contratado"
+                    "Rechazado" -> "rechazado"
+                    else -> ""
+                }
+                values.add(estadoValue)
+            } else if (fkRef != null) {
+                val options = viewModel.getDropdownOptions(fkRef.refTable, fkRef.refDisplayColumn)
+                if (options.isEmpty()) {
+                    StyledToast.show(requireContext(), "No hay datos en ${fkRef.refTable}. Créelos primero.")
+                    return
+                }
+                hasRequiredFk = true
+                
+                val autoComplete = dropDownFields.entries.find { it.value.first == col }?.value?.second
+                val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
+                if (selectedText.isBlank()) {
+                    StyledToast.show(requireContext(), "Debe seleccionar ${fkRef.refTable}")
+                    return
+                }
+                
+                // Buscar el ID correspondiente al texto seleccionado
+                val selectedOption = options.find { it.second == selectedText }
+                if (selectedOption == null) {
+                    StyledToast.show(requireContext(), "Seleccione una opción válida de ${fkRef.refTable}: $selectedText")
+                    return
+                }
+                values.add(selectedOption.first)
+            } else {
+                val et = textFields.entries.find { it.value.first == col }?.value?.second
+                val textValue = et?.text?.toString()?.trim() ?: ""
+                
+                // Validar campo según tipo
+                val errorMsg = validateField(col, textValue)
+                if (errorMsg != null) {
+                    StyledToast.show(requireContext(), errorMsg)
+                    return
+                }
+                
+                values.add(textValue)
+            }
+        }
+
+        if (values.isEmpty()) {
+            StyledToast.show(requireContext(), getString(R.string.error))
+            return
+        }
+
+        if (isEditMode && itemData.isNotEmpty()) {
+            val id = itemData.first().trim()
+            viewModel.updateRecord(tableName, id, values)
+            StyledToast.show(requireContext(), "Actualizado")
+        } else {
+            viewModel.insertRecord(tableName, values)
+            android.util.Log.d("EditorDialog", "Insert called for $tableName with values: $values")
+        }
+        
+        // Observar errores
+        viewModel.errorMessage.observe(viewLifecycleOwner) { error ->
+            if (error != null) {
+                StyledToast.show(requireContext(), "Error: $error")
+                viewModel.clearError()
+            }
+        }
+        
+        viewModel.loadItems()
+        dismiss()
+    }
+}
