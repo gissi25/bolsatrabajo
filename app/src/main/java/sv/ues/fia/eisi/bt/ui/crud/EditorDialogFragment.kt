@@ -1,5 +1,6 @@
 package sv.ues.fia.eisi.bt.ui.crud
 
+import android.content.res.TypedArray
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputFilter
@@ -145,7 +146,7 @@ val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            setTextColor(android.graphics.Color.BLACK)
+            setTextColor(getThemeColor(android.R.attr.textColorPrimary))
             keyListener = null
         }
 
@@ -207,7 +208,7 @@ val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            setTextColor(android.graphics.Color.BLACK)
+            setTextColor(getThemeColor(android.R.attr.textColorPrimary))
             keyListener = null
         }
 
@@ -269,7 +270,7 @@ val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            setTextColor(android.graphics.Color.BLACK)
+            setTextColor(getThemeColor(android.R.attr.textColorPrimary))
             keyListener = null
         }
 
@@ -363,7 +364,7 @@ val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            setTextColor(android.graphics.Color.BLACK)
+            setTextColor(getThemeColor(android.R.attr.textColorPrimary))
             inputType = getInputType(column)
             filters = getFilters(column)
         }
@@ -477,6 +478,13 @@ val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
                 android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
             else -> android.text.InputType.TYPE_CLASS_TEXT
         }
+    }
+
+    private fun getThemeColor(attr: Int): Int {
+        val ta: TypedArray = requireContext().obtainStyledAttributes(intArrayOf(attr))
+        val color = ta.getColor(0, android.graphics.Color.BLACK)
+        ta.recycle()
+        return color
     }
 
     private fun getHintText(column: String): String {

@@ -4,19 +4,19 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/beige_light">
+    android:background="?android:attr/colorBackground">
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="0dp"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/pink_pastel"
+        android:background="?attr/colorPrimary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:menu="@menu/menu_dashboard"
         app:title="@string/dashboard"
-        app:titleTextColor="@color/black" />
+        app:titleTextColor="?attr/colorOnPrimary" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilSearch"
@@ -35,7 +35,7 @@
             android:layout_height="wrap_content"
             android:hint="@string/search_tables"
             android:inputType="text"
-            android:textColor="@color/black" />
+            android:textColor="?attr/colorOnSurface" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
