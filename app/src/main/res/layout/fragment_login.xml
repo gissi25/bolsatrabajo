@@ -3,14 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/beige_light"
+    android:background="?android:attr/colorBackground"
     android:padding="24dp">
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardLogin"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="@color/white"
+        app:cardBackgroundColor="?attr/colorSurface"
         app:cardCornerRadius="24dp"
         app:cardElevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -30,7 +30,7 @@
                 android:layout_marginBottom="24dp"
                 android:gravity="center"
                 android:text="@string/app_name"
-                android:textColor="@color/black"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="28sp"
                 android:textStyle="bold" />
 
@@ -41,7 +41,7 @@
                 android:gravity="center"
                 android:text="@string/login"
                 android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
-                android:textColor="@color/black" />
+                android:textColor="?attr/colorOnSurface" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilUsername"
@@ -61,7 +61,7 @@
                     android:layout_height="wrap_content"
                     android:inputType="text"
                     android:maxLines="1"
-                    android:textColor="@color/black" />
+                    android:textColor="?attr/colorOnSurface" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -84,7 +84,7 @@
                     android:layout_height="wrap_content"
                     android:inputType="textPassword"
                     android:maxLines="1"
-                    android:textColor="@color/black" />
+                    android:textColor="?attr/colorOnSurface" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -93,9 +93,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:backgroundTint="@color/pink_pastel"
+                android:backgroundTint="?attr/colorPrimary"
                 android:text="@string/login"
-                android:textColor="@color/black"
+                android:textColor="?attr/colorOnPrimary"
                 app:cornerRadius="24dp" />
 
             <com.google.android.material.button.MaterialButton
@@ -104,9 +104,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/register"
-                android:textColor="@color/pink_medium"
+                android:textColor="?attr/colorPrimary"
                 app:cornerRadius="24dp"
-                app:strokeColor="@color/pink_pastel" />
+                app:strokeColor="?attr/colorPrimary" />
 
         </LinearLayout>
 
