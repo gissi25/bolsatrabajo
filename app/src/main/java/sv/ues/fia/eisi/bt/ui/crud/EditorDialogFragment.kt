@@ -23,7 +23,10 @@ import sv.ues.fia.eisi.bt.data.repository.MainRepository
 import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.InputMaskUtils
 import sv.ues.fia.eisi.bt.utils.StyledToast
+import sv.ues.fia.eisi.bt.utils.TriggerErrorTranslator
+import sv.ues.fia.eisi.bt.utils.ValidationRules
 import sv.ues.fia.eisi.bt.viewmodel.CrudViewModel
+import sv.ues.fia.eisi.bt.viewmodel.Resource
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -78,6 +81,23 @@ class EditorDialogFragment : DialogFragment() {
         setupTitle()
         setupFields()
         setupButtons()
+
+        viewModel.operationResult.observe(viewLifecycleOwner) { result ->
+            if (result == null) return@observe
+            btnSave.isEnabled = true
+            btnSave.text = if (isEditMode) "Actualizar" else "Guardar"
+            when (result) {
+                is Resource.Success -> {
+                    StyledToast.show(requireContext(), result.message)
+                    viewModel.clearResult()
+                    dismiss()
+                }
+                is Resource.Error -> {
+                    StyledToast.show(requireContext(), result.translatedMessage)
+                    viewModel.clearResult()
+                }
+            }
+        }
     }
 
     private fun setupTitle() {
@@ -98,8 +118,8 @@ class EditorDialogFragment : DialogFragment() {
             columns = listOf("NOMBRE")
         }
 
-        columns.drop(1).forEachIndexed { idx, column ->
-            val colIndex = idx + 1
+        columns.filter { it != getAutoGenColumn(tableName) }.forEachIndexed { idx, column ->
+            val colIndex = columns.indexOf(column)
             val isFk = fkRefs.containsKey(column)
             val isNivelDestreza = column == "NIVEL_DESTREZA"
             val isEstadoProceso = column == "ESTADO_PROCESO"
@@ -605,7 +625,7 @@ val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
             "URL_PERFIL" -> "https://..."
             "NOMBRE_CERTIFICACION" -> "Ingrese nombre de certificación"
             "CODIGO_CERTIFICACION" -> "Ingrese código de certificación"
-            "DES_EXP_LABORAL", "DESC" -> "Ingrese descripción de experiencia"
+            "DESCP_EXPERIENCIA_LABORAL", "DESC" -> "Ingrese descripción de experiencia"
             else -> "Ingrese $column"
         }
     }
@@ -711,7 +731,7 @@ private fun validateField(column: String, value: String): String? {
     private fun getColumnsForTable(table: String): List<String> {
         return when (table) {
             "USUARIO" -> listOf("ID_USUARIO", "USERNAME", "PASSWORD", "ROL")
-            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_USUARIO", "ID_GENERO", "ID_DISTRITO", "ID_TIPO_DOCUMENTO", "NUM_DOCUMENTO", "NOMBRE", "APELLIDO", "EMAIL", "FECHA_NACIMIENTO")
+            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_GENERO", "ID_TIPO_DOCUMENTO", "ID_DISTRITO", "NOMBRE", "APELLIDO", "FECHA_NACIMIENTO", "NUM_DOCUMENTO", "NUP", "DIRECCION_DETALLE", "TELEFONO_CASA", "TELEFONO_CELULAR", "EMAIL")
             "GENERO" -> listOf("ID_GENERO", "NOMBRE_GENERO")
             "TIPO_DOCUMENTO" -> listOf("ID_TIPO_DOCUMENTO", "NOMBRE_TIPO")
             "DEPARTAMENTO" -> listOf("ID_DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
@@ -722,14 +742,14 @@ private fun validateField(column: String, value: String): String? {
             "EMPRESA" -> listOf("ID_EMPRESA", "ID_DISTRITO", "NOMBRE_EMPRESA", "CONTACTO_DIRECTO", "NIT")
             "INSTITUCION" -> listOf("ID_INSTITUCION", "NOMBRE_INSTITUCION")
             "GRADO_ACADEMICO" -> listOf("ID_GRADO_ACADEMICO", "NOMBRE_GRADO")
-            "RED_SOCIAL" -> listOf("ID_RED_SOCIAL", "NOMBRE_RED", "LOGO_ICONO")
-            "OFERTA_ACADEMICA" -> listOf("ID_OFERTA_ACADEMICA", "ID_INSTITUCION", "ID_GRADO_ACADEMICO")
-            "OFERTA_TRABAJO" -> listOf("ID_OFERTA", "ID_EMPRESA", "ID_GRADO_ACADEMICO", "TITULO_PUESTO", "FECHA_PUBLICACION", "FECHA_CADUCIDAD", "EXPERIENCIA_ANIOS", "EDAD_MINIMA", "EDAD_MAXIMA", "DESCRIPCION_OFERTA_TRABAJO")
-            "CERTIFICACION" -> listOf("ID_CERTIFICACION", "ID_POSTULANTE", "ID_INSTITUCION", "NOMBRE_CERTIFICACION", "CODIGO_CERTIFICACION", "FECHA_CERTIFICACION")
-            "EXPERIENCIA_LABORAL" -> listOf("ID_EXPERIENCIA", "ID_POSTULANTE", "ID_EMPRESA", "PUESTO_TRABAJO", "FECHA_INICIO", "FECHA_FIN", "DES_EXP_LABORAL", "CONTACTO_REFERENCIA")
-            "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_OFERTA_ACADEMICA", "ID_POSTULANTE", "TITULO_OBTENIDO", "FECHA_OBTENCION")
-            "HABILIDAD_POSTULANTE" -> listOf("ID_HABILIDAD_POSTULANTE", "ID_HABILIDAD", "ID_POSTULANTE", "NIVEL_DESTREZA")
-            "POSTULACION" -> listOf("ID_POSTULACION", "ID_EMPRESA", "ID_OFERTA", "ID_POSTULANTE", "FECHA_APLICACION", "ESTADO_PROCESO")
+            "RED_SOCIAL" -> listOf("ID_RED_SOCIAL", "NOMBRE_RED")
+            "OFERTA_ACADEMICA" -> listOf("ID_OFERTA_ACADEMICA", "ID_GRADO_ACADEMICO", "ID_INSTITUCION")
+            "OFERTA_TRABAJO" -> listOf("ID_EMPRESA", "ID_OFERTA", "ID_GRADO_ACADEMICO", "TITULO_PUESTO", "FECHA_PUBLICACION", "FECHA_CADUCIDAD", "EXPERIENCIA_ANIOS", "EDAD_MINIMA", "EDAD_MAXIMA", "DESCRIPCION_OFERTA_TRABAJO")
+            "CERTIFICACION" -> listOf("ID_POSTULANTE", "ID_CERTIFICACION", "ID_INSTITUCION", "NOMBRE_CERTIFICACION", "CODIGO_CERTIFICACION", "FECHA_CERTIFICACION")
+            "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "ID_EXPERIENCIA", "ID_EMPRESA", "PUESTO_TRABAJO", "FECHA_INICIO", "FECHA_FIN", "DESCP_EXPERIENCIA_LABORAL", "CONTACTO_REFERENCIA")
+            "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_POSTULANTE", "ID_OFERTA_ACADEMICA", "TITULO_OBTENIDO", "FECHA_OBTENCION")
+            "HABILIDAD_POSTULANTE" -> listOf("ID_HABILIDAD", "ID_POSTULANTE", "ID_HABILIDAD_POSTULANTE", "NIVEL_DESTREZA")
+            "POSTULACION" -> listOf("ID_EMPRESA", "ID_OFERTA", "ID_POSTULANTE", "ID_POSTULACION", "FECHA_APLICACION", "ESTADO_PROCESO")
             "DETALLE_REQUISITO" -> listOf("ID_DETALLE", "ID_EMPRESA", "ID_OFERTA", "DESCRIPCION_REQUISITO")
             "RED_SOCIAL_POSTULANTE" -> listOf("ID_RED_POSTUALNTE", "ID_POSTULANTE", "ID_RED_SOCIAL", "URL_PERFIL")
             else -> listOf("ID", "NOMBRE")
@@ -742,13 +762,20 @@ private fun validateField(column: String, value: String): String? {
     }
 
     private fun saveData() {
-        val editableColumns = columns.drop(1)
+        val editableColumns = columns.filter { it != getAutoGenColumn(tableName) }
         val values = mutableListOf<String>()
         var hasRequiredFk = false
 
+        // Step 1: Clear all field errors
+        for (entry in textFields.values) {
+            val parent = entry.second.parent?.parent
+            if (parent is TextInputLayout) parent.error = null
+        }
+
+        // Step 2: Validate all fields locally
         for (col in editableColumns) {
             val fkRef = fkRefs[col]
-            
+
             if (col == "NIVEL_DESTREZA") {
                 val autoComplete = dropDownFields.entries.find { it.value.first == col }?.value?.second
                 val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
@@ -785,15 +812,14 @@ private fun validateField(column: String, value: String): String? {
                     return
                 }
                 hasRequiredFk = true
-                
+
                 val autoComplete = dropDownFields.entries.find { it.value.first == col }?.value?.second
                 val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
                 if (selectedText.isBlank()) {
                     StyledToast.show(requireContext(), "Debe seleccionar ${fkRef.refTable}")
                     return
                 }
-                
-                // Buscar el ID correspondiente al texto seleccionado
+
                 val selectedOption = options.find { it.second == selectedText }
                 if (selectedOption == null) {
                     StyledToast.show(requireContext(), "Seleccione una opción válida de ${fkRef.refTable}: $selectedText")
@@ -803,14 +829,18 @@ private fun validateField(column: String, value: String): String? {
             } else {
                 val et = textFields.entries.find { it.value.first == col }?.value?.second
                 val textValue = et?.text?.toString()?.trim() ?: ""
-                
-                // Validar campo según tipo
-                val errorMsg = validateField(col, textValue)
+
+                val errorMsg = ValidationRules.validate(tableName, col, textValue)
+                        ?: validateField(col, textValue)
                 if (errorMsg != null) {
+                    val parent = et?.parent?.parent
+                    if (parent is TextInputLayout) {
+                        parent.error = errorMsg
+                    }
                     StyledToast.show(requireContext(), errorMsg)
                     return
                 }
-                
+
                 values.add(textValue)
             }
         }
@@ -820,24 +850,27 @@ private fun validateField(column: String, value: String): String? {
             return
         }
 
+        // Step 3: Disable save button while operation in progress
+        btnSave.isEnabled = false
+        btnSave.text = "Guardando..."
+
+        // Step 4: Execute DB operation
         if (isEditMode && itemData.isNotEmpty()) {
             val id = itemData.first().trim()
             viewModel.updateRecord(tableName, id, values)
-            StyledToast.show(requireContext(), "Actualizado")
         } else {
             viewModel.insertRecord(tableName, values)
-            android.util.Log.d("EditorDialog", "Insert called for $tableName with values: $values")
         }
-        
-        // Observar errores
-        viewModel.errorMessage.observe(viewLifecycleOwner) { error ->
-            if (error != null) {
-                StyledToast.show(requireContext(), "Error: $error")
-                viewModel.clearError()
-            }
+    }
+
+    private fun getAutoGenColumn(table: String): String {
+        return when (table) {
+            "OFERTA_TRABAJO" -> "ID_OFERTA"
+            "EXPERIENCIA_LABORAL" -> "ID_EXPERIENCIA"
+            "CERTIFICACION" -> "ID_CERTIFICACION"
+            "HABILIDAD_POSTULANTE" -> "ID_HABILIDAD_POSTULANTE"
+            "POSTULACION" -> "ID_POSTULACION"
+            else -> columns.firstOrNull() ?: "ID"
         }
-        
-        viewModel.loadItems()
-        dismiss()
     }
 }

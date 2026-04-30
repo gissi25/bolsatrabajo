@@ -2,7 +2,7 @@ package sv.ues.fia.eisi.bt.utils
 
 object Constants {
     const val DATABASE_NAME = "si.db"
-    const val DATABASE_VERSION = 1
+    const val DATABASE_VERSION = 6
 
     const val PREFS_NAME = "bolsa_trabajo_prefs"
     const val KEY_IS_LOGGED_IN = "is_logged_in"
