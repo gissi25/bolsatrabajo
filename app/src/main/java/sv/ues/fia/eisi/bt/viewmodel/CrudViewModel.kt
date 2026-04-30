@@ -10,6 +10,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
+import sv.ues.fia.eisi.bt.utils.TriggerErrorTranslator
+
+sealed class Resource {
+    data class Success(val message: String) : Resource()
+    data class Error(val message: String, val translatedMessage: String) : Resource()
+}
 
 class CrudViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -23,6 +29,16 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
 
     private var currentTable: String = ""
 
+    private val _operationResult = MutableLiveData<Resource?>()
+    val operationResult: LiveData<Resource?> get() = _operationResult
+
+    private val _deleteDependencies = MutableLiveData<List<MainRepository.DependencyInfo>>()
+    val deleteDependencies: LiveData<List<MainRepository.DependencyInfo>> get() = _deleteDependencies
+
+    fun clearResult() {
+        _operationResult.value = null
+    }
+
     fun setTable(tableName: String) {
         currentTable = tableName
         loadItems()
@@ -34,7 +50,7 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
         _isLoading.value = true
         viewModelScope.launch {
             try {
-                delay(300) // Pequeña pausa para asegurar persistencia
+                delay(300)
                 val result = withContext(Dispatchers.IO) {
                     repository.searchTable(currentTable, "")
                 }
@@ -49,6 +65,7 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
 
     fun deleteItem(id: String) {
         if (currentTable.isBlank()) return
+        _operationResult.value = null
 
         viewModelScope.launch {
             try {
@@ -57,20 +74,54 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 delay(300)
                 loadItems()
+                _operationResult.value = Resource.Success("Eliminado correctamente")
             } catch (e: Exception) {
+                val translated = TriggerErrorTranslator.translate(e.message)
+                _operationResult.value = Resource.Error(e.message ?: "Error al eliminar", translated)
                 e.printStackTrace()
             }
         }
     }
 
+    fun deleteItemByRow(rowData: List<String>) {
+        if (currentTable.isBlank()) return
+        _operationResult.value = null
+
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    repository.deleteRecordByRow(currentTable, rowData)
+                }
+                delay(300)
+                loadItems()
+                _operationResult.value = Resource.Success("Eliminado correctamente")
+            } catch (e: Exception) {
+                val translated = TriggerErrorTranslator.translate(e.message)
+                _operationResult.value = Resource.Error(e.message ?: "Error al eliminar", translated)
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun checkDeleteDependencies(id: String) {
+        if (currentTable.isBlank()) return
+        viewModelScope.launch {
+            val deps = withContext(Dispatchers.IO) {
+                repository.getDeleteDependencies(currentTable, id)
+            }
+            _deleteDependencies.postValue(deps)
+        }
+    }
+
     private val _errorMessage = MutableLiveData<String?>()
     val errorMessage: LiveData<String?> get() = _errorMessage
-    
+
     fun clearError() {
         _errorMessage.value = null
     }
 
     fun insertRecord(tableName: String, values: List<String>) {
+        _operationResult.value = null
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
@@ -79,14 +130,17 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
                 delay(300)
                 currentTable = tableName
                 loadItems()
+                _operationResult.value = Resource.Success("Guardado correctamente")
             } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Error al guardar"
+                val translated = TriggerErrorTranslator.translate(e.message)
+                _operationResult.value = Resource.Error(e.message ?: "Error al guardar", translated)
                 e.printStackTrace()
             }
         }
     }
 
     fun updateRecord(tableName: String, id: String, values: List<String>) {
+        _operationResult.value = null
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
@@ -95,8 +149,10 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
                 delay(300)
                 currentTable = tableName
                 loadItems()
+                _operationResult.value = Resource.Success("Actualizado correctamente")
             } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Error al actualizar"
+                val translated = TriggerErrorTranslator.translate(e.message)
+                _operationResult.value = Resource.Error(e.message ?: "Error al actualizar", translated)
                 e.printStackTrace()
             }
         }

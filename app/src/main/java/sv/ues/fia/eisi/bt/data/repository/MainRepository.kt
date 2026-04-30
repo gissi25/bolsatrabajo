@@ -5,6 +5,7 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import sv.ues.fia.eisi.bt.data.local.ConnectionHelper
 import sv.ues.fia.eisi.bt.utils.PasswordHasher
+import sv.ues.fia.eisi.bt.utils.TriggerErrorTranslator
 
 class MainRepository(context: Context) {
 
@@ -75,25 +76,121 @@ class MainRepository(context: Context) {
     }
 
     fun deleteRecord(tableName: String, id: String): Boolean {
-        val idCol = getIdColumn(tableName)
-        getDb().execSQL("DELETE FROM $tableName WHERE $idCol = $id")
-        return true
+        return try {
+            val idCol = getIdColumn(tableName)
+            getDb().execSQL("DELETE FROM $tableName WHERE $idCol = $id")
+            true
+        } catch (e: android.database.sqlite.SQLiteException) {
+            throw Exception(TriggerErrorTranslator.translate(e.message))
+        }
+    }
+
+    fun deleteRecordByRow(tableName: String, rowData: List<String>): Boolean {
+        val columns = getColumnsForTable(tableName)
+        val pkColumns = getPrimaryKeyColumns(tableName)
+        return try {
+            val whereClause = pkColumns.mapIndexed { i, col ->
+                val idx = columns.indexOf(col)
+                val value = if (idx >= 0 && idx < rowData.size) rowData[idx] else ""
+                "$col = '$value'"
+            }.joinToString(" AND ")
+            getDb().execSQL("DELETE FROM $tableName WHERE $whereClause")
+            true
+        } catch (e: android.database.sqlite.SQLiteException) {
+            throw Exception(TriggerErrorTranslator.translate(e.message))
+        }
+    }
+
+    data class DependencyInfo(val tableName: String, val displayName: String, val count: Int)
+
+    fun getDeleteDependencies(tableName: String, id: String): List<DependencyInfo> {
+        val dependencies = getDependencyMap(tableName)
+        val result = mutableListOf<DependencyInfo>()
+        for ((childTable, fkColumn) in dependencies) {
+            val idCol = getIdColumn(tableName)
+            val cursor = getDb().rawQuery(
+                "SELECT COUNT(*) FROM $childTable WHERE $fkColumn = ?",
+                arrayOf(id)
+            )
+            if (cursor.moveToFirst()) {
+                val count = cursor.getInt(0)
+                if (count > 0) {
+                    result.add(DependencyInfo(
+                        childTable,
+                        childTable.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() },
+                        count
+                    ))
+                }
+            }
+            cursor.close()
+        }
+        return result
+    }
+
+    private fun getDependencyMap(tableName: String): List<Pair<String, String>> {
+        return when (tableName) {
+            "DEPARTAMENTO" -> listOf("MUNICIPIO" to "ID_DEPARTAMENTO")
+            "MUNICIPIO" -> listOf("DISTRITO" to "ID_MUNICIPIO")
+            "DISTRITO" -> listOf("POSTULANTE" to "ID_DISTRITO", "EMPRESA" to "ID_DISTRITO")
+            "GENERO" -> listOf("POSTULANTE" to "ID_GENERO")
+            "TIPO_DOCUMENTO" -> listOf("POSTULANTE" to "ID_TIPO_DOCUMENTO")
+            "INSTITUCION" -> listOf("OFERTA_ACADEMICA" to "ID_INSTITUCION", "CERTIFICACION" to "ID_INSTITUCION")
+            "GRADO_ACADEMICO" -> listOf("OFERTA_TRABAJO" to "ID_GRADO_ACADEMICO", "OFERTA_ACADEMICA" to "ID_GRADO_ACADEMICO")
+            "CATEGORIA_HABILIDAD" -> listOf("HABILIDAD" to "ID_CATEGORIA_HABILIDAD")
+            "HABILIDAD" -> listOf("HABILIDAD_POSTULANTE" to "ID_HABILIDAD")
+            "RED_SOCIAL" -> listOf("RED_SOCIAL_POSTULANTE" to "ID_RED_SOCIAL")
+            "OFERTA_ACADEMICA" -> listOf("FORMACION_ACADEMICA" to "ID_OFERTA_ACADEMICA")
+            "EMPRESA" -> listOf("OFERTA_TRABAJO" to "ID_EMPRESA", "EXPERIENCIA_LABORAL" to "ID_EMPRESA")
+            "POSTULANTE" -> listOf(
+                "POSTULACION" to "ID_POSTULANTE",
+                "EXPERIENCIA_LABORAL" to "ID_POSTULANTE",
+                "FORMACION_ACADEMICA" to "ID_POSTULANTE",
+                "CERTIFICACION" to "ID_POSTULANTE",
+                "HABILIDAD_POSTULANTE" to "ID_POSTULANTE",
+                "RED_SOCIAL_POSTULANTE" to "ID_POSTULANTE"
+            )
+            else -> emptyList()
+        }
+    }
+
+    private fun getPrimaryKeyColumns(tableName: String): List<String> {
+        return when (tableName) {
+            "OFERTA_TRABAJO" -> listOf("ID_EMPRESA", "ID_OFERTA")
+            "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "ID_EXPERIENCIA")
+            "CERTIFICACION" -> listOf("ID_POSTULANTE", "ID_CERTIFICACION")
+            "HABILIDAD_POSTULANTE" -> listOf("ID_HABILIDAD", "ID_POSTULANTE", "ID_HABILIDAD_POSTULANTE")
+            "POSTULACION" -> listOf("ID_EMPRESA", "ID_OFERTA", "ID_POSTULANTE", "ID_POSTULACION")
+            "DETALLE_REQUISITO" -> listOf("ID_DETALLE")
+            else -> listOf(getIdColumn(tableName))
+        }
+    }
+
+    private fun getAutoGenColumn(tableName: String): String {
+        return when (tableName) {
+            "OFERTA_TRABAJO" -> "ID_OFERTA"
+            "EXPERIENCIA_LABORAL" -> "ID_EXPERIENCIA"
+            "CERTIFICACION" -> "ID_CERTIFICACION"
+            "HABILIDAD_POSTULANTE" -> "ID_HABILIDAD_POSTULANTE"
+            "POSTULACION" -> "ID_POSTULACION"
+            else -> getIdColumn(tableName)
+        }
     }
 
     fun insertRecord(tableName: String, values: List<Any>): Long {
-        val columns = getColumnsForTable(tableName).drop(1)
-        val idCol = getIdColumn(tableName)
-        
+        val idCol = getAutoGenColumn(tableName)
+        val columns = getColumnsForTable(tableName).filter { it != idCol }
+
         android.util.Log.d("MainRepository", "Table: $tableName")
+        android.util.Log.d("MainRepository", "AutoGenCol: $idCol")
         android.util.Log.d("MainRepository", "Columns: $columns")
         android.util.Log.d("MainRepository", "Values: $values")
-        
+
         if (values.size != columns.size) {
             android.util.Log.e("MainRepository", "ERROR: Values count (${values.size}) != Columns count (${columns.size})")
         }
-        
+
         val valuesCopy = values.toMutableList()
-        
+
         if (tableName == "USUARIO") {
             val pwdIndex = columns.indexOf("PASSWORD")
             if (pwdIndex >= 0 && pwdIndex < valuesCopy.size) {
@@ -103,18 +200,18 @@ class MainRepository(context: Context) {
                 }
             }
         }
-        
+
         val maxIdCursor = getDb().rawQuery("SELECT MAX($idCol) FROM $tableName", null)
         maxIdCursor.moveToFirst()
         val nextId = if (maxIdCursor.isNull(0)) 1 else maxIdCursor.getInt(0) + 1
         maxIdCursor.close()
-        
+
         val cols = columns.joinToString(", ")
         val vals = valuesCopy.joinToString(", ") { "'$it'" }
         val sql = "INSERT INTO $tableName ($idCol, $cols) VALUES ($nextId, $vals)"
-        
+
         android.util.Log.d("MainRepository", "SQL: $sql")
-        
+
         getDb().beginTransaction()
         try {
             getDb().execSQL(sql)
@@ -123,22 +220,20 @@ class MainRepository(context: Context) {
             return nextId.toLong()
         } catch (e: Exception) {
             getDb().endTransaction()
-            android.util.Log.e("MainRepository", "Insert error: ${e.message}")
-            throw e
+            throw Exception(TriggerErrorTranslator.translate(e.message))
         }
     }
 
     fun updateRecord(tableName: String, id: Any, values: List<Any>): Int {
-        val columns = getColumnsForTable(tableName).drop(1)
-        val idCol = getIdColumn(tableName)
+        val idCol = getAutoGenColumn(tableName)
+        val columns = getColumnsForTable(tableName).filter { it != idCol }
         val setClause = columns.zip(values).map { "${it.first} = '${it.second}'" }.joinToString(", ")
-        
+
         try {
             getDb().execSQL("UPDATE $tableName SET $setClause WHERE $idCol = $id")
             return 1
         } catch (e: Exception) {
-            android.util.Log.e("MainRepository", "Update error: ${e.message}")
-            throw e
+            throw Exception(TriggerErrorTranslator.translate(e.message))
         }
     }
 
@@ -147,11 +242,12 @@ class MainRepository(context: Context) {
     fun getAllTablesWithCount(): List<TableInfo> {
         val tables = listOf(
             "CATEGORIA_HABILIDAD", "GENERO", "TIPO_DOCUMENTO", "DEPARTAMENTO",
-            "INSTITUCION", "GRADO_ACADEMICO", "RED_SOCIAL", "MUNICIPIO",
-            "DISTRITO", "HABILIDAD", "EMPRESA", "OFERTA_ACADEMICA",
-            "OFERTA_TRABAJO", "CERTIFICACION", "EXPERIENCIA_LABORAL",
-            "FORMACION_ACADEMICA", "HABILIDAD_POSTULANTE", "POSTULACION",
-            "DETALLE_REQUISITO", "RED_SOCIAL_POSTULANTE", "POSTULANTE", "USUARIO"
+            "MUNICIPIO", "DISTRITO", "INSTITUCION", "GRADO_ACADEMICO",
+            "RED_SOCIAL", "POSTULANTE", "USUARIO", "EMPRESA",
+            "OFERTA_TRABAJO", "DETALLE_REQUISITO", "OFERTA_ACADEMICA",
+            "FORMACION_ACADEMICA", "EXPERIENCIA_LABORAL", "CERTIFICACION",
+            "HABILIDAD", "HABILIDAD_POSTULANTE", "POSTULACION",
+            "RED_SOCIAL_POSTULANTE"
         )
         
         return try {
@@ -193,9 +289,8 @@ class MainRepository(context: Context) {
 
     fun getFkReferences(tableName: String): Map<String, FkReference> {
         return when (tableName) {
-            "USUARIO" -> mapOf("ROL" to FkReference("ROL", "ROL", "NOMBRE"))
+            "USUARIO" -> emptyMap()
             "POSTULANTE" -> mapOf(
-                "ID_USUARIO" to FkReference("ID_USUARIO", "USUARIO", "USERNAME"),
                 "ID_GENERO" to FkReference("ID_GENERO", "GENERO", "NOMBRE_GENERO"),
                 "ID_TIPO_DOCUMENTO" to FkReference("ID_TIPO_DOCUMENTO", "TIPO_DOCUMENTO", "NOMBRE_TIPO"),
                 "ID_DISTRITO" to FkReference("ID_DISTRITO", "DISTRITO", "NOMBRE_DISTRITO")
@@ -221,7 +316,7 @@ class MainRepository(context: Context) {
                 "ID_EMPRESA" to FkReference("ID_EMPRESA", "EMPRESA", "NOMBRE_EMPRESA")
             )
             "FORMACION_ACADEMICA" -> mapOf(
-                "ID_OFERTA_ACADEMICA" to FkReference("ID_OFERTA_ACADEMICA", "OFERTA_ACADEMICA", "ID_OFERTA_ACADEMICA"),
+                "ID_OFERTA_ACADEMICA" to FkReference("ID_OFERTA_ACADEMICA", "OFERTA_ACADEMICA", "OFERTA_ACADEMICA"),
                 "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "NOMBRE")
             )
             "HABILIDAD_POSTULANTE" -> mapOf(
@@ -245,7 +340,7 @@ class MainRepository(context: Context) {
         }
     }
 
-    fun getDropdownOptions(tableName: String, displayColumn: String): List<Pair<String, String>> {
+    fun getDropdownOptions(tableName: String, displayColumn: String, idColumn: String? = null): List<Pair<String, String>> {
         if (tableName == "ROL") {
             return listOf(
                 Pair("postulante", "postulante"),
@@ -253,12 +348,47 @@ class MainRepository(context: Context) {
                 Pair("admin", "admin")
             )
         }
-        
+
+        if (tableName == "OFERTA_ACADEMICA") {
+            return try {
+                val cursor = getDb().rawQuery(
+                    "SELECT o.ID_OFERTA_ACADEMICA, i.NOMBRE_INSTITUCION, g.NOMBRE_GRADO FROM OFERTA_ACADEMICA o " +
+                    "LEFT JOIN INSTITUCION i ON o.ID_INSTITUCION = i.ID_INSTITUCION " +
+                    "LEFT JOIN GRADO_ACADEMICO g ON o.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO",
+                    null
+                )
+                val options = mutableListOf<Pair<String, String>>()
+                while (cursor.moveToNext()) {
+                    val id = cursor.getInt(0).toString()
+                    val institucion = cursor.getString(1) ?: ""
+                    val grado = cursor.getString(2) ?: ""
+                    val display = "$grado - $institucion".take(50)
+                    options.add(Pair(id, display))
+                }
+                cursor.close()
+                options
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+
         return try {
+            val idCol = idColumn ?: getDb().rawQuery("PRAGMA table_info($tableName)", null).use { cols ->
+                var foundId = "ID_"
+                while (cols.moveToNext()) {
+                    val name = cols.getString(1) ?: ""
+                    if (name.startsWith("ID_") && name != "ID_GENERO" && name != "ID_TIPO_DOCUMENTO" && name != "ID_DISTRITO") {
+                        foundId = name
+                        break
+                    }
+                }
+                foundId
+            }
             val cursor = getDb().rawQuery("SELECT * FROM $tableName", null)
+            val actualIdColIndex = cursor.getColumnIndex(idCol)
             val options = mutableListOf<Pair<String, String>>()
             while (cursor.moveToNext()) {
-                val id = cursor.getInt(0).toString()
+                val id = if (actualIdColIndex >= 0) cursor.getInt(actualIdColIndex).toString() else cursor.getInt(0).toString()
                 val displayName = try {
                     val colIndex = cursor.getColumnIndex(displayColumn)
                     if (colIndex >= 0) cursor.getString(colIndex) ?: id else id
@@ -273,12 +403,32 @@ class MainRepository(context: Context) {
     }
 
     fun getFilteredOptions(childTable: String, childFkColumn: String, parentId: String): List<Pair<String, String>> {
+        val idColumn = when (childTable) {
+            "OFERTA_ACADEMICA" -> "ID_OFERTA_ACADEMICA"
+            "OFERTA_TRABAJO" -> "ID_OFERTA"
+            else -> {
+                val cols = getDb().rawQuery("PRAGMA table_info($childTable)", null)
+                val hasPkSuffix = cols.use { c ->
+                    var found = false
+                    while (c.moveToNext()) {
+                        val name = c.getString(1) ?: ""
+                        if (name.startsWith("ID_") && name != "ID_GENERO" && name != "ID_TIPO_DOCUMENTO") {
+                            found = true
+                        }
+                    }
+                    found
+                }
+                if (hasPkSuffix) "ID_" else "ID"
+            }
+        }
         return try {
             val cursor = getDb().rawQuery("SELECT * FROM $childTable WHERE $childFkColumn = ?", arrayOf(parentId))
             val options = mutableListOf<Pair<String, String>>()
             while (cursor.moveToNext()) {
-                val id = cursor.getInt(0).toString()
-                val name = cursor.getString(1) ?: id
+                val idColIdx = cursor.getColumnIndex(idColumn)
+                val id = if (idColIdx >= 0) cursor.getInt(idColIdx).toString() else cursor.getInt(0).toString()
+                val nameColIdx = idColIdx + 1
+                val name = if (nameColIdx < cursor.columnCount) cursor.getString(nameColIdx) ?: id else id
                 options.add(Pair(id, name))
             }
             cursor.close()
@@ -319,7 +469,7 @@ class MainRepository(context: Context) {
     private fun getColumnsForTable(tableName: String): List<String> {
         return when (tableName) {
             "USUARIO" -> listOf("ID_USUARIO", "USERNAME", "PASSWORD", "ROL")
-            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_USUARIO", "ID_GENERO", "ID_DISTRITO", "ID_TIPO_DOCUMENTO", "NUM_DOCUMENTO", "NOMBRE", "APELLIDO", "EMAIL", "FECHA_NACIMIENTO")
+            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_GENERO", "ID_TIPO_DOCUMENTO", "ID_DISTRITO", "NOMBRE", "APELLIDO", "FECHA_NACIMIENTO", "NUM_DOCUMENTO", "NUP", "DIRECCION_DETALLE", "TELEFONO_CASA", "TELEFONO_CELULAR", "EMAIL")
             "GENERO" -> listOf("ID_GENERO", "NOMBRE_GENERO")
             "TIPO_DOCUMENTO" -> listOf("ID_TIPO_DOCUMENTO", "NOMBRE_TIPO")
             "DEPARTAMENTO" -> listOf("ID_DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
@@ -330,14 +480,14 @@ class MainRepository(context: Context) {
             "EMPRESA" -> listOf("ID_EMPRESA", "ID_DISTRITO", "NOMBRE_EMPRESA", "CONTACTO_DIRECTO", "NIT")
             "INSTITUCION" -> listOf("ID_INSTITUCION", "NOMBRE_INSTITUCION")
             "GRADO_ACADEMICO" -> listOf("ID_GRADO_ACADEMICO", "NOMBRE_GRADO")
-            "RED_SOCIAL" -> listOf("ID_RED_SOCIAL", "NOMBRE_RED", "LOGO_ICONO")
-            "OFERTA_ACADEMICA" -> listOf("ID_OFERTA_ACADEMICA", "ID_INSTITUCION", "ID_GRADO_ACADEMICO")
-            "OFERTA_TRABAJO" -> listOf("ID_OFERTA", "ID_EMPRESA", "ID_GRADO_ACADEMICO", "TITULO_PUESTO", "FECHA_PUBLICACION", "FECHA_CADUCIDAD", "EXPERIENCIA_ANIOS", "EDAD_MINIMA", "EDAD_MAXIMA", "DESCRIPCION_OFERTA_TRABAJO")
-            "CERTIFICACION" -> listOf("ID_CERTIFICACION", "ID_POSTULANTE", "ID_INSTITUCION", "NOMBRE_CERTIFICACION", "CODIGO_CERTIFICACION", "FECHA_CERTIFICACION")
-            "EXPERIENCIA_LABORAL" -> listOf("ID_EXPERIENCIA", "ID_POSTULANTE", "ID_EMPRESA", "PUESTO_TRABAJO", "FECHA_INICIO", "FECHA_FIN", "DES_EXP_LABORAL", "CONTACTO_REFERENCIA")
-            "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_OFERTA_ACADEMICA", "ID_POSTULANTE", "TITULO_OBTENIDO", "FECHA_OBTENCION")
-            "HABILIDAD_POSTULANTE" -> listOf("ID_HABILIDAD_POSTULANTE", "ID_HABILIDAD", "ID_POSTULANTE", "NIVEL_DESTREZA")
-            "POSTULACION" -> listOf("ID_POSTULACION", "ID_EMPRESA", "ID_OFERTA", "ID_POSTULANTE", "FECHA_APLICACION", "ESTADO_PROCESO")
+            "RED_SOCIAL" -> listOf("ID_RED_SOCIAL", "NOMBRE_RED")
+            "OFERTA_ACADEMICA" -> listOf("ID_OFERTA_ACADEMICA", "ID_GRADO_ACADEMICO", "ID_INSTITUCION")
+            "OFERTA_TRABAJO" -> listOf("ID_EMPRESA", "ID_OFERTA", "ID_GRADO_ACADEMICO", "TITULO_PUESTO", "FECHA_PUBLICACION", "FECHA_CADUCIDAD", "EXPERIENCIA_ANIOS", "EDAD_MINIMA", "EDAD_MAXIMA", "DESCRIPCION_OFERTA_TRABAJO")
+            "CERTIFICACION" -> listOf("ID_POSTULANTE", "ID_CERTIFICACION", "ID_INSTITUCION", "NOMBRE_CERTIFICACION", "CODIGO_CERTIFICACION", "FECHA_CERTIFICACION")
+            "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "ID_EXPERIENCIA", "ID_EMPRESA", "PUESTO_TRABAJO", "FECHA_INICIO", "FECHA_FIN", "DESCP_EXPERIENCIA_LABORAL", "CONTACTO_REFERENCIA")
+            "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_POSTULANTE", "ID_OFERTA_ACADEMICA", "TITULO_OBTENIDO", "FECHA_OBTENCION")
+            "HABILIDAD_POSTULANTE" -> listOf("ID_HABILIDAD", "ID_POSTULANTE", "ID_HABILIDAD_POSTULANTE", "NIVEL_DESTREZA")
+            "POSTULACION" -> listOf("ID_EMPRESA", "ID_OFERTA", "ID_POSTULANTE", "ID_POSTULACION", "FECHA_APLICACION", "ESTADO_PROCESO")
             "DETALLE_REQUISITO" -> listOf("ID_DETALLE", "ID_EMPRESA", "ID_OFERTA", "DESCRIPCION_REQUISITO")
             "RED_SOCIAL_POSTULANTE" -> listOf("ID_RED_POSTUALNTE", "ID_POSTULANTE", "ID_RED_SOCIAL", "URL_PERFIL")
             else -> listOf("NOMBRE")

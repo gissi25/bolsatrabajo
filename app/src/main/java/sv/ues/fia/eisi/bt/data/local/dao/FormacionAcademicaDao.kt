@@ -10,8 +10,8 @@ class FormacionAcademicaDao(private val db: ConnectionHelper) {
         return results.map { row ->
             FormacionAcademica(
                 id_formacion = row[0] as Int,
-                id_oferta_academica = row[1] as? Int,
-                id_postulante = row[2] as Int,
+                id_postulante = row[1] as Int,
+                id_oferta_academica = row[2] as? Int,
                 titulo_obtenido = row[3] as String,
                 fecha_obtencion = row[4] as? String
             )
@@ -23,8 +23,8 @@ class FormacionAcademicaDao(private val db: ConnectionHelper) {
         return results.firstOrNull()?.let { row ->
             FormacionAcademica(
                 id_formacion = row[0] as Int,
-                id_oferta_academica = row[1] as? Int,
-                id_postulante = row[2] as Int,
+                id_postulante = row[1] as Int,
+                id_oferta_academica = row[2] as? Int,
                 titulo_obtenido = row[3] as String,
                 fecha_obtencion = row[4] as? String
             )
@@ -36,8 +36,8 @@ class FormacionAcademicaDao(private val db: ConnectionHelper) {
         return results.map { row ->
             FormacionAcademica(
                 id_formacion = row[0] as Int,
-                id_oferta_academica = row[1] as? Int,
-                id_postulante = row[2] as Int,
+                id_postulante = row[1] as Int,
+                id_oferta_academica = row[2] as? Int,
                 titulo_obtenido = row[3] as String,
                 fecha_obtencion = row[4] as? String
             )
@@ -49,8 +49,8 @@ class FormacionAcademicaDao(private val db: ConnectionHelper) {
         return results.map { row ->
             FormacionAcademica(
                 id_formacion = row[0] as Int,
-                id_oferta_academica = row[1] as? Int,
-                id_postulante = row[2] as Int,
+                id_postulante = row[1] as Int,
+                id_oferta_academica = row[2] as? Int,
                 titulo_obtenido = row[3] as String,
                 fecha_obtencion = row[4] as? String
             )
@@ -60,14 +60,14 @@ class FormacionAcademicaDao(private val db: ConnectionHelper) {
     fun insert(data: FormacionAcademica): Long {
         val ofertaId = data.id_oferta_academica ?: "NULL"
         val fecha = if (data.fecha_obtencion != null) "'${data.fecha_obtencion}'" else "NULL"
-        val query = "INSERT INTO FORMACION_ACADEMICA (ID_FORMACION, ID_OFERTA_ACADEMICA, ID_POSTULANTE, TITULO_OBTENIDO, FECHA_OBTENCION) VALUES (${data.id_formacion}, $ofertaId, ${data.id_postulante}, '${data.titulo_obtenido}', $fecha)"
+        val query = "INSERT INTO FORMACION_ACADEMICA (ID_FORMACION, ID_POSTULANTE, ID_OFERTA_ACADEMICA, TITULO_OBTENIDO, FECHA_OBTENCION) VALUES (${data.id_formacion}, ${data.id_postulante}, $ofertaId, '${data.titulo_obtenido}', $fecha)"
         return db.executeInsert(query)
     }
 
     fun update(data: FormacionAcademica): Int {
         val ofertaId = data.id_oferta_academica ?: "NULL"
         val fecha = if (data.fecha_obtencion != null) "'${data.fecha_obtencion}'" else "NULL"
-        val query = "UPDATE FORMACION_ACADEMICA SET ID_OFERTA_ACADEMICA = $ofertaId, ID_POSTULANTE = ${data.id_postulante}, TITULO_OBTENIDO = '${data.titulo_obtenido}', FECHA_OBTENCION = $fecha WHERE ID_FORMACION = ${data.id_formacion}"
+        val query = "UPDATE FORMACION_ACADEMICA SET ID_POSTULANTE = ${data.id_postulante}, ID_OFERTA_ACADEMICA = $ofertaId, TITULO_OBTENIDO = '${data.titulo_obtenido}', FECHA_OBTENCION = $fecha WHERE ID_FORMACION = ${data.id_formacion}"
         return db.executeUpdate(query)
     }
 

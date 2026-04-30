@@ -10,8 +10,7 @@ class RedSocialDao(private val db: ConnectionHelper) {
         return results.map { row ->
             RedSocial(
                 id_red_social = row[0] as Int,
-                nombre_red = row[1] as String,
-                logo_icono = row[2] as String
+                nombre_red = row[1] as? String
             )
         }
     }
@@ -21,8 +20,7 @@ class RedSocialDao(private val db: ConnectionHelper) {
         return results.firstOrNull()?.let { row ->
             RedSocial(
                 id_red_social = row[0] as Int,
-                nombre_red = row[1] as String,
-                logo_icono = row[2] as String
+                nombre_red = row[1] as? String
             )
         }
     }
@@ -32,19 +30,18 @@ class RedSocialDao(private val db: ConnectionHelper) {
         return results.map { row ->
             RedSocial(
                 id_red_social = row[0] as Int,
-                nombre_red = row[1] as String,
-                logo_icono = row[2] as String
+                nombre_red = row[1] as? String
             )
         }
     }
 
     fun insert(data: RedSocial): Long {
-        val query = "INSERT INTO RED_SOCIAL (ID_RED_SOCIAL, NOMBRE_RED, LOGO_ICONO) VALUES (${data.id_red_social}, '${data.nombre_red}', '${data.logo_icono}')"
+        val query = "INSERT INTO RED_SOCIAL (ID_RED_SOCIAL, NOMBRE_RED) VALUES (${data.id_red_social}, '${data.nombre_red}')"
         return db.executeInsert(query)
     }
 
     fun update(data: RedSocial): Int {
-        val query = "UPDATE RED_SOCIAL SET NOMBRE_RED = '${data.nombre_red}', LOGO_ICONO = '${data.logo_icono}' WHERE ID_RED_SOCIAL = ${data.id_red_social}"
+        val query = "UPDATE RED_SOCIAL SET NOMBRE_RED = '${data.nombre_red}' WHERE ID_RED_SOCIAL = ${data.id_red_social}"
         return db.executeUpdate(query)
     }
 

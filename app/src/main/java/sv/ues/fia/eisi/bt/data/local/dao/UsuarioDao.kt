@@ -10,10 +10,9 @@ class UsuarioDao(private val db: ConnectionHelper) {
         return results.map { row ->
             Usuario(
                 id_usuario = (row[0] as? Int) ?: (row[0] as? String)?.toIntOrNull() ?: 0,
-                id_postulante = (row[1] as? Int) ?: (row[1] as? String)?.toIntOrNull() ?: 0,
-                username = row[2] as? String ?: "",
-                password = row[3] as? String ?: "",
-                rol = row[4] as? String ?: ""
+                username = row[1] as? String ?: "",
+                password = row[2] as? String ?: "",
+                rol = row[3] as? String ?: ""
             )
         }
     }
@@ -23,10 +22,9 @@ class UsuarioDao(private val db: ConnectionHelper) {
         return results.firstOrNull()?.let { row ->
             Usuario(
                 id_usuario = row[0] as Int,
-                id_postulante = row[1] as Int,
-                username = row[2] as String,
-                password = row[3] as String,
-                rol = row[4] as String
+                username = row[1] as String,
+                password = row[2] as String,
+                rol = row[3] as String
             )
         }
     }
@@ -36,10 +34,9 @@ class UsuarioDao(private val db: ConnectionHelper) {
         return results.firstOrNull()?.let { row ->
             Usuario(
                 id_usuario = row[0] as Int,
-                id_postulante = row[1] as Int,
-                username = row[2] as String,
-                password = row[3] as String,
-                rol = row[4] as String
+                username = row[1] as String,
+                password = row[2] as String,
+                rol = row[3] as String
             )
         }
     }
@@ -49,21 +46,20 @@ class UsuarioDao(private val db: ConnectionHelper) {
         return results.map { row ->
             Usuario(
                 id_usuario = row[0] as Int,
-                id_postulante = row[1] as Int,
-                username = row[2] as String,
-                password = row[3] as String,
-                rol = row[4] as String
+                username = row[1] as String,
+                password = row[2] as String,
+                rol = row[3] as String
             )
         }
     }
 
     fun insert(data: Usuario): Long {
-        val query = "INSERT INTO USUARIO (ID_USUARIO, ID_POSTULANTE, USERNAME, PASSWORD, ROL) VALUES (${data.id_usuario}, ${data.id_postulante}, '${data.username}', '${data.password}', '${data.rol}')"
+        val query = "INSERT INTO USUARIO (ID_USUARIO, USERNAME, PASSWORD, ROL) VALUES (${data.id_usuario}, '${data.username}', '${data.password}', '${data.rol}')"
         return db.executeInsert(query)
     }
 
     fun update(data: Usuario): Int {
-        val query = "UPDATE USUARIO SET ID_POSTULANTE = ${data.id_postulante}, USERNAME = '${data.username}', PASSWORD = '${data.password}', ROL = '${data.rol}' WHERE ID_USUARIO = ${data.id_usuario}"
+        val query = "UPDATE USUARIO SET USERNAME = '${data.username}', PASSWORD = '${data.password}', ROL = '${data.rol}' WHERE ID_USUARIO = ${data.id_usuario}"
         return db.executeUpdate(query)
     }
 

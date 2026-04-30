@@ -12,10 +12,10 @@ class ExperienciaLaboralDao(private val db: ConnectionHelper) {
                 id_postulante = row[0] as Int,
                 id_experiencia = row[1] as Int,
                 id_empresa = row[2] as? Int,
-                puesto_trabajo = row[3] as String,
+                puesto_trabajo = row[3] as? String,
                 fecha_inicio = row[4] as? String,
                 fecha_fin = row[5] as? String,
-                des_exp_laboral = row[6] as? String,
+                descp_experiencia_laboral = row[6] as? String,
                 contacto_referencia = row[7] as? String
             )
         }
@@ -28,10 +28,10 @@ class ExperienciaLaboralDao(private val db: ConnectionHelper) {
                 id_postulante = row[0] as Int,
                 id_experiencia = row[1] as Int,
                 id_empresa = row[2] as? Int,
-                puesto_trabajo = row[3] as String,
+                puesto_trabajo = row[3] as? String,
                 fecha_inicio = row[4] as? String,
                 fecha_fin = row[5] as? String,
-                des_exp_laboral = row[6] as? String,
+                descp_experiencia_laboral = row[6] as? String,
                 contacto_referencia = row[7] as? String
             )
         }
@@ -44,10 +44,10 @@ class ExperienciaLaboralDao(private val db: ConnectionHelper) {
                 id_postulante = row[0] as Int,
                 id_experiencia = row[1] as Int,
                 id_empresa = row[2] as? Int,
-                puesto_trabajo = row[3] as String,
+                puesto_trabajo = row[3] as? String,
                 fecha_inicio = row[4] as? String,
                 fecha_fin = row[5] as? String,
-                des_exp_laboral = row[6] as? String,
+                descp_experiencia_laboral = row[6] as? String,
                 contacto_referencia = row[7] as? String
             )
         }
@@ -60,10 +60,10 @@ class ExperienciaLaboralDao(private val db: ConnectionHelper) {
                 id_postulante = row[0] as Int,
                 id_experiencia = row[1] as Int,
                 id_empresa = row[2] as? Int,
-                puesto_trabajo = row[3] as String,
+                puesto_trabajo = row[3] as? String,
                 fecha_inicio = row[4] as? String,
                 fecha_fin = row[5] as? String,
-                des_exp_laboral = row[6] as? String,
+                descp_experiencia_laboral = row[6] as? String,
                 contacto_referencia = row[7] as? String
             )
         }
@@ -73,9 +73,9 @@ class ExperienciaLaboralDao(private val db: ConnectionHelper) {
         val empresaId = data.id_empresa ?: "NULL"
         val fechaIni = if (data.fecha_inicio != null) "'${data.fecha_inicio}'" else "NULL"
         val fechaFin = if (data.fecha_fin != null) "'${data.fecha_fin}'" else "NULL"
-        val desc = if (data.des_exp_laboral != null) "'${data.des_exp_laboral}'" else "NULL"
+        val desc = if (data.descp_experiencia_laboral != null) "'${data.descp_experiencia_laboral}'" else "NULL"
         val contacto = if (data.contacto_referencia != null) "'${data.contacto_referencia}'" else "NULL"
-        val query = "INSERT INTO EXPERIENCIA_LABORAL (ID_POSTULANTE, ID_EXPERIENCIA, ID_EMPRESA, PUESTO_TRABAJO, FECHA_INICIO, FECHA_FIN, DES_EXP_LABORAL, CONTACTO_REFERENCIA) VALUES (${data.id_postulante}, ${data.id_experiencia}, $empresaId, '${data.puesto_trabajo}', $fechaIni, $fechaFin, $desc, $contacto)"
+        val query = "INSERT INTO EXPERIENCIA_LABORAL (ID_POSTULANTE, ID_EXPERIENCIA, ID_EMPRESA, PUESTO_TRABAJO, FECHA_INICIO, FECHA_FIN, DESCP_EXPERIENCIA_LABORAL, CONTACTO_REFERENCIA) VALUES (${data.id_postulante}, ${data.id_experiencia}, $empresaId, '${data.puesto_trabajo}', $fechaIni, $fechaFin, $desc, $contacto)"
         return db.executeInsert(query)
     }
 
@@ -83,9 +83,9 @@ class ExperienciaLaboralDao(private val db: ConnectionHelper) {
         val empresaId = data.id_empresa ?: "NULL"
         val fechaIni = if (data.fecha_inicio != null) "'${data.fecha_inicio}'" else "NULL"
         val fechaFin = if (data.fecha_fin != null) "'${data.fecha_fin}'" else "NULL"
-        val desc = if (data.des_exp_laboral != null) "'${data.des_exp_laboral}'" else "NULL"
+        val desc = if (data.descp_experiencia_laboral != null) "'${data.descp_experiencia_laboral}'" else "NULL"
         val contacto = if (data.contacto_referencia != null) "'${data.contacto_referencia}'" else "NULL"
-        val query = "UPDATE EXPERIENCIA_LABORAL SET ID_EMPRESA = $empresaId, PUESTO_TRABAJO = '${data.puesto_trabajo}', FECHA_INICIO = $fechaIni, FECHA_FIN = $fechaFin, DES_EXP_LABORAL = $desc, CONTACTO_REFERENCIA = $contacto WHERE ID_POSTULANTE = ${data.id_postulante} AND ID_EXPERIENCIA = ${data.id_experiencia}"
+        val query = "UPDATE EXPERIENCIA_LABORAL SET ID_EMPRESA = $empresaId, PUESTO_TRABAJO = '${data.puesto_trabajo}', FECHA_INICIO = $fechaIni, FECHA_FIN = $fechaFin, DESCP_EXPERIENCIA_LABORAL = $desc, CONTACTO_REFERENCIA = $contacto WHERE ID_POSTULANTE = ${data.id_postulante} AND ID_EXPERIENCIA = ${data.id_experiencia}"
         return db.executeUpdate(query)
     }
 
