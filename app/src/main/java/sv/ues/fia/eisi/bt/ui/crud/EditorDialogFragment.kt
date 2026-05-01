@@ -110,7 +110,6 @@ class EditorDialogFragment : DialogFragment() {
         dropDownFields.clear()
         textFields.clear()
         nivelDestrezaFields.clear()
-        estadoProcesoFields.clear()
         docTypeColumnIndex = -1
         numDocColumnIndex = -1
 
@@ -650,7 +649,9 @@ class EditorDialogFragment : DialogFragment() {
             "NOMBRE", "NOMBRE_CATEGORIA", "NOMBRE_GENERO", "NOMBRE_TIPO", "NOMBRE_DEPARTAMENTO", "NOMBRE_MUNICIPIO", "NOMBRE_DISTRITO", "NOMBRE_HABILIDAD", "NOMBRE_EMPRESA", "NOMBRE_INSTITUCION", "NOMBRE_GRADO", "NOMBRE_RED" -> "Ingrese el nombre"
             "APELLIDO" -> "Ingrese el apellido"
             "EMAIL", "CORREO" -> "ejemplo@correo.com"
-            "TELEFONO", "TEL", "TELEFONO_CASA", "TELEFONO_CELULAR" -> "Ingrese teléfono (ej: 2222-1111)"
+            "TELEFONO", "TEL" -> "Ingrese teléfono (ej: 2222-1111)"
+            "TELEFONO_CASA" -> "Ingrese telefono casa"
+            "TELEFONO_CELULAR" -> "Ingrese telefono celular"
             "NUP" -> "Ingrese NUP"
             "NUM_DOCUMENTO" -> "DUI: 12345678-9 / NIT: 0614-111222-333-4 / Pasaporte"
             "CODIGO" -> "Ingrese código"
@@ -783,7 +784,7 @@ private fun validateField(column: String, value: String): String? {
     private fun getColumnsForTable(table: String): List<String> {
         return when (table) {
             "USUARIO" -> listOf("ID_USUARIO", "USERNAME", "PASSWORD", "ROL")
-            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_GENERO", "ID_TIPO_DOCUMENTO", "ID_DISTRITO", "NOMBRE", "APELLIDO", "FECHA_NACIMIENTO", "NUM_DOCUMENTO", "NUP", "DIRECCION_DETALLE", "TELEFONO_CASA", "TELEFONO_CELULAR", "EMAIL")
+            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_GENERO", "ID_TIPO_DOCUMENTO", "NUM_DOCUMENTO", "ID_DISTRITO", "NOMBRE", "APELLIDO", "FECHA_NACIMIENTO", "NUP", "DIRECCION_DETALLE", "TELEFONO_CASA", "TELEFONO_CELULAR", "EMAIL")
             "GENERO" -> listOf("ID_GENERO", "NOMBRE_GENERO")
             "TIPO_DOCUMENTO" -> listOf("ID_TIPO_DOCUMENTO", "NOMBRE_TIPO")
             "DEPARTAMENTO" -> listOf("ID_DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
@@ -800,7 +801,7 @@ private fun validateField(column: String, value: String): String? {
             "CERTIFICACION" -> listOf("ID_POSTULANTE", "ID_CERTIFICACION", "ID_INSTITUCION", "NOMBRE_CERTIFICACION", "CODIGO_CERTIFICACION", "FECHA_CERTIFICACION")
             "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "ID_EXPERIENCIA", "ID_EMPRESA", "PUESTO_TRABAJO", "FECHA_INICIO", "FECHA_FIN", "DESCP_EXPERIENCIA_LABORAL", "CONTACTO_REFERENCIA")
             "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_POSTULANTE", "ID_OFERTA_ACADEMICA", "TITULO_OBTENIDO", "FECHA_OBTENCION")
-            "HABILIDAD_POSTULANTE" -> listOf("ID_HABILIDAD", "ID_POSTULANTE", "ID_HABILIDAD_POSTULANTE", "NIVEL_DESTREZA")
+            "HABILIDAD_POSTULANTE" -> listOf("ID_POSTULANTE", "ID_HABILIDAD", "ID_HABILIDAD_POSTULANTE", "NIVEL_DESTREZA")
             "POSTULACION" -> listOf("ID_EMPRESA", "ID_OFERTA", "ID_POSTULANTE", "ID_POSTULACION", "FECHA_APLICACION", "ESTADO_PROCESO")
             "DETALLE_REQUISITO" -> listOf("ID_DETALLE", "ID_EMPRESA", "ID_OFERTA", "DESCRIPCION_REQUISITO")
             "RED_SOCIAL_POSTULANTE" -> listOf("ID_RED_POSTUALNTE", "ID_POSTULANTE", "ID_RED_SOCIAL", "URL_PERFIL")

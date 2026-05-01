@@ -292,6 +292,52 @@ class MainRepository(context: Context) {
                 WHERE d.NOMBRE_DISTRITO LIKE '%$query%'
                 """.trimIndent()
             }
+            "EXPERIENCIA_LABORAL" -> {
+                """
+                SELECT e.ID_POSTULANTE, e.ID_EXPERIENCIA, e.ID_EMPRESA, 
+                       e.PUESTO_TRABAJO, e.FECHA_INICIO, e.FECHA_FIN, 
+                       e.DESCP_EXPERIENCIA_LABORAL, e.CONTACTO_REFERENCIA,
+                       p.NOMBRE, p.APELLIDO
+                FROM EXPERIENCIA_LABORAL e
+                LEFT JOIN POSTULANTE p ON e.ID_POSTULANTE = p.ID_POSTULANTE
+                WHERE p.NOMBRE LIKE '%$query%' OR p.APELLIDO LIKE '%$query%' OR e.PUESTO_TRABAJO LIKE '%$query%'
+                ORDER BY p.APELLIDO, p.NOMBRE
+                """.trimIndent()
+            }
+            "HABILIDAD_POSTULANTE" -> {
+                """
+                SELECT hp.ID_HABILIDAD, hp.ID_POSTULANTE, hp.ID_HABILIDAD_POSTULANTE, hp.NIVEL_DESTREZA,
+                       p.NOMBRE, p.APELLIDO, h.NOMBRE_HABILIDAD
+                FROM HABILIDAD_POSTULANTE hp
+                LEFT JOIN POSTULANTE p ON hp.ID_POSTULANTE = p.ID_POSTULANTE
+                LEFT JOIN HABILIDAD h ON hp.ID_HABILIDAD = h.ID_HABILIDAD
+                WHERE p.NOMBRE LIKE '%$query%' OR p.APELLIDO LIKE '%$query%' OR h.NOMBRE_HABILIDAD LIKE '%$query%'
+                ORDER BY p.APELLIDO, p.NOMBRE, h.NOMBRE_HABILIDAD
+                """.trimIndent()
+            }
+            "POSTULACION" -> {
+                """
+                SELECT p.ID_EMPRESA, p.ID_OFERTA, p.ID_POSTULANTE, p.ID_POSTULACION, 
+                       p.FECHA_APLICACION, p.ESTADO_PROCESO,
+                       post.NOMBRE, post.APELLIDO, o.TITULO_PUESTO
+                FROM POSTULACION p
+                LEFT JOIN POSTULANTE post ON p.ID_POSTULANTE = post.ID_POSTULANTE
+                LEFT JOIN OFERTA_TRABAJO o ON p.ID_EMPRESA = o.ID_EMPRESA AND p.ID_OFERTA = o.ID_OFERTA
+                WHERE post.NOMBRE LIKE '%$query%' OR post.APELLIDO LIKE '%$query%' OR o.TITULO_PUESTO LIKE '%$query%'
+                ORDER BY post.APELLIDO, post.NOMBRE, o.TITULO_PUESTO
+                """.trimIndent()
+            }
+            "RED_SOCIAL_POSTULANTE" -> {
+                """
+                SELECT r.ID_RED_POSTUALNTE, r.ID_POSTULANTE, r.ID_RED_SOCIAL, r.URL_PERFIL,
+                       p.NOMBRE, p.APELLIDO, rs.NOMBRE_RED
+                FROM RED_SOCIAL_POSTULANTE r
+                LEFT JOIN POSTULANTE p ON r.ID_POSTULANTE = p.ID_POSTULANTE
+                LEFT JOIN RED_SOCIAL rs ON r.ID_RED_SOCIAL = rs.ID_RED_SOCIAL
+                WHERE p.NOMBRE LIKE '%$query%' OR p.APELLIDO LIKE '%$query%' OR rs.NOMBRE_RED LIKE '%$query%'
+                ORDER BY p.APELLIDO, p.NOMBRE, rs.NOMBRE_RED
+                """.trimIndent()
+            }
             else -> {
                 val cols = getColumnsForTable(tableName).joinToString(", ")
                 "SELECT $cols FROM $tableName"
@@ -407,6 +453,28 @@ class MainRepository(context: Context) {
             }
         }
 
+        // Caso especial para POSTULANTE: mostrar "NOMBRE APELLIDO"
+        if (tableName == "POSTULANTE") {
+            return try {
+                val cursor = getDb().rawQuery(
+                    "SELECT ID_POSTULANTE, NOMBRE, APELLIDO FROM POSTULANTE",
+                    null
+                )
+                val options = mutableListOf<Pair<String, String>>()
+                while (cursor.moveToNext()) {
+                    val id = cursor.getInt(0).toString()
+                    val nombre = cursor.getString(1) ?: ""
+                    val apellido = cursor.getString(2) ?: ""
+                    val display = "$nombre $apellido".trim()
+                    options.add(Pair(id, display.ifBlank { id }))
+                }
+                cursor.close()
+                options
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+
         return try {
             val idCol = idColumn ?: getDb().rawQuery("PRAGMA table_info($tableName)", null).use { cols ->
                 var foundId = "ID_"
@@ -504,7 +572,7 @@ class MainRepository(context: Context) {
     fun getColumnsForTable(tableName: String): List<String> {
         return when (tableName) {
             "USUARIO" -> listOf("ID_USUARIO", "USERNAME", "PASSWORD", "ROL")
-            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_GENERO", "ID_TIPO_DOCUMENTO", "ID_DISTRITO", "NOMBRE", "APELLIDO", "FECHA_NACIMIENTO", "NUM_DOCUMENTO", "NUP", "DIRECCION_DETALLE", "TELEFONO_CASA", "TELEFONO_CELULAR", "EMAIL")
+            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_GENERO", "ID_TIPO_DOCUMENTO", "NUM_DOCUMENTO", "ID_DISTRITO", "NOMBRE", "APELLIDO", "FECHA_NACIMIENTO", "NUP", "DIRECCION_DETALLE", "TELEFONO_CASA", "TELEFONO_CELULAR", "EMAIL")
             "GENERO" -> listOf("ID_GENERO", "NOMBRE_GENERO")
             "TIPO_DOCUMENTO" -> listOf("ID_TIPO_DOCUMENTO", "NOMBRE_TIPO")
             "DEPARTAMENTO" -> listOf("ID_DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
@@ -521,7 +589,7 @@ class MainRepository(context: Context) {
             "CERTIFICACION" -> listOf("ID_POSTULANTE", "ID_CERTIFICACION", "ID_INSTITUCION", "NOMBRE_CERTIFICACION", "CODIGO_CERTIFICACION", "FECHA_CERTIFICACION")
             "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "ID_EXPERIENCIA", "ID_EMPRESA", "PUESTO_TRABAJO", "FECHA_INICIO", "FECHA_FIN", "DESCP_EXPERIENCIA_LABORAL", "CONTACTO_REFERENCIA")
             "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_POSTULANTE", "ID_OFERTA_ACADEMICA", "TITULO_OBTENIDO", "FECHA_OBTENCION")
-            "HABILIDAD_POSTULANTE" -> listOf("ID_HABILIDAD", "ID_POSTULANTE", "ID_HABILIDAD_POSTULANTE", "NIVEL_DESTREZA")
+            "HABILIDAD_POSTULANTE" -> listOf("ID_POSTULANTE", "ID_HABILIDAD", "ID_HABILIDAD_POSTULANTE", "NIVEL_DESTREZA")
             "POSTULACION" -> listOf("ID_EMPRESA", "ID_OFERTA", "ID_POSTULANTE", "ID_POSTULACION", "FECHA_APLICACION", "ESTADO_PROCESO")
             "DETALLE_REQUISITO" -> listOf("ID_DETALLE", "ID_EMPRESA", "ID_OFERTA", "DESCRIPCION_REQUISITO")
             "RED_SOCIAL_POSTULANTE" -> listOf("ID_RED_POSTUALNTE", "ID_POSTULANTE", "ID_RED_SOCIAL", "URL_PERFIL")
