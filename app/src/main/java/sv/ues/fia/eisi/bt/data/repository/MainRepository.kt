@@ -263,8 +263,43 @@ class MainRepository(context: Context) {
     }
 
     fun searchTable(tableName: String, query: String): List<List<Any>> {
+        val sql = when (tableName) {
+            "USUARIO" -> {
+                "SELECT ID_USUARIO, USERNAME, ROL FROM USUARIO WHERE USERNAME LIKE '%$query%'"
+            }
+            "HABILIDAD" -> {
+                """
+                SELECT h.ID_HABILIDAD, IFNULL(c.NOMBRE_CATEGORIA, 'Sin Categoría'), h.NOMBRE_HABILIDAD 
+                FROM HABILIDAD h
+                LEFT JOIN CATEGORIA_HABILIDAD c ON h.ID_CATEGORIA_HABILIDAD = c.ID_CATEGORIA_HABILIDAD
+                WHERE h.NOMBRE_HABILIDAD LIKE '%$query%'
+                ORDER BY h.NOMBRE_HABILIDAD
+                """.trimIndent()
+            }
+            "MUNICIPIO" -> {
+                """
+                SELECT m.ID_MUNICIPIO, d.NOMBRE_DEPARTAMENTO, m.NOMBRE_MUNICIPIO 
+                FROM MUNICIPIO m
+                LEFT JOIN DEPARTAMENTO d ON m.ID_DEPARTAMENTO = d.ID_DEPARTAMENTO
+                WHERE m.NOMBRE_MUNICIPIO LIKE '%$query%'
+                """.trimIndent()
+            }
+            "DISTRITO" -> {
+                """
+                SELECT d.ID_DISTRITO, m.NOMBRE_MUNICIPIO, d.NOMBRE_DISTRITO 
+                FROM DISTRITO d
+                LEFT JOIN MUNICIPIO m ON d.ID_MUNICIPIO = m.ID_MUNICIPIO
+                WHERE d.NOMBRE_DISTRITO LIKE '%$query%'
+                """.trimIndent()
+            }
+            else -> {
+                val cols = getColumnsForTable(tableName).joinToString(", ")
+                "SELECT $cols FROM $tableName"
+            }
+        }
+        
         return try {
-            val cursor = getDb().rawQuery("SELECT * FROM $tableName", null)
+            val cursor = getDb().rawQuery(sql, null)
             val results = mutableListOf<List<Any>>()
             
             while (cursor.moveToNext()) {
@@ -466,7 +501,7 @@ class MainRepository(context: Context) {
         }
     }
 
-    private fun getColumnsForTable(tableName: String): List<String> {
+    fun getColumnsForTable(tableName: String): List<String> {
         return when (tableName) {
             "USUARIO" -> listOf("ID_USUARIO", "USERNAME", "PASSWORD", "ROL")
             "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_GENERO", "ID_TIPO_DOCUMENTO", "ID_DISTRITO", "NOMBRE", "APELLIDO", "FECHA_NACIMIENTO", "NUM_DOCUMENTO", "NUP", "DIRECCION_DETALLE", "TELEFONO_CASA", "TELEFONO_CELULAR", "EMAIL")

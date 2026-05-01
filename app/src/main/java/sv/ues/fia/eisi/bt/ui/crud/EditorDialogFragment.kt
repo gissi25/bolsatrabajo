@@ -123,6 +123,7 @@ class EditorDialogFragment : DialogFragment() {
             val isFk = fkRefs.containsKey(column)
             val isNivelDestreza = column == "NIVEL_DESTREZA"
             val isEstadoProceso = column == "ESTADO_PROCESO"
+            val isRol = column == "ROL"
 
             if (column == "ID_TIPO_DOCUMENTO") docTypeColumnIndex = colIndex
             if (column == "NUM_DOCUMENTO") numDocColumnIndex = colIndex
@@ -133,6 +134,8 @@ class EditorDialogFragment : DialogFragment() {
                 createNivelDestrezaDropdown(idx, column, colIndex)
             } else if (isEstadoProceso) {
                 createEstadoProcesoDropdown(idx, column, colIndex)
+            } else if (isRol) {
+                createRolDropdown(idx, column, colIndex)
             } else {
                 createTextInputField(idx, column, colIndex)
             }
@@ -170,7 +173,7 @@ class EditorDialogFragment : DialogFragment() {
             boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
         }
 
-val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
+        val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -329,6 +332,55 @@ val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
             if (position < estadoOptions.size) {
                 estadoProcesoFields[colIndex] = estadoOptions[position].first
             }
+        }
+
+        til.addView(autoComplete)
+        tilFieldsContainer.addView(til)
+        dropDownFields[colIndex] = Pair(column, autoComplete)
+    }
+
+    private fun createRolDropdown(idx: Int, column: String, colIndex: Int) {
+        val roles = arrayOf("postulante", "empresa", "admin")
+        
+        val til = TextInputLayout(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 0, 0, 24)
+            }
+            hint = "Rol"
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+        }
+
+        val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setTextColor(getThemeColor(android.R.attr.textColorPrimary))
+            keyListener = null
+        }
+
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, roles)
+        autoComplete.setAdapter(adapter)
+        
+        autoComplete.setOnTouchListener { v, event ->
+            if (event.action == android.view.MotionEvent.ACTION_UP) {
+                autoComplete.showDropDown()
+            }
+            true
+        }
+
+        if (isEditMode && colIndex < itemData.size) {
+            val currentValue = itemData[colIndex].trim()
+            if (roles.contains(currentValue)) {
+                autoComplete.setText(currentValue, false)
+            } else {
+                autoComplete.setText(roles[0], false)
+            }
+        } else {
+            autoComplete.setText("postulante", false)
         }
 
         til.addView(autoComplete)
@@ -805,6 +857,10 @@ private fun validateField(column: String, value: String): String? {
                     else -> ""
                 }
                 values.add(estadoValue)
+            } else if (col == "ROL") {
+                val autoComplete = dropDownFields.entries.find { it.value.first == col }?.value?.second
+                val selectedText = autoComplete?.text?.toString()?.trim() ?: "postulante"
+                values.add(selectedText)
             } else if (fkRef != null) {
                 val options = viewModel.getDropdownOptions(fkRef.refTable, fkRef.refDisplayColumn)
                 if (options.isEmpty()) {
