@@ -5,48 +5,55 @@ import sv.ues.fia.eisi.bt.data.local.entities.Habilidad
 
 class HabilidadDao(private val db: ConnectionHelper) {
 
+    private fun mapRowToHabilidad(row: List<Any>): Habilidad {
+        return Habilidad(
+            id_habilidad = row[0].toString().toIntOrNull() ?: 0,
+            id_categoria_habilidad = row[1].toString().toIntOrNull() ?: 0,
+            nombre_habilidad = row[2].toString(),
+            nombre_categoria = if (row.size > 3) row[3].toString() else null
+        )
+    }
+
     fun getAll(): List<Habilidad> {
-        val results = db.executeQuery("SELECT * FROM HABILIDAD ORDER BY NOMBRE_HABILIDAD")
-        return results.map { row ->
-            Habilidad(
-                id_habilidad = row[0] as Int,
-                id_categoria_habilidad = row[1] as Int,
-                nombre_habilidad = row[2] as String
-            )
-        }
+        val sql = """
+            SELECT h.*, c.NOMBRE_CATEGORIA 
+            FROM HABILIDAD h
+            INNER JOIN CATEGORIA_HABILIDAD c ON h.ID_CATEGORIA_HABILIDAD = c.ID_CATEGORIA_HABILIDAD
+            ORDER BY h.NOMBRE_HABILIDAD
+        """.trimIndent()
+        return db.executeQuery(sql).map { mapRowToHabilidad(it) }
     }
 
     fun getById(id: Int): Habilidad? {
-        val results = db.getById("HABILIDAD", "ID_HABILIDAD", id)
-        return results.firstOrNull()?.let { row ->
-            Habilidad(
-                id_habilidad = row[0] as Int,
-                id_categoria_habilidad = row[1] as Int,
-                nombre_habilidad = row[2] as String
-            )
-        }
+        val sql = """
+            SELECT h.*, c.NOMBRE_CATEGORIA 
+            FROM HABILIDAD h
+            INNER JOIN CATEGORIA_HABILIDAD c ON h.ID_CATEGORIA_HABILIDAD = c.ID_CATEGORIA_HABILIDAD
+            WHERE h.ID_HABILIDAD = $id
+        """.trimIndent()
+        return db.executeQuery(sql).firstOrNull()?.let { mapRowToHabilidad(it) }
     }
 
     fun getByCategoria(categoriaId: Int): List<Habilidad> {
-        val results = db.executeQuery("SELECT * FROM HABILIDAD WHERE ID_CATEGORIA_HABILIDAD = $categoriaId ORDER BY NOMBRE_HABILIDAD")
-        return results.map { row ->
-            Habilidad(
-                id_habilidad = row[0] as Int,
-                id_categoria_habilidad = row[1] as Int,
-                nombre_habilidad = row[2] as String
-            )
-        }
+        val sql = """
+            SELECT h.*, c.NOMBRE_CATEGORIA 
+            FROM HABILIDAD h
+            INNER JOIN CATEGORIA_HABILIDAD c ON h.ID_CATEGORIA_HABILIDAD = c.ID_CATEGORIA_HABILIDAD
+            WHERE h.ID_CATEGORIA_HABILIDAD = $categoriaId
+            ORDER BY h.NOMBRE_HABILIDAD
+        """.trimIndent()
+        return db.executeQuery(sql).map { mapRowToHabilidad(it) }
     }
 
     fun search(query: String): List<Habilidad> {
-        val results = db.search("HABILIDAD", "NOMBRE_HABILIDAD", query)
-        return results.map { row ->
-            Habilidad(
-                id_habilidad = row[0] as Int,
-                id_categoria_habilidad = row[1] as Int,
-                nombre_habilidad = row[2] as String
-            )
-        }
+        val sql = """
+            SELECT h.*, c.NOMBRE_CATEGORIA 
+            FROM HABILIDAD h
+            INNER JOIN CATEGORIA_HABILIDAD c ON h.ID_CATEGORIA_HABILIDAD = c.ID_CATEGORIA_HABILIDAD
+            WHERE h.NOMBRE_HABILIDAD LIKE '%$query%'
+            ORDER BY h.NOMBRE_HABILIDAD
+        """.trimIndent()
+        return db.executeQuery(sql).map { mapRowToHabilidad(it) }
     }
 
     fun insert(data: Habilidad): Long {

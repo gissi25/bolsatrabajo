@@ -1,5 +1,6 @@
 package sv.ues.fia.eisi.bt.ui.crud
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -181,10 +182,24 @@ class DeleteConfirmDialog : DialogFragment() {
 
     private fun performDelete() {
         if (isLoading) return
+
+        val dataList = itemData.split(",").map { it.trim() }
+        val idToDelete = dataList.firstOrNull()
+
+        // Validar que el usuario activo no se pueda borrar a sí mismo
+        if (tableName == Constants.TABLE_USUARIO && idToDelete != null) {
+            val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
+            val activeUserId = prefs.getInt(Constants.KEY_USER_ID, -1)
+            if (idToDelete == activeUserId.toString()) {
+                StyledToast.show(requireContext(), "No puedes eliminar tu propio usuario mientras está activo")
+                dismiss()
+                return
+            }
+        }
+
         isLoading = true
 
         val columns = viewModel.getFkReferences(tableName)
-        val dataList = itemData.split(",").map { it.trim() }
 
         val needsComposite = tableName in listOf(
             "OFERTA_TRABAJO", "EXPERIENCIA_LABORAL", "CERTIFICACION",

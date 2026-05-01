@@ -1,144 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Text Appearance global - DARK MODE (default) -->
+    <!-- Text Appearance global - LIGHT MODE (Default) -->
     <style name="TextAppearance.BT.Body" parent="TextAppearance.Material3.BodyMedium">
-        <item name="android:textColor">@color/text_primary_dark</item>
+        <item name="android:textColor">@color/text_primary</item>
     </style>
     
     <style name="TextAppearance.BT.Title" parent="TextAppearance.Material3.TitleLarge">
-        <item name="android:textColor">@color/text_primary_dark</item>
+        <item name="android:textColor">@color/text_primary</item>
     </style>
 
     <style name="Base.Theme.BT" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="android:textColor">@color/text_primary_dark</item>
-        <item name="android:textColorPrimary">@color/text_primary_dark</item>
-        <item name="android:textColorSecondary">@color/text_secondary_dark</item>
-        <item name="colorPrimary">@color/primary_dark</item>
-        <item name="colorPrimaryContainer">@color/primary_container_dark</item>
-        <item name="colorOnPrimary">@color/on_primary_dark</item>
-        <item name="colorOnPrimaryContainer">@color/on_primary_container_dark</item>
-        <item name="colorSecondary">@color/secondary_dark</item>
-        <item name="colorSecondaryContainer">@color/primary_container_dark</item>
-        <item name="colorOnSecondary">@color/on_primary_dark</item>
-        <item name="colorOnSecondaryContainer">@color/on_primary_container_dark</item>
-        <item name="colorTertiary">@color/primary_variant_dark</item>
-        <item name="colorTertiaryContainer">@color/primary_container_dark</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryContainer">@color/primary_container</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="colorOnPrimaryContainer">@color/on_primary_container</item>
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorSecondaryContainer">@color/secondary_container</item>
+        <item name="colorOnSecondary">@color/on_secondary</item>
+        <item name="colorOnSecondaryContainer">@color/on_secondary_container</item>
+        <item name="colorTertiary">@color/primary_variant</item>
+        <item name="colorTertiaryContainer">@color/primary_container</item>
         <item name="colorError">@color/error</item>
         <item name="colorOnError">@color/on_error</item>
-        <item name="android:colorBackground">@color/background_dark</item>
-        <item name="colorSurface">@color/surface_dark</item>
-        <item name="colorSurfaceVariant">@color/surface_variant_dark</item>
-        <item name="colorOnSurface">@color/text_primary_dark</item>
-        <item name="colorOnSurfaceVariant">@color/text_secondary_dark</item>
-        <item name="colorOutline">@color/text_secondary_dark</item>
-        <item name="android:statusBarColor">@color/background_dark</item>
-        <item name="android:navigationBarColor">@color/background_dark</item>
+        <item name="android:colorBackground">@color/background_light</item>
+        <item name="colorSurface">@color/surface_light</item>
+        <item name="colorSurfaceVariant">@color/surface_variant_light</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="colorOutline">@color/outline</item>
+        <item name="android:statusBarColor">@color/primary</item>
+        <item name="android:navigationBarColor">@color/background_light</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
     <style name="Theme.BT" parent="Base.Theme.BT" />
 
     <!-- Botones -->
     <style name="AestheticButton" parent="Widget.Material3.Button">
-        <item name="android:textColor">@color/on_primary_dark</item>
-        <item name="backgroundTint">@color/primary_dark</item>
+        <item name="android:textColor">@color/on_primary</item>
+        <item name="backgroundTint">@color/primary</item>
         <item name="cornerRadius">24dp</item>
-        <item name="android:paddingStart">24dp</item>
-        <item name="android:paddingEnd">24dp</item>
-        <item name="android:minHeight">48dp</item>
     </style>
 
     <style name="AestheticButton.Secondary" parent="Widget.Material3.Button.TonalButton">
-        <item name="android:textColor">@color/on_primary_container_dark</item>
-        <item name="backgroundTint">@color/primary_container_dark</item>
-        <item name="cornerRadius">24dp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="backgroundTint">@color/surface_variant_light</item>
     </style>
 
     <style name="AestheticButton.Outlined" parent="Widget.Material3.Button.OutlinedButton">
-        <item name="android:textColor">@color/primary_dark</item>
-        <item name="strokeColor">@color/primary_dark</item>
+        <item name="android:textColor">@color/primary</item>
+        <item name="strokeColor">@color/primary</item>
         <item name="cornerRadius">24dp</item>
     </style>
 
     <!-- Cards -->
     <style name="AestheticCard" parent="Widget.Material3.CardView.Elevated">
-        <item name="cardBackgroundColor">@color/card_dark</item>
+        <item name="cardBackgroundColor">@color/card_light</item>
         <item name="cardCornerRadius">24dp</item>
-        <item name="cardElevation">4dp</item>
-        <item name="contentPadding">16dp</item>
+        <item name="cardElevation">2dp</item>
     </style>
 
     <!-- TextInputLayout -->
     <style name="AestheticTextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
-        <item name="boxCornerRadiusTopStart">16dp</item>
-        <item name="boxCornerRadiusTopEnd">16dp</item>
-        <item name="boxCornerRadiusBottomStart">16dp</item>
-        <item name="boxCornerRadiusBottomEnd">16dp</item>
-        <item name="boxStrokeColor">@color/primary_dark</item>
-        <item name="hintTextColor">@color/text_primary_dark</item>
+        <item name="boxStrokeColor">@color/primary</item>
+        <item name="hintTextColor">@color/text_primary</item>
     </style>
 
     <!-- Text Appearances -->
-    <style name="AestheticText.Title" parent="TextAppearance.Material3.TitleLarge">
-        <item name="android:textColor">@color/text_primary_dark</item>
-        <item name="android:fontFamily">sans-serif-medium</item>
-    </style>
-
+    <style name="AestheticText.Title" parent="TextAppearance.BT.Title" />
     <style name="AestheticText.Subtitle" parent="TextAppearance.Material3.TitleMedium">
-        <item name="android:textColor">@color/text_primary_dark</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+    <style name="AestheticText.Body" parent="TextAppearance.BT.Body" />
+
+    <!-- Dialogs -->
+    <style name="AestheticDialog" parent="ThemeOverlay.Material3.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
     </style>
 
-    <style name="AestheticText.Body" parent="TextAppearance.Material3.BodyMedium">
-        <item name="android:textColor">@color/text_primary_dark</item>
-    </style>
-
-    <style name="AestheticText.Label" parent="TextAppearance.Material3.LabelMedium">
-        <item name="android:textColor">@color/text_secondary_dark</item>
-    </style>
-
-    <!-- FAB -->
-    <style name="AestheticFAB" parent="Widget.Material3.FloatingActionButton.Primary">
-        <item name="backgroundTint">@color/primary_dark</item>
-        <item name="tint">@color/on_primary_dark</item>
-        <item name="shapeAppearance">@style/ShapeAppearance.BT.FAB</item>
-    </style>
-
-    <style name="ShapeAppearance.BT.FAB" parent="ShapeAppearance.Material3.Corner.Full">
+    <!-- Shapes -->
+    <style name="ShapeAppearance.BT.FAB" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerFamily">rounded</item>
         <item name="cornerSize">16dp</item>
-    </style>
-
-    <!-- Dialog -->
-    <style name="AestheticDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
-        <item name="colorSurface">@color/card_dark</item>
-        <item name="colorOnSurface">@color/text_primary_dark</item>
-        <item name="android:textColorPrimary">@color/text_primary_dark</item>
-        <item name="android:textColorSecondary">@color/text_secondary_dark</item>
-        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.BT.Dialog</item>
-    </style>
-
-    <style name="ShapeAppearance.BT.Dialog" parent="ShapeAppearance.Material3.Corner.Medium">
-        <item name="cornerSize">24dp</item>
-    </style>
-
-    <!-- BottomNavigation -->
-    <style name="AestheticBottomNavigation" parent="Widget.Material3.BottomNavigationView">
-        <item name="backgroundTint">@color/surface_dark</item>
-        <item name="itemActiveIndicatorStyle">@style/AestheticBottomNavigation.ActiveIndicator</item>
-    </style>
-
-    <style name="AestheticBottomNavigation.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
-        <item name="android:color">@color/primary_container_dark</item>
-    </style>
-
-    <!-- SearchView -->
-    <style name="AestheticSearchView" parent="Widget.Material3.SearchBar">
-        <item name="backgroundTint">@color/surface_variant_dark</item>
-    </style>
-
-    <!-- Chip -->
-    <style name="AestheticChip" parent="Widget.Material3.Chip.Filter">
-        <item name="chipBackgroundColor">@color/surface_variant_dark</item>
-        <item name="chipStrokeColor">@color/primary_dark</item>
-        <item name="chipCornerRadius">16dp</item>
-        <item name="checkedIconVisible">true</item>
     </style>
 </resources>
