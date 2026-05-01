@@ -83,6 +83,43 @@ class TableAdapter(
                 tvId.text = "ID: ${getStringSafely(item, 0)}"
                 tvPrimary.text = "$nombre $apellido".trim().ifBlank { "(sin nombre)" }
                 tvSecondary.text = redSocial.ifBlank { "(sin red social)" }
+            } else if (tableName == "OFERTA_TRABAJO") {
+                // Mostrar TITULO_PUESTO (index 3) y NOMBRE_EMPRESA (index 10)
+                val titulo = getStringSafely(item, 3)
+                val empresa = getStringSafely(item, 10)
+                tvId.text = "ID: ${getStringSafely(item, 1)}"
+                tvPrimary.text = titulo.ifBlank { "(sin título)" }
+                tvSecondary.text = empresa.ifBlank { "(sin empresa)" }
+            } else if (tableName == "DETALLE_REQUISITO") {
+                // Mostrar DESCRIPCION_REQUISITO (index 3) y TITULO_PUESTO (index 4)
+                val descripcion = getStringSafely(item, 3)
+                val titulo = getStringSafely(item, 4)
+                tvId.text = "ID: ${getStringSafely(item, 0)}"
+                tvPrimary.text = descripcion.ifBlank { "(sin descripción)" }
+                tvSecondary.text = titulo.ifBlank { "(sin puesto)" }
+            } else if (tableName == "OFERTA_ACADEMICA") {
+                // Mostrar NOMBRE_GRADO (index 4) y NOMBRE_INSTITUCION (index 3)
+                val grado = getStringSafely(item, 4)
+                val institucion = getStringSafely(item, 3)
+                tvId.text = "ID: ${getStringSafely(item, 0)}"
+                tvPrimary.text = grado.ifBlank { "(sin grado)" }
+                tvSecondary.text = institucion.ifBlank { "(sin institución)" }
+            } else if (tableName == "CERTIFICACION") {
+                // Mostrar NOMBRE_CERTIFICACION (index 3) y NOMBRE + APELLIDO (index 6, 7)
+                val nombre = getStringSafely(item, 3)
+                val postNombre = getStringSafely(item, 6)
+                val postApellido = getStringSafely(item, 7)
+                tvId.text = "ID: ${getStringSafely(item, 1)}"
+                tvPrimary.text = nombre.ifBlank { "(sin certificación)" }
+                tvSecondary.text = "$postNombre $postApellido".trim().ifBlank { "(sin postulante)" }
+            } else if (tableName == "FORMACION_ACADEMICA") {
+                // Mostrar TITULO_OBTENIDO (index 3) y NOMBRE + APELLIDO (index 5, 6)
+                val titulo = getStringSafely(item, 3)
+                val postNombre = getStringSafely(item, 5)
+                val postApellido = getStringSafely(item, 6)
+                tvId.text = "ID: ${getStringSafely(item, 0)}"
+                tvPrimary.text = titulo.ifBlank { "(sin título)" }
+                tvSecondary.text = "$postNombre $postApellido".trim().ifBlank { "(sin postulante)" }
             } else {
                 // Mostrar datos genéricos - primeros campos disponibles
                 val field1 = getStringSafely(item, 1)
