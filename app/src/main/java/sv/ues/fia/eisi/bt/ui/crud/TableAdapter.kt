@@ -45,14 +45,13 @@ class TableAdapter(
             val field0 = getStringSafely(item, 0)
 
             if (tableName == "POSTULANTE") {
-                // Para POSTULANTE mostrar NOMBRE (index 4) y APELLIDO (index 5)
-                val nombre = getStringSafely(item, 4)
-                val apellido = getStringSafely(item, 5)
+                // Índices corregidos según getColumnsForTable: 5=NOMBRE, 6=APELLIDO
+                val nombre = getStringSafely(item, 5)
+                val apellido = getStringSafely(item, 6)
                 tvId.text = "ID: $field0"
                 tvPrimary.text = nombre.ifBlank { "(sin nombre)" }
                 tvSecondary.text = apellido.ifBlank { "(sin apellido)" }
             } else if (tableName == "EXPERIENCIA_LABORAL") {
-                // Mostrar NOMBRE (index 8), APELLIDO (index 9) y PUESTO_TRABAJO (index 3)
                 val nombre = getStringSafely(item, 8)
                 val apellido = getStringSafely(item, 9)
                 val puesto = getStringSafely(item, 3)
@@ -60,9 +59,6 @@ class TableAdapter(
                 tvPrimary.text = "$nombre $apellido".trim().ifBlank { "(sin nombre)" }
                 tvSecondary.text = puesto.ifBlank { "(sin puesto)" }
             } else if (tableName == "HABILIDAD_POSTULANTE") {
-                // Mostrar NOMBRE (index 5), APELLIDO (index 6) y NOMBRE_HABILIDAD (index 7)
-                // ID_HABILIDAD_POSTULANTE ahora esta en el index 3
-                // NIVEL_DESTREZA está en index 4
                 val nombre = getStringSafely(item, 5)
                 val apellido = getStringSafely(item, 6)
                 val habilidad = getStringSafely(item, 7)
@@ -79,7 +75,6 @@ class TableAdapter(
                 tvPrimary.text = "$nombre $apellido".trim().ifBlank { "(sin nombre)" }
                 tvSecondary.text = if (nivelText.isNotBlank()) "$habilidad • $nivelText" else habilidad
             } else if (tableName == "POSTULACION") {
-                // Mostrar NOMBRE (index 6), APELLIDO (index 7) y TITULO_PUESTO (index 8)
                 val nombre = getStringSafely(item, 6)
                 val apellido = getStringSafely(item, 7)
                 val puesto = getStringSafely(item, 8)
@@ -87,7 +82,6 @@ class TableAdapter(
                 tvPrimary.text = "$nombre $apellido".trim().ifBlank { "(sin nombre)" }
                 tvSecondary.text = puesto.ifBlank { "(sin puesto)" }
             } else if (tableName == "RED_SOCIAL_POSTULANTE") {
-                // Mostrar NOMBRE (index 4), APELLIDO (index 5) y NOMBRE_RED (index 6)
                 val nombre = getStringSafely(item, 4)
                 val apellido = getStringSafely(item, 5)
                 val redSocial = getStringSafely(item, 6)
@@ -95,28 +89,24 @@ class TableAdapter(
                 tvPrimary.text = "$nombre $apellido".trim().ifBlank { "(sin nombre)" }
                 tvSecondary.text = redSocial.ifBlank { "(sin red social)" }
             } else if (tableName == "OFERTA_TRABAJO") {
-                // Mostrar TITULO_PUESTO (index 3) y NOMBRE_EMPRESA (index 10)
                 val titulo = getStringSafely(item, 3)
                 val empresa = getStringSafely(item, 10)
                 tvId.text = "ID: ${getStringSafely(item, 1)}"
                 tvPrimary.text = titulo.ifBlank { "(sin título)" }
                 tvSecondary.text = empresa.ifBlank { "(sin empresa)" }
             } else if (tableName == "DETALLE_REQUISITO") {
-                // Mostrar DESCRIPCION_REQUISITO (index 3) y TITULO_PUESTO (index 4)
                 val descripcion = getStringSafely(item, 3)
                 val titulo = getStringSafely(item, 4)
                 tvId.text = "ID: ${getStringSafely(item, 0)}"
                 tvPrimary.text = descripcion.ifBlank { "(sin descripción)" }
                 tvSecondary.text = titulo.ifBlank { "(sin puesto)" }
             } else if (tableName == "OFERTA_ACADEMICA") {
-                // Mostrar NOMBRE_GRADO (index 4) y NOMBRE_INSTITUCION (index 3)
                 val grado = getStringSafely(item, 4)
                 val institucion = getStringSafely(item, 3)
                 tvId.text = "ID: ${getStringSafely(item, 0)}"
                 tvPrimary.text = grado.ifBlank { "(sin grado)" }
                 tvSecondary.text = institucion.ifBlank { "(sin institución)" }
             } else if (tableName == "CERTIFICACION") {
-                // Mostrar NOMBRE_CERTIFICACION (index 3) y NOMBRE + APELLIDO (index 6, 7)
                 val nombre = getStringSafely(item, 3)
                 val postNombre = getStringSafely(item, 6)
                 val postApellido = getStringSafely(item, 7)
@@ -124,7 +114,6 @@ class TableAdapter(
                 tvPrimary.text = nombre.ifBlank { "(sin certificación)" }
                 tvSecondary.text = "$postNombre $postApellido".trim().ifBlank { "(sin postulante)" }
             } else if (tableName == "FORMACION_ACADEMICA") {
-                // Mostrar TITULO_OBTENIDO (index 3) y NOMBRE + APELLIDO (index 5, 6)
                 val titulo = getStringSafely(item, 3)
                 val postNombre = getStringSafely(item, 5)
                 val postApellido = getStringSafely(item, 6)
@@ -132,7 +121,6 @@ class TableAdapter(
                 tvPrimary.text = titulo.ifBlank { "(sin título)" }
                 tvSecondary.text = "$postNombre $postApellido".trim().ifBlank { "(sin postulante)" }
             } else {
-                // Mostrar datos genéricos - primeros campos disponibles
                 val field1 = getStringSafely(item, 1)
                 val field2 = getStringSafely(item, 2)
                 tvId.text = "ID: $field0"
