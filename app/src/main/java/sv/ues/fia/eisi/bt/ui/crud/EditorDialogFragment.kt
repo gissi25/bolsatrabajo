@@ -1,6 +1,7 @@
 package sv.ues.fia.eisi.bt.ui.crud
 
 import android.content.res.TypedArray
+import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputFilter
@@ -169,7 +170,7 @@ class EditorDialogFragment : DialogFragment() {
             ).apply {
                 setMargins(0, 0, 0, 24)
             }
-            hint = column.replace("ID_", "").replace("_", " ")
+            hint = getHintText(column)
         }
 
         val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
@@ -233,7 +234,7 @@ class EditorDialogFragment : DialogFragment() {
             ).apply {
                 setMargins(0, 0, 0, 24)
             }
-            hint = "Nivel Destreza"
+            hint = getHintText(column)
         }
 
         val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
@@ -294,7 +295,7 @@ class EditorDialogFragment : DialogFragment() {
             ).apply {
                 setMargins(0, 0, 0, 24)
             }
-            hint = "Estado Proceso"
+            hint = getHintText(column)
         }
 
         val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
@@ -346,7 +347,7 @@ class EditorDialogFragment : DialogFragment() {
             ).apply {
                 setMargins(0, 0, 0, 24)
             }
-            hint = "Rol"
+            hint = getHintText(column)
         }
 
         val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
@@ -419,10 +420,10 @@ class EditorDialogFragment : DialogFragment() {
 
         val tipo = getSelectedDocType()
         til.hint = when (tipo) {
-            "DUI" -> "DUI: 12345678-9"
-            "NIT" -> "NIT: 0614-111222-333-4"
-            "PASAPORTE" -> "Pasaporte (máx 9 caracteres)"
-            else -> "DUI: 12345678-9 / NIT: 0614-111222-333-4 / Pasaporte"
+            "DUI" -> "DUI"
+            "NIT" -> "NIT"
+            "PASAPORTE" -> "Pasaporte"
+            else -> getHintText("NUM_DOCUMENTO")
         }
 
         val text = et.text?.toString() ?: return
@@ -463,7 +464,7 @@ class EditorDialogFragment : DialogFragment() {
             ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
         )
         childAutoComplete.setText("", false)
-        childTil.hint = childColumn.replace("ID_", "").replace("_", " ")
+        childTil.hint = getHintText(childColumn)
     }
 
     private fun createTextInputField(idx: Int, column: String, colIndex: Int) {
@@ -491,22 +492,16 @@ class EditorDialogFragment : DialogFragment() {
 
             inputType = getInputType(column)
 
-            // Forzamos gravedad para que todos los campos alineen igual su primera línea
-            gravity = Gravity.START or Gravity.CENTER_VERTICAL
-
             if (isMultiline) {
                 setSingleLine(false)
                 setHorizontallyScrolling(false)
+                gravity = Gravity.TOP or Gravity.START
                 minLines = 1
                 maxLines = 5
             } else {
                 setSingleLine(true)
+                gravity = Gravity.CENTER_VERTICAL or Gravity.START
             }
-            
-            // Forzamos un padding uniforme para que todos los campos tengan la misma altura base
-            val density = resources.displayMetrics.density
-            val verticalPadding = (12 * density).toInt()
-            setPadding(0, verticalPadding, 0, verticalPadding)
             
             includeFontPadding = false
             filters = getFilters(column)
@@ -632,20 +627,76 @@ class EditorDialogFragment : DialogFragment() {
 
     private fun getHintText(column: String): String {
         val col = column.uppercase()
-        return when {
-            col.contains("NOMBRE") -> "Ingrese el nombre"
-            col.contains("APELLIDO") -> "Ingrese el apellido"
-            col.contains("EMAIL") || col.contains("CORREO") -> "ejemplo@correo.com"
-            col.contains("TELEFONO") || col.contains("TEL") -> "Ingrese teléfono"
-            col.contains("NUP") -> "Ingrese NUP"
-            col.contains("NUM_DOCUMENTO") -> "Documento de identidad"
-            col.contains("TITULO") -> "Ingrese el título"
-            col.contains("DESCRIPCION") || col.contains("DETALLE") || col.contains("DESC") || col.contains("REQUISITO") -> "Ingrese la descripción"
-            col.contains("EXPERIENCIA_ANIOS") -> "Años de experiencia"
-            col.contains("EDAD_MINIMA") -> "Edad mínima"
-            col.contains("EDAD_MAXIMA") -> "Edad máxima"
-            col.contains("FECHA") -> "AAAA-MM-DD"
-            else -> "Ingrese $column"
+        return when (col) {
+            "ID_GENERO" -> "Género"
+            "ID_TIPO_DOCUMENTO" -> "Tipo de documento"
+            "NUM_DOCUMENTO" -> "Número de documento"
+            "ID_DISTRITO" -> "Distrito"
+            "NOMBRE" -> "Nombre"
+            "APELLIDO" -> "Apellido"
+            "FECHA_NACIMIENTO" -> "Fecha de nacimiento"
+            "NUP" -> "NUP"
+            "DIRECCION_DETALLE" -> "Dirección"
+            "TELEFONO_CASA" -> "Teléfono casa"
+            "TELEFONO_CELULAR" -> "Teléfono celular"
+            "EMAIL", "CORREO" -> "Correo electrónico"
+            "ID_DEPARTAMENTO" -> "Departamento"
+            "ID_MUNICIPIO" -> "Municipio"
+            "NOMBRE_CATEGORIA" -> "Nombre de categoría"
+            "NOMBRE_GENERO" -> "Nombre de género"
+            "NOMBRE_TIPO" -> "Nombre de tipo"
+            "NOMBRE_DEPARTAMENTO" -> "Nombre de departamento"
+            "NOMBRE_MUNICIPIO" -> "Nombre de municipio"
+            "NOMBRE_DISTRITO" -> "Nombre de distrito"
+            "NOMBRE_HABILIDAD" -> "Nombre de habilidad"
+            "ID_CATEGORIA_HABILIDAD" -> "Categoría de habilidad"
+            "NOMBRE_EMPRESA" -> "Nombre de empresa"
+            "CONTACTO_DIRECTO" -> "Contacto directo"
+            "NIT" -> "NIT"
+            "NOMBRE_INSTITUCION" -> "Nombre de institución"
+            "NOMBRE_GRADO" -> "Nombre de grado"
+            "NOMBRE_RED" -> "Nombre de red social"
+            "ID_INSTITUCION" -> "Institución"
+            "ID_GRADO_ACADEMICO" -> "Grado académico"
+            "TITULO_PUESTO" -> "Título del puesto"
+            "FECHA_PUBLICACION" -> "Fecha de publicación"
+            "FECHA_CADUCIDAD" -> "Fecha de caducidad"
+            "EXPERIENCIA_ANIOS" -> "Años de experiencia"
+            "EDAD_MINIMA" -> "Edad mínima"
+            "EDAD_MAXIMA" -> "Edad máxima"
+            "DESCRIPCION_OFERTA_TRABAJO", "DESCRIPCION", "DESC" -> "Descripción"
+            "DESCRIPCION_REQUISITO" -> "Descripción del requisito"
+            "ID_EMPRESA" -> "Empresa"
+            "ID_OFERTA" -> "Oferta de trabajo"
+            "ID_POSTULANTE" -> "Postulante"
+            "ID_CERTIFICACION" -> "Certificación"
+            "NOMBRE_CERTIFICACION" -> "Nombre de certificación"
+            "CODIGO_CERTIFICACION" -> "Código de certificación"
+            "FECHA_CERTIFICACION" -> "Fecha de certificación"
+            "ID_EXPERIENCIA" -> "Experiencia"
+            "PUESTO_TRABAJO" -> "Puesto de trabajo"
+            "FECHA_INICIO" -> "Fecha de inicio"
+            "FECHA_FIN" -> "Fecha de fin"
+            "DESCP_EXPERIENCIA_LABORAL" -> "Descripción de experiencia"
+            "CONTACTO_REFERENCIA" -> "Contacto de referencia"
+            "ID_FORMACION" -> "Formación"
+            "ID_OFERTA_ACADEMICA" -> "Oferta académica"
+            "TITULO_OBTENIDO" -> "Título obtenido"
+            "FECHA_OBTENCION" -> "Fecha de obtención"
+            "ID_HABILIDAD" -> "Habilidad"
+            "ID_HABILIDAD_POSTULANTE" -> "Habilidad postulante"
+            "NIVEL_DESTREZA" -> "Nivel de destreza"
+            "ID_POSTULACION" -> "Postulación"
+            "FECHA_APLICACION" -> "Fecha de aplicación"
+            "ESTADO_PROCESO" -> "Estado del proceso"
+            "ID_DETALLE" -> "Detalle"
+            "ID_RED_POSTUALNTE" -> "Red social postulante"
+            "ID_RED_SOCIAL" -> "Red social"
+            "URL_PERFIL" -> "URL del perfil"
+            "USERNAME", "USER" -> "Nombre de usuario"
+            "PASSWORD", "CONTRA" -> "Contraseña"
+            "ROL" -> "Rol"
+            else -> column.replace("ID_", "").replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
         }
     }
 
