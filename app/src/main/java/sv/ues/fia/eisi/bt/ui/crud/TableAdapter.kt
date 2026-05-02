@@ -60,13 +60,24 @@ class TableAdapter(
                 tvPrimary.text = "$nombre $apellido".trim().ifBlank { "(sin nombre)" }
                 tvSecondary.text = puesto.ifBlank { "(sin puesto)" }
             } else if (tableName == "HABILIDAD_POSTULANTE") {
-                // Mostrar NOMBRE (index 4), APELLIDO (index 5) y NOMBRE_HABILIDAD (index 6)
-                val nombre = getStringSafely(item, 4)
-                val apellido = getStringSafely(item, 5)
-                val habilidad = getStringSafely(item, 6)
-                tvId.text = "ID: ${getStringSafely(item, 2)}"
+                // Mostrar NOMBRE (index 5), APELLIDO (index 6) y NOMBRE_HABILIDAD (index 7)
+                // ID_HABILIDAD_POSTULANTE ahora esta en el index 3
+                // NIVEL_DESTREZA está en index 4
+                val nombre = getStringSafely(item, 5)
+                val apellido = getStringSafely(item, 6)
+                val habilidad = getStringSafely(item, 7)
+                val nivelRaw = getStringSafely(item, 4)
+                
+                val nivelText = when(nivelRaw) {
+                    "1" -> "Básico"
+                    "2" -> "Intermedio"
+                    "3" -> "Avanzado"
+                    else -> nivelRaw
+                }
+
+                tvId.text = "ID: ${getStringSafely(item, 3)}"
                 tvPrimary.text = "$nombre $apellido".trim().ifBlank { "(sin nombre)" }
-                tvSecondary.text = habilidad.ifBlank { "(sin habilidad)" }
+                tvSecondary.text = if (nivelText.isNotBlank()) "$habilidad • $nivelText" else habilidad
             } else if (tableName == "POSTULACION") {
                 // Mostrar NOMBRE (index 6), APELLIDO (index 7) y TITULO_PUESTO (index 8)
                 val nombre = getStringSafely(item, 6)

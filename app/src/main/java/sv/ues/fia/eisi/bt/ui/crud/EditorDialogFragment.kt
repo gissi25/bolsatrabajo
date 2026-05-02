@@ -101,22 +101,10 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun setupTitle() {
-        btnSave.text = if (isEditMode) getString(R.string.save) else getString(R.string.add)
         tvTitle.text = if (isEditMode) "Editar $tableName" else "Nuevo $tableName"
     }
 
     private fun setupFields() {
-        tilFieldsContainer.removeAllViews()
-        dropDownFields.clear()
-        textFields.clear()
-        nivelDestrezaFields.clear()
-        docTypeColumnIndex = -1
-        numDocColumnIndex = -1
-
-        if (columns.isEmpty()) {
-            columns = listOf("NOMBRE")
-        }
-
         columns.filter { it != getAutoGenColumn(tableName) }.forEachIndexed { idx, column ->
             val colIndex = columns.indexOf(column)
             val isFk = fkRefs.containsKey(column)
@@ -139,6 +127,11 @@ class EditorDialogFragment : DialogFragment() {
                 createTextInputField(idx, column, colIndex)
             }
         }
+
+        // Refrescar configuración de documento si existen ambos campos
+        if (docTypeColumnIndex != -1 && numDocColumnIndex != -1) {
+            refreshNumDocHintAndValidation()
+        }
     }
 
     private fun createDropdownField(idx: Int, column: String, colIndex: Int) {
@@ -146,17 +139,27 @@ class EditorDialogFragment : DialogFragment() {
         
         var parentId: String? = null
         if (column == "ID_MUNICIPIO" && fkRefs.containsKey("ID_DEPARTAMENTO")) {
-            val parentAutoComplete = dropDownFields.entries.find { it.value.first == "ID_DEPARTAMENTO" }?.value?.second
+            val parentAutoComplete = dropDownFields.values.find { it.first == "ID_DEPARTAMENTO" }?.second
             parentId = getSelectedDropdownValue(parentAutoComplete)
         }
         if (column == "ID_DISTRITO" && fkRefs.containsKey("ID_MUNICIPIO")) {
-            val parentAutoComplete = dropDownFields.entries.find { it.value.first == "ID_MUNICIPIO" }?.value?.second
+            val parentAutoComplete = dropDownFields.values.find { it.first == "ID_MUNICIPIO" }?.second
+            parentId = getSelectedDropdownValue(parentAutoComplete)
+        }
+        if (column == "ID_HABILIDAD" && fkRefs.containsKey("ID_CATEGORIA_HABILIDAD")) {
+            val parentAutoComplete = dropDownFields.values.find { it.first == "ID_CATEGORIA_HABILIDAD" }?.second
             parentId = getSelectedDropdownValue(parentAutoComplete)
         }
 
         val options = if (parentId != null && parentId.isNotBlank()) {
-            val parentFk = fkRefs[if (column == "ID_MUNICIPIO") "ID_DEPARTAMENTO" else "ID_MUNICIPIO"]!!
-            viewModel.getFilteredOptions(fkRef.refTable, parentFk.fkColumn, parentId)
+            val parentFkColumnName = when (column) {
+                "ID_MUNICIPIO" -> "ID_DEPARTAMENTO"
+                "ID_DISTRITO" -> "ID_MUNICIPIO"
+                "ID_HABILIDAD" -> "ID_CATEGORIA_HABILIDAD"
+                else -> ""
+            }
+            val parentFk = fkRefs[parentFkColumnName]!!
+            viewModel.getFilteredOptions(fkRef.refTable, parentFk.fkColumn, parentId, fkRef.refDisplayColumn)
         } else {
             viewModel.getDropdownOptions(fkRef.refTable, fkRef.refDisplayColumn)
         }
@@ -202,17 +205,22 @@ class EditorDialogFragment : DialogFragment() {
 
         autoComplete.setOnItemClickListener { _, _, position, _ ->
             if (position < options.size) {
-                if (column == "ID_DEPARTAMENTO") {
-                    refreshDependentDropdown("ID_MUNICIPIO")
-                }
-                if (column == "ID_MUNICIPIO") {
-                    refreshDependentDropdown("ID_DISTRITO")
-                }
+                if (column == "ID_DEPARTAMENTO") refreshDependentDropdown("ID_MUNICIPIO")
+                if (column == "ID_MUNICIPIO") refreshDependentDropdown("ID_DISTRITO")
+                if (column == "ID_CATEGORIA_HABILIDAD") refreshDependentDropdown("ID_HABILIDAD")
+            }
+        }
+
+        // Escuchar cambios de texto para actualizar la máscara del documento al instante
+        autoComplete.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
                 if (column == "ID_TIPO_DOCUMENTO") {
                     refreshNumDocHintAndValidation()
                 }
             }
-        }
+        })
 
         til.addView(autoComplete)
         tilFieldsContainer.addView(til)
@@ -402,14 +410,14 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun getSelectedDocType(): String? {
-        if (docTypeColumnIndex == -1 || !fkRefs.containsKey("ID_TIPO_DOCUMENTO")) return null
+        if (docTypeColumnIndex == -1) return null
         val autoComplete = dropDownFields[docTypeColumnIndex]?.second ?: return null
-        val text = autoComplete.text?.toString()?.trim() ?: return null
+        val text = autoComplete.text?.toString()?.trim()?.lowercase() ?: return null
         if (text.isBlank()) return null
-        return when (text.lowercase()) {
-            "dui" -> "DUI"
-            "nit" -> "NIT"
-            "pasaporte" -> "PASAPORTE"
+        return when {
+            text.contains("dui") -> "DUI"
+            text.contains("nit") -> "NIT"
+            text.contains("pasaporte") -> "PASAPORTE"
             else -> text.uppercase()
         }
     }
@@ -418,16 +426,68 @@ class EditorDialogFragment : DialogFragment() {
         if (numDocColumnIndex == -1) return
         val pair = textFields[numDocColumnIndex] ?: return
         val et = pair.second
-        val til = et.parent as? TextInputLayout ?: return
+        
+        // Búsqueda robusta del TextInputLayout subiendo en la jerarquía
+        var current = et.parent
+        var til: TextInputLayout? = null
+        while (current != null) {
+            if (current is TextInputLayout) {
+                til = current
+                break
+            }
+            current = current.parent
+        }
+        if (til == null) return
 
         val tipo = getSelectedDocType()
+        
+        // BLOQUEO: Deshabilitar el campo si no se ha seleccionado tipo de documento
+        et.isEnabled = tipo != null
+        
+        // 1. Actualizar Hint dinámico
         til.hint = when (tipo) {
-            "DUI" -> "DUI: 12345678-9"
-            "NIT" -> "NIT: 0614-111222-333-4"
-            "PASAPORTE" -> "Pasaporte (máx 9 caracteres)"
-            else -> "DUI: 12345678-9 / NIT: 0614-111222-333-4 / Pasaporte"
+            "DUI" -> "DUI (ej: 12345678-9)"
+            "NIT" -> "NIT (ej: 0614-111222-333-4)"
+            "PASAPORTE" -> "Pasaporte (Letras y Números)"
+            null -> "Seleccione Tipo de Documento primero"
+            else -> "Número de Documento"
         }
 
+        if (tipo == null) {
+            et.setText("")
+            til.error = null
+            return
+        }
+
+        // 2. Cambiar teclado dinámicamente
+        val targetInputType = when (tipo) {
+            "DUI", "NIT" -> android.text.InputType.TYPE_CLASS_PHONE
+            else -> android.text.InputType.TYPE_CLASS_TEXT
+        }
+        if (et.inputType != targetInputType) {
+            et.inputType = targetInputType
+        }
+
+        // 3. Aplicar Filtros estrictos de caracteres y longitud
+        val filters = mutableListOf<InputFilter>()
+        val maxLength = when (tipo) {
+            "DUI" -> 10 // 8 digitos + guion + 1 digito
+            "NIT" -> 17 // Formato completo con guiones
+            else -> 17
+        }
+        filters.add(InputFilter.LengthFilter(maxLength))
+        
+        if (tipo == "DUI" || tipo == "NIT") {
+            filters.add(InputFilter { source, start, end, _, _, _ ->
+                for (i in start until end) {
+                    if (!source[i].isDigit() && source[i] != '-') return@InputFilter ""
+                }
+                null
+            })
+        }
+        et.filters = filters.toTypedArray()
+
+        // 4. Re-formatear si ya hay texto
         val text = et.text?.toString() ?: return
         if (text.isNotBlank()) {
             val formatted = formatInput("NUM_DOCUMENTO", text, tipo)
@@ -441,24 +501,25 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun refreshDependentDropdown(childColumn: String) {
-        val childInfo = dropDownFields.entries.find { it.value.first == childColumn } ?: return
-        val childIdx = childInfo.key
-        val childAutoComplete = childInfo.value.second
+        val childInfo = dropDownFields.values.find { it.first == childColumn } ?: return
+        val childAutoComplete = childInfo.second
         val childTil = childAutoComplete.parent as? TextInputLayout ?: return
         
         val parentFkColumn = when (childColumn) {
             "ID_MUNICIPIO" -> "ID_DEPARTAMENTO"
             "ID_DISTRITO" -> "ID_MUNICIPIO"
+            "ID_HABILIDAD" -> "ID_CATEGORIA_HABILIDAD"
             else -> return
         }
         val parentFk = fkRefs[parentFkColumn] ?: return
-        val parentAutoComplete = dropDownFields.entries.find { it.value.first == parentFkColumn }?.value?.second
+        val parentAutoComplete = dropDownFields.values.find { it.first == parentFkColumn }?.second
         val parentId = getSelectedDropdownValue(parentAutoComplete) ?: return
 
         val newOptions = viewModel.getFilteredOptions(
             fkRefs[childColumn]!!.refTable,
             parentFk.fkColumn,
-            parentId
+            parentId,
+            fkRefs[childColumn]!!.refDisplayColumn
         )
         
         val displayOptions = newOptions.map { it.second }
@@ -801,7 +862,7 @@ private fun validateField(column: String, value: String): String? {
             "CERTIFICACION" -> listOf("ID_POSTULANTE", "ID_CERTIFICACION", "ID_INSTITUCION", "NOMBRE_CERTIFICACION", "CODIGO_CERTIFICACION", "FECHA_CERTIFICACION")
             "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "ID_EXPERIENCIA", "ID_EMPRESA", "PUESTO_TRABAJO", "FECHA_INICIO", "FECHA_FIN", "DESCP_EXPERIENCIA_LABORAL", "CONTACTO_REFERENCIA")
             "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_POSTULANTE", "ID_OFERTA_ACADEMICA", "TITULO_OBTENIDO", "FECHA_OBTENCION")
-            "HABILIDAD_POSTULANTE" -> listOf("ID_POSTULANTE", "ID_HABILIDAD", "ID_HABILIDAD_POSTULANTE", "NIVEL_DESTREZA")
+            "HABILIDAD_POSTULANTE" -> listOf("ID_POSTULANTE", "ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "ID_HABILIDAD_POSTULANTE", "NIVEL_DESTREZA")
             "POSTULACION" -> listOf("ID_EMPRESA", "ID_OFERTA", "ID_POSTULANTE", "ID_POSTULACION", "FECHA_APLICACION", "ESTADO_PROCESO")
             "DETALLE_REQUISITO" -> listOf("ID_DETALLE", "ID_EMPRESA", "ID_OFERTA", "DESCRIPCION_REQUISITO")
             "RED_SOCIAL_POSTULANTE" -> listOf("ID_RED_POSTUALNTE", "ID_POSTULANTE", "ID_RED_SOCIAL", "URL_PERFIL")
@@ -830,7 +891,7 @@ private fun validateField(column: String, value: String): String? {
             val fkRef = fkRefs[col]
 
             if (col == "NIVEL_DESTREZA") {
-                val autoComplete = dropDownFields.entries.find { it.value.first == col }?.value?.second
+                val autoComplete = dropDownFields.values.find { it.first == col }?.second
                 val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
                 if (selectedText.isBlank()) {
                     StyledToast.show(requireContext(), "Debe seleccionar un nivel de destreza")
@@ -844,7 +905,7 @@ private fun validateField(column: String, value: String): String? {
                 }
                 values.add(nivelValue)
             } else if (col == "ESTADO_PROCESO") {
-                val autoComplete = dropDownFields.entries.find { it.value.first == col }?.value?.second
+                val autoComplete = dropDownFields.values.find { it.first == col }?.second
                 val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
                 if (selectedText.isBlank()) {
                     StyledToast.show(requireContext(), "Debe seleccionar un estado")
@@ -859,18 +920,29 @@ private fun validateField(column: String, value: String): String? {
                 }
                 values.add(estadoValue)
             } else if (col == "ROL") {
-                val autoComplete = dropDownFields.entries.find { it.value.first == col }?.value?.second
+                val autoComplete = dropDownFields.values.find { it.first == col }?.second
                 val selectedText = autoComplete?.text?.toString()?.trim() ?: "postulante"
                 values.add(selectedText)
             } else if (fkRef != null) {
-                val options = viewModel.getDropdownOptions(fkRef.refTable, fkRef.refDisplayColumn)
+                val options = if (col == "ID_HABILIDAD" && tableName == "HABILIDAD_POSTULANTE") {
+                    val categoryAutoComplete = dropDownFields.values.find { it.first == "ID_CATEGORIA_HABILIDAD" }?.second
+                    val categoryId = getSelectedDropdownValue(categoryAutoComplete)
+                    if (categoryId != null) {
+                        viewModel.getFilteredOptions(fkRef.refTable, "ID_CATEGORIA_HABILIDAD", categoryId, fkRef.refDisplayColumn)
+                    } else {
+                        viewModel.getDropdownOptions(fkRef.refTable, fkRef.refDisplayColumn)
+                    }
+                } else {
+                    viewModel.getDropdownOptions(fkRef.refTable, fkRef.refDisplayColumn)
+                }
+
                 if (options.isEmpty()) {
                     StyledToast.show(requireContext(), "No hay datos en ${fkRef.refTable}. Créelos primero.")
                     return
                 }
                 hasRequiredFk = true
 
-                val autoComplete = dropDownFields.entries.find { it.value.first == col }?.value?.second
+                val autoComplete = dropDownFields.values.find { it.first == col }?.second
                 val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
                 if (selectedText.isBlank()) {
                     StyledToast.show(requireContext(), "Debe seleccionar ${fkRef.refTable}")
@@ -884,7 +956,7 @@ private fun validateField(column: String, value: String): String? {
                 }
                 values.add(selectedOption.first)
             } else {
-                val et = textFields.entries.find { it.value.first == col }?.value?.second
+                val et = textFields.values.find { it.first == col }?.second
                 val textValue = et?.text?.toString()?.trim() ?: ""
 
                 val errorMsg = ValidationRules.validate(tableName, col, textValue)
