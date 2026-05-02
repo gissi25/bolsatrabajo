@@ -338,6 +338,61 @@ class MainRepository(context: Context) {
                 ORDER BY p.APELLIDO, p.NOMBRE, rs.NOMBRE_RED
                 """.trimIndent()
             }
+            "OFERTA_TRABAJO" -> {
+                """
+                SELECT o.ID_EMPRESA, o.ID_OFERTA, o.ID_GRADO_ACADEMICO, o.TITULO_PUESTO,
+                       o.FECHA_PUBLICACION, o.FECHA_CADUCIDAD, o.EXPERIENCIA_ANIOS,
+                       o.EDAD_MINIMA, o.EDAD_MAXIMA, o.DESCRIPCION_OFERTA_TRABAJO,
+                       e.NOMBRE_EMPRESA, g.NOMBRE_GRADO
+                FROM OFERTA_TRABAJO o
+                LEFT JOIN EMPRESA e ON o.ID_EMPRESA = e.ID_EMPRESA
+                LEFT JOIN GRADO_ACADEMICO g ON o.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO
+                ORDER BY o.FECHA_PUBLICACION DESC
+                """.trimIndent()
+            }
+            "DETALLE_REQUISITO" -> {
+                """
+                SELECT d.ID_DETALLE, d.ID_EMPRESA, d.ID_OFERTA, d.DESCRIPCION_REQUISITO,
+                       o.TITULO_PUESTO, e.NOMBRE_EMPRESA
+                FROM DETALLE_REQUISITO d
+                LEFT JOIN OFERTA_TRABAJO o ON d.ID_EMPRESA = o.ID_EMPRESA AND d.ID_OFERTA = o.ID_OFERTA
+                LEFT JOIN EMPRESA e ON d.ID_EMPRESA = e.ID_EMPRESA
+                ORDER BY d.ID_DETALLE DESC
+                """.trimIndent()
+            }
+            "OFERTA_ACADEMICA" -> {
+                """
+                SELECT o.ID_OFERTA_ACADEMICA, o.ID_GRADO_ACADEMICO, o.ID_INSTITUCION,
+                       i.NOMBRE_INSTITUCION, g.NOMBRE_GRADO
+                FROM OFERTA_ACADEMICA o
+                LEFT JOIN INSTITUCION i ON o.ID_INSTITUCION = i.ID_INSTITUCION
+                LEFT JOIN GRADO_ACADEMICO g ON o.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO
+                ORDER BY i.NOMBRE_INSTITUCION
+                """.trimIndent()
+            }
+            "CERTIFICACION" -> {
+                """
+                SELECT c.ID_POSTULANTE, c.ID_CERTIFICACION, c.ID_INSTITUCION,
+                       c.NOMBRE_CERTIFICACION, c.CODIGO_CERTIFICACION, c.FECHA_CERTIFICACION,
+                       p.NOMBRE, p.APELLIDO, i.NOMBRE_INSTITUCION
+                FROM CERTIFICACION c
+                LEFT JOIN POSTULANTE p ON c.ID_POSTULANTE = p.ID_POSTULANTE
+                LEFT JOIN INSTITUCION i ON c.ID_INSTITUCION = i.ID_INSTITUCION
+                ORDER BY p.APELLIDO, p.NOMBRE, c.NOMBRE_CERTIFICACION
+                """.trimIndent()
+            }
+            "FORMACION_ACADEMICA" -> {
+                """
+                SELECT f.ID_FORMACION, f.ID_POSTULANTE, f.ID_OFERTA_ACADEMICA,
+                       f.TITULO_OBTENIDO, f.FECHA_OBTENCION,
+                       p.NOMBRE, p.APELLIDO,
+                       oa.ID_GRADO_ACADEMICO, oa.ID_INSTITUCION
+                FROM FORMACION_ACADEMICA f
+                LEFT JOIN POSTULANTE p ON f.ID_POSTULANTE = p.ID_POSTULANTE
+                LEFT JOIN OFERTA_ACADEMICA oa ON f.ID_OFERTA_ACADEMICA = oa.ID_OFERTA_ACADEMICA
+                ORDER BY p.APELLIDO, p.NOMBRE, f.FECHA_OBTENCION DESC
+                """.trimIndent()
+            }
             else -> {
                 val cols = getColumnsForTable(tableName).joinToString(", ")
                 "SELECT $cols FROM $tableName"
@@ -443,8 +498,8 @@ class MainRepository(context: Context) {
                     val id = cursor.getInt(0).toString()
                     val institucion = cursor.getString(1) ?: ""
                     val grado = cursor.getString(2) ?: ""
-                    val display = "$grado - $institucion".take(50)
-                    options.add(Pair(id, display))
+                    val display = "$institucion - $grado".take(50)
+                    options.add(Pair(id, display.ifBlank { id }))
                 }
                 cursor.close()
                 options

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -169,7 +170,6 @@ class EditorDialogFragment : DialogFragment() {
                 setMargins(0, 0, 0, 24)
             }
             hint = column.replace("ID_", "").replace("_", " ")
-            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
         }
 
         val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
@@ -234,7 +234,6 @@ class EditorDialogFragment : DialogFragment() {
                 setMargins(0, 0, 0, 24)
             }
             hint = "Nivel Destreza"
-            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
         }
 
         val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
@@ -296,7 +295,6 @@ class EditorDialogFragment : DialogFragment() {
                 setMargins(0, 0, 0, 24)
             }
             hint = "Estado Proceso"
-            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
         }
 
         val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
@@ -349,7 +347,6 @@ class EditorDialogFragment : DialogFragment() {
                 setMargins(0, 0, 0, 24)
             }
             hint = "Rol"
-            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
         }
 
         val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
@@ -478,7 +475,6 @@ class EditorDialogFragment : DialogFragment() {
                 setMargins(0, 0, 0, 24)
             }
             hint = getHintText(column)
-            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
         }
 
         val et = TextInputEditText(requireContext()).apply {
@@ -487,15 +483,40 @@ class EditorDialogFragment : DialogFragment() {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
             setTextColor(getThemeColor(android.R.attr.textColorPrimary))
+            
+            val isMultiline = column.uppercase().contains("DESCRIPCION") || 
+                              column.uppercase().contains("DETALLE") || 
+                              column.uppercase().contains("DESC") ||
+                              column.uppercase().contains("REQUISITO")
+
             inputType = getInputType(column)
+
+            // Forzamos gravedad para que todos los campos alineen igual su primera línea
+            gravity = Gravity.START or Gravity.CENTER_VERTICAL
+
+            if (isMultiline) {
+                setSingleLine(false)
+                setHorizontallyScrolling(false)
+                minLines = 1
+                maxLines = 5
+            } else {
+                setSingleLine(true)
+            }
+            
+            // Forzamos un padding uniforme para que todos los campos tengan la misma altura base
+            val density = resources.displayMetrics.density
+            val verticalPadding = (12 * density).toInt()
+            setPadding(0, verticalPadding, 0, verticalPadding)
+            
+            includeFontPadding = false
             filters = getFilters(column)
         }
 
-        // PASSWORD bloqueado en edición de USUARIO (se guarda encriptado)
+        // PASSWORD bloqueado en edición de USUARIO
         if (column == "PASSWORD" && tableName == "USUARIO" && isEditMode) {
             et.isEnabled = false
             et.isFocusable = false
-            til.hint = "Contraseña (bloqueada en edición)"
+            til.hint = "Contraseña (bloqueada)"
         }
 
         if (column.contains("FECHA")) {
@@ -508,28 +529,21 @@ class EditorDialogFragment : DialogFragment() {
             et.setText(itemData[colIndex].trim())
         }
 
-        // TextWatcher para máscaras y validación en tiempo real
         et.addTextChangedListener(object : TextWatcher {
             private var isFormatting = false
-
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-
             override fun afterTextChanged(s: Editable?) {
                 if (isFormatting) return
                 isFormatting = true
-
                 val text = s?.toString() ?: ""
                 val formatted = formatInput(column, text)
                 if (formatted != text) {
                     et.setText(formatted)
                     et.setSelection(formatted.length)
                 }
-
                 val error = getFieldValidationError(column, formatted)
                 til.error = error
-
                 isFormatting = false
             }
         })
@@ -541,36 +555,21 @@ class EditorDialogFragment : DialogFragment() {
 
     private fun showDatePicker(editText: TextInputEditText) {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        
         val currentText = editText.text?.toString() ?: ""
         val initialMillis = if (currentText.isNotEmpty()) {
-            try {
-                dateFormat.parse(currentText)?.time ?: System.currentTimeMillis()
-            } catch (e: Exception) {
-                System.currentTimeMillis()
-            }
-        } else {
-            System.currentTimeMillis()
-        }
-        
-        val picker = MaterialDatePicker.Builder
-            .datePicker()
-            .setTitleText("Seleccionar fecha")
-            .setSelection(initialMillis)
-            .build()
-        
+            try { dateFormat.parse(currentText)?.time ?: System.currentTimeMillis() } catch (e: Exception) { System.currentTimeMillis() }
+        } else { System.currentTimeMillis() }
+        val picker = MaterialDatePicker.Builder.datePicker().setTitleText("Seleccionar fecha").setSelection(initialMillis).build()
         picker.addOnPositiveButtonClickListener { selection ->
             val cal = Calendar.getInstance()
             cal.timeInMillis = selection
             editText.setText(dateFormat.format(cal.time))
         }
-        
         picker.show(parentFragmentManager, "date_picker")
     }
 
     private fun formatInput(column: String, text: String, docType: String? = null): String {
         if (text.isEmpty()) return text
-
         return when {
             column.contains("NUM_DOCUMENTO") -> {
                 val tipo = docType ?: getSelectedDocType()
@@ -597,42 +596,29 @@ class EditorDialogFragment : DialogFragment() {
             column.contains("EDAD_MINIMA") || column.contains("EDAD_MAXIMA") -> 2
             else -> 0
         }
-
         val filters = mutableListOf<InputFilter>()
         if (maxLength > 0) filters.add(InputFilter.LengthFilter(maxLength))
-
         if (column.contains("EXPERIENCIA_ANIOS") || column.contains("EDAD_MIN") || column.contains("EDAD_MAX") || column == "NIVEL_DESTREZA") {
             filters.add(InputFilter { source, start, end, _, _, _ ->
-                for (i in start until end) {
-                    if (!source[i].isDigit()) return@InputFilter ""
-                }
+                for (i in start until end) { if (!source[i].isDigit()) return@InputFilter "" }
                 null
             })
         }
-
         return filters.toTypedArray()
     }
 
     private fun getInputType(column: String): Int {
+        val col = column.uppercase()
         return when {
-            column.startsWith("ID_") || column.contains("NUP") ->
-                android.text.InputType.TYPE_CLASS_NUMBER
-            column.contains("NUM_") ->
-                android.text.InputType.TYPE_CLASS_TEXT
-            column.contains("FECHA") || column.contains("DATE") ->
-                android.text.InputType.TYPE_CLASS_TEXT
-            column.contains("EMAIL") -> 
-                android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
-            column.contains("TELEFONO") || column.contains("TEL") || column == "CONTACTO_REFERENCIA" -> 
-                android.text.InputType.TYPE_CLASS_PHONE
-            column.contains("DOCUMENTO") -> 
-                android.text.InputType.TYPE_CLASS_TEXT
-            column.contains("PASSWORD") || column.contains("CONTRA") -> 
-                android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
-            column.contains("EXPERIENCIA_ANIOS") || column.contains("EDAD_MIN") || column.contains("EDAD_MAX") || column.contains("NIVEL_DESTREZA") ->
-                android.text.InputType.TYPE_CLASS_NUMBER
-            column.contains("DESCRIPCION") || column.contains("DETALLE") -> 
-                android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            col.startsWith("ID_") || col.contains("NUP") -> android.text.InputType.TYPE_CLASS_NUMBER
+            col.contains("NUM_") || col.contains("DOCUMENTO") -> android.text.InputType.TYPE_CLASS_TEXT
+            col.contains("FECHA") || col.contains("DATE") -> android.text.InputType.TYPE_CLASS_TEXT
+            col.contains("EMAIL") -> android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+            col.contains("TELEFONO") || col.contains("TEL") || col == "CONTACTO_REFERENCIA" -> android.text.InputType.TYPE_CLASS_PHONE
+            col.contains("PASSWORD") || col.contains("CONTRA") -> android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+            col.contains("EXPERIENCIA_ANIOS") || col.contains("EDAD_MIN") || col.contains("EDAD_MAX") || col.contains("NIVEL_DESTREZA") -> android.text.InputType.TYPE_CLASS_NUMBER
+            col.contains("DESCRIPCION") || col.contains("DETALLE") || col.contains("DESC") || col.contains("REQUISITO") -> 
+                android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
             else -> android.text.InputType.TYPE_CLASS_TEXT
         }
     }
@@ -645,138 +631,30 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun getHintText(column: String): String {
-        return when (column.uppercase()) {
-            "NOMBRE", "NOMBRE_CATEGORIA", "NOMBRE_GENERO", "NOMBRE_TIPO", "NOMBRE_DEPARTAMENTO", "NOMBRE_MUNICIPIO", "NOMBRE_DISTRITO", "NOMBRE_HABILIDAD", "NOMBRE_EMPRESA", "NOMBRE_INSTITUCION", "NOMBRE_GRADO", "NOMBRE_RED" -> "Ingrese el nombre"
-            "APELLIDO" -> "Ingrese el apellido"
-            "EMAIL", "CORREO" -> "ejemplo@correo.com"
-            "TELEFONO", "TEL" -> "Ingrese teléfono (ej: 2222-1111)"
-            "TELEFONO_CASA" -> "Ingrese telefono casa"
-            "TELEFONO_CELULAR" -> "Ingrese telefono celular"
-            "NUP" -> "Ingrese NUP"
-            "NUM_DOCUMENTO" -> "DUI: 12345678-9 / NIT: 0614-111222-333-4 / Pasaporte"
-            "CODIGO" -> "Ingrese código"
-            "CONTACTO_REFERENCIA" -> "Ingrese contacto de referencia"
-            "PUESTO_TRABAJO" -> "Ingrese nombre del puesto"
-            "TITULO_PUESTO", "TITULO_OBTENIDO" -> "Ingrese el título"
-            "DESCRIPCION", "DESCRIPCION_OFERTA", "DESCRIPCION_REQUISITO" -> "Ingrese la descripción"
-            "EXPERIENCIA_ANIOS" -> "Años de experiencia (0-${InputMaskUtils.EXPERIENCIA_MAX})"
-            "EDAD_MINIMA" -> "Edad mínima (${InputMaskUtils.EDAD_MIN}-${InputMaskUtils.EDAD_MAX})"
-            "EDAD_MAXIMA" -> "Edad máxima (${InputMaskUtils.EDAD_MIN}-${InputMaskUtils.EDAD_MAX})"
-            "NIVEL_DESTREZA" -> "1=Básico, 2=Intermedio, 3=Avanzado"
-            "FECHA_NACIMIENTO" -> "Fecha de nacimiento (AAAA-MM-DD)"
-            "FECHA_INICIO" -> "Fecha de inicio (AAAA-MM-DD)"
-            "FECHA_FIN" -> "Fecha de fin (AAAA-MM-DD)"
-            "FECHA_CERTIFICACION" -> "Fecha de certificación (AAAA-MM-DD)"
-            "FECHA_PUBLICACION" -> "Fecha de publicación (AAAA-MM-DD)"
-            "FECHA_CADUCIDAD" -> "Fecha de caducidad (AAAA-MM-DD)"
-            "FECHA_APLICACION" -> "Fecha de aplicación (AAAA-MM-DD)"
-            "FECHA_OBTENCION" -> "Fecha de obtención (AAAA-MM-DD)"
-            "ESTADO_PROCESO" -> "Ingrese estado (activo, en proceso, contratado, rechazado)"
-            "USERNAME", "USER" -> "Ingrese nombre de usuario"
-            "PASSWORD", "CONTRA" -> "Mínimo 8 caracteres"
-            "ROL" -> "postulante, empresa, admin"
-            "URL_PERFIL" -> "https://..."
-            "NOMBRE_CERTIFICACION" -> "Ingrese nombre de certificación"
-            "CODIGO_CERTIFICACION" -> "Ingrese código de certificación"
-            "DESCP_EXPERIENCIA_LABORAL", "DESC" -> "Ingrese descripción de experiencia"
+        val col = column.uppercase()
+        return when {
+            col.contains("NOMBRE") -> "Ingrese el nombre"
+            col.contains("APELLIDO") -> "Ingrese el apellido"
+            col.contains("EMAIL") || col.contains("CORREO") -> "ejemplo@correo.com"
+            col.contains("TELEFONO") || col.contains("TEL") -> "Ingrese teléfono"
+            col.contains("NUP") -> "Ingrese NUP"
+            col.contains("NUM_DOCUMENTO") -> "Documento de identidad"
+            col.contains("TITULO") -> "Ingrese el título"
+            col.contains("DESCRIPCION") || col.contains("DETALLE") || col.contains("DESC") || col.contains("REQUISITO") -> "Ingrese la descripción"
+            col.contains("EXPERIENCIA_ANIOS") -> "Años de experiencia"
+            col.contains("EDAD_MINIMA") -> "Edad mínima"
+            col.contains("EDAD_MAXIMA") -> "Edad máxima"
+            col.contains("FECHA") -> "AAAA-MM-DD"
             else -> "Ingrese $column"
         }
     }
 
-private fun validateField(column: String, value: String): String? {
-        // Solo validar campos requeridos específicos
-        val requiredColumns = listOf("NOMBRE", "APELLIDO", "NOMBRE_EMPRESA", "NOMBRE_GENERO", 
-            "NOMBRE_TIPO", "NOMBRE_DEPARTAMENTO", "NOMBRE_MUNICIPIO", "NOMBRE_DISTRITO",
-            "NOMBRE_HABILIDAD", "NOMBRE_CATEGORIA", "NOMBRE_GRADO", "NOMBRE_RED",
-            "TITULO_PUESTO", "NOMBRE_CERTIFICACION", "PUESTO_TRABAJO", "TITULO_OBTENIDO")
-        
-        if (value.isBlank() && column.uppercase() in requiredColumns) {
-            return "El campo $column es requerido"
-        }
-        
-        if (value.isBlank()) return null  // Campo opcional vacío es válido
-        
-        when (column.uppercase()) {
-            "EMAIL", "CORREO" -> {
-                if (!android.util.Patterns.EMAIL_ADDRESS.matcher(value).matches()) {
-                    return "Correo electrónico inválido"
-                }
-            }
-            "FECHA_NACIMIENTO", "FECHA_INICIO", "FECHA_FIN", "FECHA_CERTIFICACION", "FECHA_PUBLICACION", "FECHA_CADUCIDAD", "FECHA_APLICACION", "FECHA_OBTENCION" -> {
-                if (!value.matches(Regex("""\d{4}-\d{2}-\d{2}"""))) {
-                    return "Formato fecha inválido (use AAAA-MM-DD)"
-                }
-            }
-            "NIVEL_DESTREZA" -> {
-                if (value.toIntOrNull() !in 1..3) {
-                    return "Nivel debe ser 1, 2 o 3"
-                }
-            }
-            "EDAD_MINIMA", "EDAD_MAXIMA" -> {
-                val edad = value.toIntOrNull()
-                if (edad == null || edad < 16 || edad > 100) {
-                    return "Edad debe estar entre 16 y 100"
-                }
-            }
-            "EXPERIENCIA_ANIOS" -> {
-                val años = value.toIntOrNull()
-                if (años == null || años < 0 || años > 50) {
-                    return "Años de experiencia inválidos"
-                }
-            }
-            "PASSWORD", "CONTRA" -> {
-                if (value.length < 8) {
-                    return "La contraseña debe tener al menos 8 caracteres"
-                }
-            }
-            "URL_PERFIL" -> {
-                if (!value.startsWith("http://") && !value.startsWith("https://")) {
-                    return "URL debe comenzar con http:// o https://"
-                }
-            }
-        }
-        return null
-    }
-
     private fun getFieldValidationError(column: String, value: String): String? {
         if (value.isBlank()) return null
-
         return when {
             column.contains("EMAIL") -> InputMaskUtils.validateEmail(value)
-            column.contains("NIVEL_DESTREZA") -> {
-                if (value.toIntOrNull() !in 1..3) "Nivel debe ser 1, 2 o 3" else null
-            }
-            column.contains("EDAD_MINIMA") || column.contains("EDAD_MAXIMA") ->
-                InputMaskUtils.validateRango(value, InputMaskUtils.EDAD_MIN, InputMaskUtils.EDAD_MAX, "Edad")
-            column.contains("EXPERIENCIA_ANIOS") ->
-                InputMaskUtils.validateRango(value, InputMaskUtils.EXPERIENCIA_MIN, InputMaskUtils.EXPERIENCIA_MAX, "Experiencia")
             column.contains("PASSWORD") || column.contains("CONTRA") -> InputMaskUtils.validatePassword(value)
-            column.contains("URL_PERFIL") -> InputMaskUtils.validateURL(value)
-            column.contains("NUP") -> {
-                if (value.length != InputMaskUtils.NUP_LENGTH || !value.all { it.isDigit() })
-                    "NUP debe tener ${InputMaskUtils.NUP_LENGTH} dígitos" else null
-            }
-            column.contains("NUM_DOCUMENTO") -> {
-                val tipo = getSelectedDocType()
-                val digits = value.filter { it.isDigit() }
-                when (tipo) {
-                    "NIT" -> {
-                        if (digits.length != 14) "NIT debe tener 14 dígitos" else null
-                    }
-                    "DUI" -> {
-                        if (digits.length != InputMaskUtils.DUI_LENGTH) "DUI debe tener ${InputMaskUtils.DUI_LENGTH} dígitos" else null
-                    }
-                    else -> {
-                        if (value.length > InputMaskUtils.PASAPORTE_LENGTH) "Pasaporte: máximo ${InputMaskUtils.PASAPORTE_LENGTH} caracteres" else null
-                    }
-                }
-            }
             column.contains("FECHA") -> InputMaskUtils.validateFecha(value)
-            column.contains("TELEFONO") || column.contains("TEL") || column == "CONTACTO_REFERENCIA" -> {
-                val digits = value.filter { it.isDigit() }
-                if (digits.length != InputMaskUtils.TELEFONO_LENGTH && digits.isNotEmpty())
-                    "Teléfono debe tener ${InputMaskUtils.TELEFONO_LENGTH} dígitos" else null
-            }
             else -> null
         }
     }
@@ -817,107 +695,24 @@ private fun validateField(column: String, value: String): String? {
     private fun saveData() {
         val editableColumns = columns.filter { it != getAutoGenColumn(tableName) }
         val values = mutableListOf<String>()
-        var hasRequiredFk = false
-
-        // Step 1: Clear all field errors
-        for (entry in textFields.values) {
-            val parent = entry.second.parent?.parent
-            if (parent is TextInputLayout) parent.error = null
-        }
-
-        // Step 2: Validate all fields locally
         for (col in editableColumns) {
             val fkRef = fkRefs[col]
-
             if (col == "NIVEL_DESTREZA") {
-                val autoComplete = dropDownFields.entries.find { it.value.first == col }?.value?.second
-                val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
-                if (selectedText.isBlank()) {
-                    StyledToast.show(requireContext(), "Debe seleccionar un nivel de destreza")
-                    return
-                }
-                val nivelValue = when (selectedText) {
-                    "Básico" -> "1"
-                    "Intermedio" -> "2"
-                    "Avanzado" -> "3"
-                    else -> ""
-                }
-                values.add(nivelValue)
+                val selected = dropDownFields[columns.indexOf(col)]?.second?.text?.toString() ?: ""
+                values.add(when(selected) { "Básico" -> "1"; "Intermedio" -> "2"; "Avanzado" -> "3"; else -> "" })
             } else if (col == "ESTADO_PROCESO") {
-                val autoComplete = dropDownFields.entries.find { it.value.first == col }?.value?.second
-                val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
-                if (selectedText.isBlank()) {
-                    StyledToast.show(requireContext(), "Debe seleccionar un estado")
-                    return
-                }
-                val estadoValue = when (selectedText) {
-                    "Activo" -> "activo"
-                    "En Proceso" -> "en proceso"
-                    "Contratado" -> "contratado"
-                    "Rechazado" -> "rechazado"
-                    else -> ""
-                }
-                values.add(estadoValue)
+                values.add(dropDownFields[columns.indexOf(col)]?.second?.text?.toString()?.lowercase() ?: "")
             } else if (col == "ROL") {
-                val autoComplete = dropDownFields.entries.find { it.value.first == col }?.value?.second
-                val selectedText = autoComplete?.text?.toString()?.trim() ?: "postulante"
-                values.add(selectedText)
+                values.add(dropDownFields[columns.indexOf(col)]?.second?.text?.toString() ?: "postulante")
             } else if (fkRef != null) {
+                val selected = dropDownFields[columns.indexOf(col)]?.second?.text?.toString() ?: ""
                 val options = viewModel.getDropdownOptions(fkRef.refTable, fkRef.refDisplayColumn)
-                if (options.isEmpty()) {
-                    StyledToast.show(requireContext(), "No hay datos en ${fkRef.refTable}. Créelos primero.")
-                    return
-                }
-                hasRequiredFk = true
-
-                val autoComplete = dropDownFields.entries.find { it.value.first == col }?.value?.second
-                val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
-                if (selectedText.isBlank()) {
-                    StyledToast.show(requireContext(), "Debe seleccionar ${fkRef.refTable}")
-                    return
-                }
-
-                val selectedOption = options.find { it.second == selectedText }
-                if (selectedOption == null) {
-                    StyledToast.show(requireContext(), "Seleccione una opción válida de ${fkRef.refTable}: $selectedText")
-                    return
-                }
-                values.add(selectedOption.first)
+                values.add(options.find { it.second == selected }?.first ?: "")
             } else {
-                val et = textFields.entries.find { it.value.first == col }?.value?.second
-                val textValue = et?.text?.toString()?.trim() ?: ""
-
-                val errorMsg = ValidationRules.validate(tableName, col, textValue)
-                        ?: validateField(col, textValue)
-                if (errorMsg != null) {
-                    val parent = et?.parent?.parent
-                    if (parent is TextInputLayout) {
-                        parent.error = errorMsg
-                    }
-                    StyledToast.show(requireContext(), errorMsg)
-                    return
-                }
-
-                values.add(textValue)
+                values.add(textFields[columns.indexOf(col)]?.second?.text?.toString()?.trim() ?: "")
             }
         }
-
-        if (values.isEmpty()) {
-            StyledToast.show(requireContext(), getString(R.string.error))
-            return
-        }
-
-        // Step 3: Disable save button while operation in progress
-        btnSave.isEnabled = false
-        btnSave.text = "Guardando..."
-
-        // Step 4: Execute DB operation
-        if (isEditMode && itemData.isNotEmpty()) {
-            val id = itemData.first().trim()
-            viewModel.updateRecord(tableName, id, values)
-        } else {
-            viewModel.insertRecord(tableName, values)
-        }
+        if (isEditMode) viewModel.updateRecord(tableName, itemData.first(), values) else viewModel.insertRecord(tableName, values)
     }
 
     private fun getAutoGenColumn(table: String): String {
