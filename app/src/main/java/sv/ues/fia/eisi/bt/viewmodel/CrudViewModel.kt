@@ -166,7 +166,15 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
         return repository.getDropdownOptions(refTable, displayColumn)
     }
 
-    fun getFilteredOptions(childTable: String, childFkColumn: String, parentId: String): List<Pair<String, String>> {
-        return repository.getFilteredOptions(childTable, childFkColumn, parentId)
+    fun getFilteredOptions(childTable: String, childFkColumn: String, parentId: String, displayColumn: String? = null): List<Pair<String, String>> {
+        return repository.getFilteredOptions(childTable, childFkColumn, parentId, displayColumn)
+    }
+
+    fun getDepartamentoByMunicipio(idMunicipio: String): String? {
+        return repository.getDepartamentoByMunicipio(idMunicipio)
+    }
+
+    fun getMunicipioByDistrito(idDistrito: String): String? {
+        return repository.getMunicipioByDistrito(idDistrito)
     }
 }
