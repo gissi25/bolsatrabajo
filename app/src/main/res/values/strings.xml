@@ -2,49 +2,17 @@
 <resources>
     <string name="app_name">Bolsa de Trabajo</string>
 
-    <!-- Tablas Maestras -->
-    <string name="table_categoria_habilidad">Categoría Habilidad</string>
-    <string name="table_genero">Género</string>
-    <string name="table_tipo_documento">Tipo Documento</string>
-    <string name="table_departamento">Departamento</string>
-    <string name="table_institucion">Institución</string>
-    <string name="table_grado_academico">Grado Académico</string>
-    <string name="table_red_social">Red Social</string>
-
-    <!-- Tablas con Dependencias -->
-    <string name="table_municipio">Municipio</string>
-    <string name="table_distrito">Distrito</string>
-    <string name="table_habilidad">Habilidad</string>
-    <string name="table_empresa">Empresa</string>
-    <string name="table_oferta_academica">Oferta Académica</string>
-
-    <!-- Entidades Principales -->
-    <string name="table_postulante">Postulante</string>
-    <string name="table_usuario">Usuario</string>
-    <string name="table_certificacion">Certificación</string>
-    <string name="table_oferta_trabajo">Oferta de Trabajo</string>
-    <string name="table_detalle_requisito">Detalle Requisito</string>
-    <string name="table_experiencia_laboral">Experiencia Laboral</string>
-    <string name="table_formacion_academica">Formación Académica</string>
-    <string name="table_habilidad_postulante">Habilidad Postulante</string>
-    <string name="table_postulacion">Postulación</string>
-    <string name="table_red_social_postulante">Red Social Postulante</string>
-
     <!-- Auth -->
     <string name="login">Iniciar Sesión</string>
     <string name="register">Registrarse</string>
     <string name="username">Usuario</string>
     <string name="password">Contraseña</string>
     <string name="confirm_password">Confirmar Contraseña</string>
-    <string name="forgot_password">¿Olvidaste tu contraseña?</string>
-    <string name="no_account">¿No tienes cuenta?</string>
-    <string name="have_account">¿Ya tienes cuenta?</string>
 
     <!-- Dashboard -->
     <string name="dashboard">Dashboard</string>
     <string name="records">registros</string>
     <string name="search">Buscar</string>
-    <string name="filter">Filtrar</string>
 
     <!-- CRUD -->
     <string name="add">Agregar</string>
@@ -52,21 +20,14 @@
     <string name="delete">Eliminar</string>
     <string name="save">Guardar</string>
     <string name="cancel">Cancelar</string>
-    <string name="confirm">Confirmar</string>
     <string name="yes">Sí</string>
     <string name="no">No</string>
 
     <!-- Dialogos -->
-    <string name="confirm_delete">¿Estás seguro de eliminar este registro?</string>
-    <string name="delete_confirm_title">Confirmar Eliminación</string>
     <string name="delete_warning">¿Estás seguro que deseas eliminar este registro? Esta acción no es revocable y los registros asociados también serán eliminados.</string>
-    <string name="success">Éxito</string>
-    <string name="error">Error</string>
-    <string name="loading">Cargando…</string>
 
     <!-- Validaciones -->
     <string name="field_required">Este campo es requerido</string>
-    <string name="invalid_email">Correo electrónico inválido</string>
     <string name="password_mismatch">Las contraseñas no coinciden</string>
     <string name="username_already_exists">El nombre de usuario ya existe</string>
     <string name="search_tables">Buscar tablas...</string>
@@ -75,14 +36,5 @@
     <string name="password_too_short">La contraseña debe tener al menos 6 caracteres</string>
 
     <!-- Navegacion -->
-    <string name="home">Inicio</string>
-    <string name="dark_mode">Modo Oscuro</string>
     <string name="logout">Cerrar Sesión</string>
-    <string name="settings">Configuración</string>
-    <string name="profile">Perfil</string>
-
-    <!-- Misc -->
-    <string name="no_data">No hay datos disponibles</string>
-    <string name="retry">Reintentar</string>
-    <string name="ok">Aceptar</string>
 </resources>
