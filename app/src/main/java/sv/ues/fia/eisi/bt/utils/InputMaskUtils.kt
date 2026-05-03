@@ -3,7 +3,7 @@ package sv.ues.fia.eisi.bt.utils
 object InputMaskUtils {
 
     const val DUI_LENGTH = 9
-    const val NUP_LENGTH = 14
+    const val NUP_LENGTH = 12
     const val PASAPORTE_LENGTH = 9
     const val MIN_PASSWORD = 8
     const val EXPERIENCIA_MIN = 0
@@ -11,6 +11,7 @@ object InputMaskUtils {
     const val EDAD_MIN = 16
     const val EDAD_MAX = 100
     const val TELEFONO_LENGTH = 8
+    const val NIT_LENGTH_SIMPLE = 14
 
     fun formatDUI(text: String): String {
         val digits = text.filter { it.isDigit() }
@@ -42,6 +43,11 @@ object InputMaskUtils {
             d.length <= 4 -> d
             else -> "${d.substring(0, 4)}-${d.substring(4)}"
         }
+    }
+
+    fun formatNitSimple(text: String): String {
+        val digits = text.filter { it.isDigit() }
+        return if (digits.length > 14) digits.substring(0, 14) else digits
     }
 
     fun validateRango(value: String, min: Int, max: Int, nombre: String): String? {

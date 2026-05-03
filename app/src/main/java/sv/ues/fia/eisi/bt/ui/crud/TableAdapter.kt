@@ -120,6 +120,12 @@ class TableAdapter(
                 tvId.text = "ID: ${getStringSafely(item, 0)}"
                 tvPrimary.text = titulo.ifBlank { "(sin título)" }
                 tvSecondary.text = "$postNombre $postApellido".trim().ifBlank { "(sin postulante)" }
+            } else if (tableName == "EMPRESA") {
+                val nombreEmpresa = getStringSafely(item, 2)
+                val contactoDirecto = getStringSafely(item, 3)
+                tvId.text = "ID: $field0"
+                tvPrimary.text = nombreEmpresa.ifBlank { "(sin nombre)" }
+                tvSecondary.text = contactoDirecto.ifBlank { "(sin contacto)" }
             } else {
                 val field1 = getStringSafely(item, 1)
                 val field2 = getStringSafely(item, 2)

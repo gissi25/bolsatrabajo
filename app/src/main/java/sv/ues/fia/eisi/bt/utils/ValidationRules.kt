@@ -31,7 +31,8 @@ object ValidationRules {
             )
             "EMPRESA" -> mapOf(
                 "NOMBRE_EMPRESA" to FieldRule(field = "NOMBRE_EMPRESA", required = true, friendlyName = "Nombre de empresa"),
-                "NIT" to FieldRule(field = "NIT", required = true, friendlyName = "NIT"),
+                "NIT" to FieldRule(field = "NIT", required = true, minLength = 14, maxLength = 14, pattern = "^\\d{14}$", friendlyName = "NIT"),
+                "CONTACTO_DIRECTO" to FieldRule(field = "CONTACTO_DIRECTO", required = true, minLength = 9, maxLength = 9, pattern = "^\\d{4}-\\d{4}$", friendlyName = "Contacto directo"),
                 "ID_DISTRITO" to FieldRule(field = "ID_DISTRITO", required = true, friendlyName = "Distrito")
             )
             "OFERTA_TRABAJO" -> mapOf(
@@ -82,7 +83,7 @@ object ValidationRules {
             )
             "CERTIFICACION" -> mapOf(
                 "NOMBRE_CERTIFICACION" to FieldRule(field = "NOMBRE_CERTIFICACION", required = true, friendlyName = "Nombre de certificación"),
-                "CODIGO_CERTIFICACION" to FieldRule(field = "CODIGO_CERTIFICACION", required = true, friendlyName = "Código de certificación"),
+                "CODIGO_CERTIFICACION" to FieldRule(field = "CODIGO_CERTIFICACION", required = true, minLength = 14, maxLength = 14, pattern = "^\\d{14}$", friendlyName = "Código de certificación"),
                 "ID_POSTULANTE" to FieldRule(field = "ID_POSTULANTE", required = true, friendlyName = "Postulante"),
                 "ID_INSTITUCION" to FieldRule(field = "ID_INSTITUCION", required = true, friendlyName = "Institución")
             )

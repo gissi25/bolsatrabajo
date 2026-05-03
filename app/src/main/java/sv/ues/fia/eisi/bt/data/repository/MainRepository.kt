@@ -673,6 +673,30 @@ class MainRepository(context: Context) {
             }
         }
 
+        if (childTable == "OFERTA_TRABAJO" && childFkColumn == "ID_EMPRESA") {
+            return try {
+                val cursor = getDb().rawQuery(
+                    "SELECT o.ID_OFERTA, o.TITULO_PUESTO, e.NOMBRE_EMPRESA FROM OFERTA_TRABAJO o " +
+                    "LEFT JOIN EMPRESA e ON o.ID_EMPRESA = e.ID_EMPRESA " +
+                    "WHERE o.ID_EMPRESA = ? " +
+                    "ORDER BY o.FECHA_PUBLICACION DESC",
+                    arrayOf(parentId)
+                )
+                val options = mutableListOf<Pair<String, String>>()
+                while (cursor.moveToNext()) {
+                    val id = cursor.getInt(0).toString()
+                    val titulo = cursor.getString(1) ?: ""
+                    val empresa = cursor.getString(2) ?: ""
+                    val display = "$titulo".take(50)
+                    options.add(Pair(id, display.ifBlank { id }))
+                }
+                cursor.close()
+                options
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+
         // Caso genérico
         val idColumn = when (childTable) {
             "OFERTA_ACADEMICA" -> "ID_OFERTA_ACADEMICA"
