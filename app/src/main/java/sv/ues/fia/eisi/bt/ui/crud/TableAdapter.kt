@@ -43,14 +43,15 @@ class TableAdapter(
 
         fun bind(item: List<Any>, position: Int) {
             val field0 = getStringSafely(item, 0)
+            tvId.visibility = View.VISIBLE
 
             if (tableName == "POSTULANTE") {
-                // Para POSTULANTE mostrar NOMBRE (index 4) y APELLIDO (index 5)
-                val nombre = getStringSafely(item, 4)
-                val apellido = getStringSafely(item, 5)
+                // Mostrar ID arriba a la derecha y nombre completo abajo
+                val nombre = getStringSafely(item, 5)  // NOMBRE es índice 5
+                val apellido = getStringSafely(item, 6) // APELLIDO es índice 6
                 tvId.text = "ID: $field0"
-                tvPrimary.text = nombre.ifBlank { "(sin nombre)" }
-                tvSecondary.text = apellido.ifBlank { "(sin apellido)" }
+                tvPrimary.text = "$nombre $apellido".trim().ifBlank { "(sin nombre)" }
+                tvSecondary.text = ""
             } else if (tableName == "EXPERIENCIA_LABORAL") {
                 // Mostrar NOMBRE (index 8), APELLIDO (index 9) y PUESTO_TRABAJO (index 3)
                 val nombre = getStringSafely(item, 8)
