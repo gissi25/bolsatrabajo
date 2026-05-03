@@ -746,6 +746,34 @@ class MainRepository(context: Context) {
         }
     }
 
+    fun getDepartamentoByMunicipio(idMunicipio: String): String? {
+        return try {
+            val cursor = getDb().rawQuery(
+                "SELECT ID_DEPARTAMENTO FROM MUNICIPIO WHERE ID_MUNICIPIO = ?",
+                arrayOf(idMunicipio)
+            )
+            val result = if (cursor.moveToFirst()) cursor.getString(0) else null
+            cursor.close()
+            result
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    fun getMunicipioByDistrito(idDistrito: String): String? {
+        return try {
+            val cursor = getDb().rawQuery(
+                "SELECT ID_MUNICIPIO FROM DISTRITO WHERE ID_DISTRITO = ?",
+                arrayOf(idDistrito)
+            )
+            val result = if (cursor.moveToFirst()) cursor.getString(0) else null
+            cursor.close()
+            result
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     fun getColumnsForTable(tableName: String): List<String> {
         return when (tableName) {
             "USUARIO" -> listOf("ID_USUARIO", "USERNAME", "PASSWORD", "ROL")

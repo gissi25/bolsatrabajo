@@ -55,6 +55,12 @@ class EditorDialogFragment : DialogFragment() {
     private var docTypeColumnIndex: Int = -1
     private var numDocColumnIndex: Int = -1
 
+    private var distritoDepartamentoAutoComplete: MaterialAutoCompleteTextView? = null
+    private var distritoMunicipioAutoComplete: MaterialAutoCompleteTextView? = null
+
+    private var empresaDepartamentoAutoComplete: MaterialAutoCompleteTextView? = null
+    private var empresaMunicipioAutoComplete: MaterialAutoCompleteTextView? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NORMAL, R.style.AestheticDialog)
@@ -107,6 +113,15 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun setupFields() {
+        if (tableName == "DISTRITO") {
+            createDistritoDepartamentoField()
+        }
+
+        if (tableName == "EMPRESA") {
+            createEmpresaDepartamentoField()
+            createEmpresaMunicipioField()
+        }
+
         columns.filter { it != getAutoGenColumn(tableName) }.forEachIndexed { idx, column ->
             val colIndex = columns.indexOf(column)
             val isFk = fkRefs.containsKey(column)
@@ -130,7 +145,6 @@ class EditorDialogFragment : DialogFragment() {
             }
         }
 
-        // Refrescar configuración de documento si existen ambos campos
         if (docTypeColumnIndex != -1 && numDocColumnIndex != -1) {
             refreshNumDocHintAndValidation()
         }
@@ -141,6 +155,22 @@ class EditorDialogFragment : DialogFragment() {
 
         var parentId: String? = null
         var filterColumn: String? = null
+
+        if (column == "ID_MUNICIPIO" && tableName == "DISTRITO") {
+            val deptId = getSelectedDistritoDepartamentoValue()
+            if (deptId != null) {
+                parentId = deptId
+                filterColumn = "ID_DEPARTAMENTO"
+            }
+        }
+
+        if (column == "ID_DISTRITO" && tableName == "EMPRESA") {
+            val municipioId = getSelectedEmpresaMunicipioValue()
+            if (municipioId != null) {
+                parentId = municipioId
+                filterColumn = "ID_MUNICIPIO"
+            }
+        }
 
         if (column == "ID_MUNICIPIO" && fkRefs.containsKey("ID_DEPARTAMENTO")) {
             val parentAutoComplete = dropDownFields.values.find { it.first == "ID_DEPARTAMENTO" }?.second
@@ -158,7 +188,6 @@ class EditorDialogFragment : DialogFragment() {
             filterColumn = "ID_CATEGORIA_HABILIDAD"
         }
 
-        // Filtrar usando 'filterColumn' (el padre) en vez de la columna hija
         val options = if (parentId != null && parentId.isNotBlank() && filterColumn != null) {
             viewModel.getFilteredOptions(fkRef.refTable, filterColumn, parentId, fkRef.refDisplayColumn)
         } else {
@@ -222,6 +251,18 @@ class EditorDialogFragment : DialogFragment() {
         til.addView(autoComplete)
         tilFieldsContainer.addView(til)
         dropDownFields[colIndex] = Pair(column, autoComplete)
+
+        if (tableName == "DISTRITO" && column == "ID_MUNICIPIO") {
+            distritoMunicipioAutoComplete = autoComplete
+        }
+    }
+
+    private fun getSelectedDistritoDepartamentoValue(): String? {
+        val autoComplete = distritoDepartamentoAutoComplete ?: return null
+        val text = autoComplete.text?.toString()?.trim() ?: return null
+        if (text.isBlank()) return null
+        val departamentoOptions = viewModel.getDropdownOptions("DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
+        return departamentoOptions.find { it.second == text }?.first
     }
 
     private fun createNivelDestrezaDropdown(idx: Int, column: String, colIndex: Int) {
@@ -387,6 +428,283 @@ class EditorDialogFragment : DialogFragment() {
         til.addView(autoComplete)
         tilFieldsContainer.addView(til)
         dropDownFields[colIndex] = Pair(column, autoComplete)
+    }
+
+    private fun createDistritoDepartamentoField() {
+        val departamentoOptions = viewModel.getDropdownOptions("DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
+
+        val til = TextInputLayout(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 0, 0, 24)
+            }
+            hint = "Departamento"
+        }
+
+        val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setTextColor(getThemeColor(android.R.attr.textColorPrimary))
+            keyListener = null
+        }
+
+        val displayOptions = departamentoOptions.map { it.second }
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
+        autoComplete.setAdapter(adapter)
+
+        autoComplete.setOnTouchListener { v, event ->
+            if (event.action == android.view.MotionEvent.ACTION_UP) {
+                autoComplete.showDropDown()
+            }
+            true
+        }
+
+        if (isEditMode && itemData.size >= 2) {
+            val currentMunicipioId = itemData[1].trim()
+            val departamentoId = viewModel.getDepartamentoByMunicipio(currentMunicipioId)
+            if (departamentoId != null) {
+                val deptOptionIndex = departamentoOptions.indexOfFirst { it.first == departamentoId }
+                if (deptOptionIndex >= 0) {
+                    autoComplete.setText(displayOptions[deptOptionIndex], false)
+                }
+                post {
+                    prefillDistritoMunicipio(currentMunicipioId)
+                }
+            }
+        }
+
+        autoComplete.setOnItemClickListener { _, _, _, _ ->
+            refreshDistritoMunicipioDropdown()
+        }
+
+        til.addView(autoComplete)
+        tilFieldsContainer.addView(til)
+        distritoDepartamentoAutoComplete = autoComplete
+    }
+
+    private fun refreshDistritoMunicipioDropdown() {
+        val departamentoAutoComplete = distritoDepartamentoAutoComplete ?: return
+        val municipioAutoComplete = distritoMunicipioAutoComplete ?: return
+
+        val deptText = departamentoAutoComplete.text?.toString()?.trim() ?: return
+        val departamentoOptions = viewModel.getDropdownOptions("DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
+        val departamentoId = departamentoOptions.find { it.second == deptText }?.first ?: return
+
+        val municipioOptions = viewModel.getFilteredOptions("MUNICIPIO", "ID_DEPARTAMENTO", departamentoId, "NOMBRE_MUNICIPIO")
+        val displayOptions = municipioOptions.map { it.second }
+
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
+        municipioAutoComplete.setAdapter(adapter)
+        municipioAutoComplete.setText("", false)
+    }
+
+    private fun prefillDistritoMunicipio(municipioId: String) {
+        val municipioAutoComplete = distritoMunicipioAutoComplete ?: return
+        val deptText = distritoDepartamentoAutoComplete?.text?.toString()?.trim() ?: return
+        val departamentoOptions = viewModel.getDropdownOptions("DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
+        val departamentoId = departamentoOptions.find { it.second == deptText }?.first ?: return
+
+        val municipioOptions = viewModel.getFilteredOptions("MUNICIPIO", "ID_DEPARTAMENTO", departamentoId, "NOMBRE_MUNICIPIO")
+        val displayOptions = municipioOptions.map { it.second }
+
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
+        municipioAutoComplete.setAdapter(adapter)
+
+        val optionIndex = municipioOptions.indexOfFirst { it.first == municipioId }
+        if (optionIndex >= 0) {
+            municipioAutoComplete.setText(displayOptions[optionIndex], false)
+        }
+    }
+
+    private fun post(action: () -> Unit) {
+        tilFieldsContainer.post(action)
+    }
+
+    private fun createEmpresaDepartamentoField() {
+        val departamentoOptions = viewModel.getDropdownOptions("DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
+
+        val til = TextInputLayout(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 0, 0, 24)
+            }
+            hint = "Departamento"
+        }
+
+        val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setTextColor(getThemeColor(android.R.attr.textColorPrimary))
+            keyListener = null
+        }
+
+        val displayOptions = departamentoOptions.map { it.second }
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
+        autoComplete.setAdapter(adapter)
+
+        autoComplete.setOnTouchListener { v, event ->
+            if (event.action == android.view.MotionEvent.ACTION_UP) {
+                autoComplete.showDropDown()
+            }
+            true
+        }
+
+        if (isEditMode && itemData.size >= 2) {
+            val currentDistritoId = itemData[1].trim()
+            val municipioId = viewModel.getMunicipioByDistrito(currentDistritoId)
+            if (municipioId != null) {
+                val departamentoId = viewModel.getDepartamentoByMunicipio(municipioId)
+                if (departamentoId != null) {
+                    val deptOptionIndex = departamentoOptions.indexOfFirst { it.first == departamentoId }
+                    if (deptOptionIndex >= 0) {
+                        autoComplete.setText(displayOptions[deptOptionIndex], false)
+                    }
+                    post {
+                        prefillEmpresaMunicipio(municipioId)
+                        post {
+                            prefillEmpresaDistrito(currentDistritoId)
+                        }
+                    }
+                }
+            }
+        }
+
+        autoComplete.setOnItemClickListener { _, _, _, _ ->
+            refreshEmpresaMunicipioDropdown()
+            empresaMunicipioAutoComplete?.setText("", false)
+        }
+
+        til.addView(autoComplete)
+        tilFieldsContainer.addView(til)
+        empresaDepartamentoAutoComplete = autoComplete
+    }
+
+    private fun createEmpresaMunicipioField() {
+        val municipioOptions = viewModel.getDropdownOptions("MUNICIPIO", "NOMBRE_MUNICIPIO")
+
+        val til = TextInputLayout(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 0, 0, 24)
+            }
+            hint = "Municipio"
+        }
+
+        val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setTextColor(getThemeColor(android.R.attr.textColorPrimary))
+            keyListener = null
+        }
+
+        val displayOptions = municipioOptions.map { it.second }
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
+        autoComplete.setAdapter(adapter)
+
+        autoComplete.setOnTouchListener { v, event ->
+            if (event.action == android.view.MotionEvent.ACTION_UP) {
+                autoComplete.showDropDown()
+            }
+            true
+        }
+
+        autoComplete.setOnItemClickListener { _, _, _, _ ->
+            refreshEmpresaDistritoDropdown()
+        }
+
+        til.addView(autoComplete)
+        tilFieldsContainer.addView(til)
+        empresaMunicipioAutoComplete = autoComplete
+    }
+
+    private fun refreshEmpresaMunicipioDropdown() {
+        val departamentoAutoComplete = empresaDepartamentoAutoComplete ?: return
+        val municipioAutoComplete = empresaMunicipioAutoComplete ?: return
+
+        val deptText = departamentoAutoComplete.text?.toString()?.trim() ?: return
+        val departamentoOptions = viewModel.getDropdownOptions("DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
+        val departamentoId = departamentoOptions.find { it.second == deptText }?.first ?: return
+
+        val municipioOptions = viewModel.getFilteredOptions("MUNICIPIO", "ID_DEPARTAMENTO", departamentoId, "NOMBRE_MUNICIPIO")
+        val displayOptions = municipioOptions.map { it.second }
+
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
+        municipioAutoComplete.setAdapter(adapter)
+        municipioAutoComplete.setText("", false)
+    }
+
+    private fun refreshEmpresaDistritoDropdown() {
+        val municipioAutoComplete = empresaMunicipioAutoComplete ?: return
+
+        val munText = municipioAutoComplete.text?.toString()?.trim() ?: return
+        val municipioOptions = viewModel.getDropdownOptions("MUNICIPIO", "NOMBRE_MUNICIPIO")
+        val municipioId = municipioOptions.find { it.second == munText }?.first ?: return
+
+        val distritoOptions = viewModel.getFilteredOptions("DISTRITO", "ID_MUNICIPIO", municipioId, "NOMBRE_DISTRITO")
+        val displayOptions = distritoOptions.map { it.second }
+
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
+        val distritoAutoComplete = dropDownFields.values.find { it.first == "ID_DISTRITO" }?.second ?: return
+        distritoAutoComplete.setAdapter(adapter)
+        distritoAutoComplete.setText("", false)
+    }
+
+    private fun prefillEmpresaMunicipio(municipioId: String) {
+        val municipioAutoComplete = empresaMunicipioAutoComplete ?: return
+        val deptText = empresaDepartamentoAutoComplete?.text?.toString()?.trim() ?: return
+        val departamentoOptions = viewModel.getDropdownOptions("DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
+        val departamentoId = departamentoOptions.find { it.second == deptText }?.first ?: return
+
+        val municipioOptions = viewModel.getFilteredOptions("MUNICIPIO", "ID_DEPARTAMENTO", departamentoId, "NOMBRE_MUNICIPIO")
+        val displayOptions = municipioOptions.map { it.second }
+
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
+        municipioAutoComplete.setAdapter(adapter)
+
+        val optionIndex = municipioOptions.indexOfFirst { it.first == municipioId }
+        if (optionIndex >= 0) {
+            municipioAutoComplete.setText(displayOptions[optionIndex], false)
+        }
+    }
+
+    private fun prefillEmpresaDistrito(distritoId: String) {
+        val municipioAutoComplete = empresaMunicipioAutoComplete ?: return
+        val distritoAutoComplete = dropDownFields.values.find { it.first == "ID_DISTRITO" }?.second ?: return
+
+        val munText = municipioAutoComplete.text?.toString()?.trim() ?: return
+        val municipioOptions = viewModel.getDropdownOptions("MUNICIPIO", "NOMBRE_MUNICIPIO")
+        val municipioId = municipioOptions.find { it.second == munText }?.first ?: return
+
+        val distritoOptions = viewModel.getFilteredOptions("DISTRITO", "ID_MUNICIPIO", municipioId, "NOMBRE_DISTRITO")
+        val displayOptions = distritoOptions.map { it.second }
+
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
+        distritoAutoComplete.setAdapter(adapter)
+
+        val optionIndex = distritoOptions.indexOfFirst { it.first == distritoId }
+        if (optionIndex >= 0) {
+            distritoAutoComplete.setText(displayOptions[optionIndex], false)
+        }
+    }
+
+    private fun getSelectedEmpresaMunicipioValue(): String? {
+        val autoComplete = empresaMunicipioAutoComplete ?: return null
+        val text = autoComplete.text?.toString()?.trim() ?: return null
+        if (text.isBlank()) return null
+        val municipioOptions = viewModel.getDropdownOptions("MUNICIPIO", "NOMBRE_MUNICIPIO")
+        return municipioOptions.find { it.second == text }?.first
     }
 
     private fun getSelectedDropdownValue(autoComplete: MaterialAutoCompleteTextView?): String? {
