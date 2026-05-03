@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.ImageButton
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
@@ -15,6 +16,7 @@ import com.google.android.material.textfield.TextInputLayout
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.StyledToast
+import sv.ues.fia.eisi.bt.utils.ThemeToggleHelper
 import sv.ues.fia.eisi.bt.viewmodel.AuthViewModel
 
 class RegisterFragment : Fragment() {
@@ -30,6 +32,7 @@ class RegisterFragment : Fragment() {
     private lateinit var actvRol: MaterialAutoCompleteTextView
     private lateinit var btnRegister: MaterialButton
     private lateinit var btnLogin: MaterialButton
+    private lateinit var btnThemeToggle: ImageButton
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_register, container, false)
@@ -48,6 +51,12 @@ class RegisterFragment : Fragment() {
         actvRol = view.findViewById(R.id.actvRol)
         btnRegister = view.findViewById(R.id.btnRegister)
         btnLogin = view.findViewById(R.id.btnLogin)
+        btnThemeToggle = view.findViewById(R.id.btnThemeToggle)
+
+        btnThemeToggle.setImageResource(ThemeToggleHelper.getIconRes())
+        btnThemeToggle.setOnClickListener {
+            ThemeToggleHelper.toggle(requireActivity())
+        }
 
         // Setup rol dropdown
         val roles = arrayOf("postulante", "empresa", "admin")
