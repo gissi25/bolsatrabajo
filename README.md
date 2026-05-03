@@ -6,6 +6,44 @@ Aplicación Android nativa para la gestión de una bolsa de trabajo, desarrollad
 
 ## Arquitectura
 
+El proyecto sigue el patrón **MVVM** (Model-View-ViewModel), que separa la lógica de presentación de la interfaz de usuario para facilitar el mantenimiento y las pruebas.
+
+### Capas del patrón MVVM
+
+| Capa | Componentes | Responsabilidad |
+|------|------------|----------------|
+| **View** | Fragments (`LoginFragment`, `DashboardFragment`, `TableDetailFragment`, etc.) | Renderiza la UI, observa el ViewModel y reacciona a cambios de estado. No contiene lógica de negocio. |
+| **ViewModel** | `AuthViewModel`, `CrudViewModel`, `DashboardViewModel` | Expone datos a la View mediante `LiveData`, orquesta operaciones con el Repository, maneja estados de carga/error. |
+| **Model** | `MainRepository`, DAOs, Entities, `ConnectionHelper` | Fuente de datos única (SQLite). El Repository abstrae el origen de datos y el ViewModel solo conoce al Repository. |
+
+### Flujo de datos
+
+```
+View (Fragment)
+    │  Observa LiveData y envía acciones del usuario
+    ▼
+ViewModel
+    │  Llama al Repository en corrutinas (Dispatchers.IO)
+    ▼
+Repository (MainRepository)
+    │  Ejecuta queries SQL directas sobre SQLite
+    ▼
+ConnectionHelper (SQLiteOpenHelper)
+    │
+    ▼
+si.db (base de datos SQLite pre-poblada en assets/)
+```
+
+### Principios aplicados
+
+- **Single Activity**: La app usa una sola `MainActivity` con `NavHostFragment` y Navigation Component para gestionar todo el flujo de pantallas.
+- **Repository Pattern**: `MainRepository.kt` es la única fuente de datos, centraliza todas las consultas SQL y lógica de acceso a BD.
+- **LiveData**: Los ViewModels exponen `LiveData` que los Fragments observan, asegurando que la UI se actualice automáticamente cuando los datos cambian.
+- **Corrutinas**: Las operaciones de base de datos se ejecutan en `Dispatchers.IO` dentro de `viewModelScope` para no bloquear el hilo principal.
+- **CRUD Genérico**: Un solo `EditorDialogFragment` maneja la creación/edición de cualquier tabla, generando dinámicamente los campos según las columnas.
+
+### Diagrama de capas
+
 ```
 ┌─────────────────────────────────────────────────┐
 │  UI Layer (Fragments + Dialogs)                 │
