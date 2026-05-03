@@ -9,7 +9,7 @@ class ConnectionHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "bolsadetabajo.db"
-        private const val DATABASE_VERSION = 8
+        private const val DATABASE_VERSION = 9
         private const val TAG = "ConnectionHelper"
     }
 
@@ -349,6 +349,8 @@ class ConnectionHelper(context: Context) :
             FOR EACH ROW BEGIN
                 SELECT CASE WHEN NEW.FECHA_PUBLICACION IS NULL
                 THEN RAISE(ABORT, 'La fecha de publicación es obligatoria') END;
+                SELECT CASE WHEN NEW.FECHA_PUBLICACION > date('now')
+                THEN RAISE(ABORT, 'La fecha de publicación no puede ser futura') END;
             END
         """)
 
@@ -365,6 +367,8 @@ class ConnectionHelper(context: Context) :
         db.execSQL("""
             CREATE TRIGGER TR_POSTULANTE_EDAD BEFORE INSERT ON POSTULANTE
             FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.FECHA_NACIMIENTO > date('now')
+                THEN RAISE(ABORT, 'La fecha de nacimiento no puede ser futura') END;
                 SELECT CASE WHEN (strftime('%Y', 'now') - strftime('%Y', NEW.FECHA_NACIMIENTO)) < 18
                 THEN RAISE(ABORT, 'El postulante debe ser mayor de edad') END;
             END
@@ -378,6 +382,39 @@ class ConnectionHelper(context: Context) :
                 THEN RAISE(ABORT, 'Correo electrónico no válido') END;
             END
         """)
+
+        // ================================================================
+        // VALIDACIÓN DE FECHAS NO FUTURAS
+        // ================================================================
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_FORM_ACAD_FECHA_FUTURA")
+        db.execSQL("""
+            CREATE TRIGGER TR_FORM_ACAD_FECHA_FUTURA BEFORE INSERT ON FORMACION_ACADEMICA
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.FECHA_OBTENCION > date('now')
+                THEN RAISE(ABORT, 'La fecha de obtención no puede ser futura') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_EXP_LAB_FECHA_INICIO_FUTURA")
+        db.execSQL("""
+            CREATE TRIGGER TR_EXP_LAB_FECHA_INICIO_FUTURA BEFORE INSERT ON EXPERIENCIA_LABORAL
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.FECHA_INICIO > date('now')
+                THEN RAISE(ABORT, 'La fecha de inicio no puede ser futura') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_CERTIFICACION_FECHA_FUTURA")
+        db.execSQL("""
+            CREATE TRIGGER TR_CERTIFICACION_FECHA_FUTURA BEFORE INSERT ON CERTIFICACION
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.FECHA_CERTIFICACION > date('now')
+                THEN RAISE(ABORT, 'La fecha de certificación no puede ser futura') END;
+            END
+        """)
+
+        
 
         // ================================================================
         // BLOQUE 2: CASCADA DE BORRADO (14 triggers)
