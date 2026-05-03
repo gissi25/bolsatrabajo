@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ProgressBar
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
@@ -15,6 +16,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import sv.ues.fia.eisi.bt.utils.StyledToast
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.utils.Constants
+import sv.ues.fia.eisi.bt.utils.ThemeToggleHelper
 import sv.ues.fia.eisi.bt.viewmodel.CrudViewModel
 
 class TableDetailFragment : Fragment() {
@@ -25,6 +27,7 @@ class TableDetailFragment : Fragment() {
     private lateinit var toolbar: MaterialToolbar
     private lateinit var fabAdd: FloatingActionButton
     private lateinit var progressBar: ProgressBar
+    private lateinit var btnThemeToggle: ImageButton
     private lateinit var adapter: TableAdapter
 
     private var tableName: String = ""
@@ -51,6 +54,12 @@ class TableDetailFragment : Fragment() {
         toolbar = view.findViewById(R.id.toolbar)
         fabAdd = view.findViewById(R.id.fabAdd)
         progressBar = view.findViewById(R.id.progressBar)
+        btnThemeToggle = view.findViewById(R.id.btnThemeToggle)
+
+        btnThemeToggle.setImageResource(ThemeToggleHelper.getIconRes())
+        btnThemeToggle.setOnClickListener {
+            ThemeToggleHelper.toggle(requireActivity())
+        }
 
         setupToolbar()
         setupRecyclerView()

@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatDelegate
+import android.widget.ImageButton
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -12,9 +12,11 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.utils.Constants
+import sv.ues.fia.eisi.bt.utils.ThemeToggleHelper
 import sv.ues.fia.eisi.bt.viewmodel.DashboardViewModel
 
 class DashboardFragment : Fragment() {
@@ -24,6 +26,8 @@ class DashboardFragment : Fragment() {
     private lateinit var toolbar: MaterialToolbar
     private lateinit var adapter: DashboardAdapter
     private lateinit var etSearch: TextInputEditText
+    private lateinit var btnThemeToggle: ImageButton
+    private lateinit var btnLogout: ImageButton
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_dashboard, container, false)
@@ -35,8 +39,23 @@ class DashboardFragment : Fragment() {
         recyclerView = view.findViewById(R.id.recyclerTables)
         toolbar = view.findViewById(R.id.toolbar)
         etSearch = view.findViewById(R.id.etSearch)
+        btnThemeToggle = view.findViewById(R.id.btnThemeToggle)
+        btnLogout = view.findViewById(R.id.btnLogout)
 
-        setupToolbar()
+        val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        val username = prefs.getString(Constants.KEY_USERNAME, "")
+        toolbar.title = getString(R.string.welcome_user, username)
+
+        btnThemeToggle.setImageResource(ThemeToggleHelper.getIconRes())
+        btnThemeToggle.setOnClickListener {
+            ThemeToggleHelper.toggle(requireActivity())
+        }
+
+        btnLogout.setImageResource(ThemeToggleHelper.getLogoutIconRes())
+        btnLogout.setOnClickListener {
+            showLogoutConfirm()
+        }
+
         setupSearch()
         setupRecyclerView()
 
@@ -48,38 +67,6 @@ class DashboardFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         viewModel.refreshCounts()
-    }
-
-    private fun setupToolbar() {
-        val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
-        val username = prefs.getString(Constants.KEY_USERNAME, "")
-        
-        toolbar.title = getString(R.string.welcome_user, username)
-        
-        toolbar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.action_dark_mode -> {
-                    toggleDarkMode()
-                    true
-                }
-                R.id.action_logout -> {
-                    logout()
-                    true
-                }
-                else -> false
-            }
-        }
-    }
-
-    private fun toggleDarkMode() {
-        val currentMode = AppCompatDelegate.getDefaultNightMode()
-        val newMode = if (currentMode == AppCompatDelegate.MODE_NIGHT_YES) {
-            AppCompatDelegate.MODE_NIGHT_NO
-        } else {
-            AppCompatDelegate.MODE_NIGHT_YES
-        }
-        AppCompatDelegate.setDefaultNightMode(newMode)
-        requireActivity().recreate()
     }
 
     private fun setupSearch() {
@@ -106,8 +93,8 @@ class DashboardFragment : Fragment() {
         recyclerView.adapter = adapter
     }
 
-    private fun logout() {
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+    private fun showLogoutConfirm() {
+        MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.logout)
             .setMessage(R.string.logout_confirm_message)
             .setPositiveButton(R.string.yes) { _, _ ->
