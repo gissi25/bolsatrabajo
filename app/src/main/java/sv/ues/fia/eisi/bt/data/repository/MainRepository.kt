@@ -178,25 +178,33 @@ class MainRepository(context: Context) {
 
     fun insertRecord(tableName: String, values: List<Any>): Long {
         val idCol = getAutoGenColumn(tableName)
-        val columns = getColumnsForTable(tableName).filter { it != idCol }
+        var columns = getColumnsForTable(tableName).filter { it != idCol }
+        val finalValues = values.toMutableList()
+
+        // Filtrar columnas virtuales que no existen en la tabla real
+        if (tableName == "HABILIDAD_POSTULANTE") {
+            val catIndex = getColumnsForTable(tableName).filter { it != idCol }.indexOf("ID_CATEGORIA_HABILIDAD")
+            if (catIndex >= 0) {
+                columns = columns.filterIndexed { index, _ -> index != catIndex }
+                finalValues.removeAt(catIndex)
+            }
+        }
 
         android.util.Log.d("MainRepository", "Table: $tableName")
         android.util.Log.d("MainRepository", "AutoGenCol: $idCol")
         android.util.Log.d("MainRepository", "Columns: $columns")
-        android.util.Log.d("MainRepository", "Values: $values")
+        android.util.Log.d("MainRepository", "Values: $finalValues")
 
-        if (values.size != columns.size) {
-            android.util.Log.e("MainRepository", "ERROR: Values count (${values.size}) != Columns count (${columns.size})")
+        if (finalValues.size != columns.size) {
+            android.util.Log.e("MainRepository", "ERROR: Values count (${finalValues.size}) != Columns count (${columns.size})")
         }
-
-        val valuesCopy = values.toMutableList()
 
         if (tableName == "USUARIO") {
             val pwdIndex = columns.indexOf("PASSWORD")
-            if (pwdIndex >= 0 && pwdIndex < valuesCopy.size) {
-                val plainPassword = valuesCopy[pwdIndex].toString()
+            if (pwdIndex >= 0 && pwdIndex < finalValues.size) {
+                val plainPassword = finalValues[pwdIndex].toString()
                 if (plainPassword.isNotBlank() && !plainPassword.startsWith("$2")) {
-                    valuesCopy[pwdIndex] = PasswordHasher.hash(plainPassword)
+                    finalValues[pwdIndex] = PasswordHasher.hash(plainPassword)
                 }
             }
         }
@@ -207,7 +215,7 @@ class MainRepository(context: Context) {
         maxIdCursor.close()
 
         val cols = columns.joinToString(", ")
-        val vals = valuesCopy.joinToString(", ") { "'$it'" }
+        val vals = finalValues.joinToString(", ") { "'$it'" }
         val sql = "INSERT INTO $tableName ($idCol, $cols) VALUES ($nextId, $vals)"
 
         android.util.Log.d("MainRepository", "SQL: $sql")
@@ -226,8 +234,19 @@ class MainRepository(context: Context) {
 
     fun updateRecord(tableName: String, id: Any, values: List<Any>): Int {
         val idCol = getAutoGenColumn(tableName)
-        val columns = getColumnsForTable(tableName).filter { it != idCol }
-        val setClause = columns.zip(values).map { "${it.first} = '${it.second}'" }.joinToString(", ")
+        var columns = getColumnsForTable(tableName).filter { it != idCol }
+        val finalValues = values.toMutableList()
+
+        // Filtrar columnas virtuales que no existen en la tabla real
+        if (tableName == "HABILIDAD_POSTULANTE") {
+            val catIndex = getColumnsForTable(tableName).filter { it != idCol }.indexOf("ID_CATEGORIA_HABILIDAD")
+            if (catIndex >= 0) {
+                columns = columns.filterIndexed { index, _ -> index != catIndex }
+                finalValues.removeAt(catIndex)
+            }
+        }
+
+        val setClause = columns.zip(finalValues).map { "${it.first} = '${it.second}'" }.joinToString(", ")
 
         try {
             getDb().execSQL("UPDATE $tableName SET $setClause WHERE $idCol = $id")
@@ -306,7 +325,7 @@ class MainRepository(context: Context) {
             }
             "HABILIDAD_POSTULANTE" -> {
                 """
-                SELECT hp.ID_HABILIDAD, hp.ID_POSTULANTE, hp.ID_HABILIDAD_POSTULANTE, hp.NIVEL_DESTREZA,
+                SELECT hp.ID_POSTULANTE, h.ID_CATEGORIA_HABILIDAD, hp.ID_HABILIDAD, hp.ID_HABILIDAD_POSTULANTE, hp.NIVEL_DESTREZA,
                        p.NOMBRE, p.APELLIDO, h.NOMBRE_HABILIDAD
                 FROM HABILIDAD_POSTULANTE hp
                 LEFT JOIN POSTULANTE p ON hp.ID_POSTULANTE = p.ID_POSTULANTE
@@ -456,8 +475,9 @@ class MainRepository(context: Context) {
                 "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "NOMBRE")
             )
             "HABILIDAD_POSTULANTE" -> mapOf(
-                "ID_HABILIDAD" to FkReference("ID_HABILIDAD", "HABILIDAD", "NOMBRE_HABILIDAD"),
-                "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "NOMBRE")
+                "ID_HABILIDAD" to FkReference("ID_HABILIDAD", "HABILIDAD", "NOMBRE_HABILIDAD", "ID_CATEGORIA_HABILIDAD"),
+                "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "NOMBRE"),
+                "ID_CATEGORIA_HABILIDAD" to FkReference("ID_CATEGORIA_HABILIDAD", "CATEGORIA_HABILIDAD", "NOMBRE_CATEGORIA")
             )
             "POSTULACION" -> mapOf(
                 "ID_EMPRESA" to FkReference("ID_EMPRESA", "EMPRESA", "NOMBRE_EMPRESA"),
@@ -530,6 +550,29 @@ class MainRepository(context: Context) {
             }
         }
 
+        // Caso especial para HABILIDAD: mostrar "[Categoría] Nombre"
+        if (tableName == "HABILIDAD") {
+            return try {
+                val cursor = getDb().rawQuery(
+                    "SELECT h.ID_HABILIDAD, h.NOMBRE_HABILIDAD, c.NOMBRE_CATEGORIA FROM HABILIDAD h " +
+                    "LEFT JOIN CATEGORIA_HABILIDAD c ON h.ID_CATEGORIA_HABILIDAD = c.ID_CATEGORIA_HABILIDAD",
+                    null
+                )
+                val options = mutableListOf<Pair<String, String>>()
+                while (cursor.moveToNext()) {
+                    val id = cursor.getInt(0).toString()
+                    val nombre = cursor.getString(1) ?: ""
+                    val categoria = cursor.getString(2) ?: "Sin Categoría"
+                    val display = "[$categoria] $nombre"
+                    options.add(Pair(id, display))
+                }
+                cursor.close()
+                options
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+
         return try {
             val idCol = idColumn ?: getDb().rawQuery("PRAGMA table_info($tableName)", null).use { cols ->
                 var foundId = "ID_"
@@ -560,33 +603,112 @@ class MainRepository(context: Context) {
         }
     }
 
-    fun getFilteredOptions(childTable: String, childFkColumn: String, parentId: String): List<Pair<String, String>> {
+    fun getFilteredOptions(childTable: String, childFkColumn: String, parentId: String, displayColumn: String? = null): List<Pair<String, String>> {
+        // Casos especiales de visualización (mantener consistencia con getDropdownOptions)
+        if (childTable == "HABILIDAD") {
+            return try {
+                val cursor = getDb().rawQuery(
+                    "SELECT h.ID_HABILIDAD, h.NOMBRE_HABILIDAD, c.NOMBRE_CATEGORIA FROM HABILIDAD h " +
+                    "LEFT JOIN CATEGORIA_HABILIDAD c ON h.ID_CATEGORIA_HABILIDAD = c.ID_CATEGORIA_HABILIDAD " +
+                    "WHERE h.$childFkColumn = ?",
+                    arrayOf(parentId)
+                )
+                val options = mutableListOf<Pair<String, String>>()
+                while (cursor.moveToNext()) {
+                    val id = cursor.getInt(0).toString()
+                    val nombre = cursor.getString(1) ?: ""
+                    val categoria = cursor.getString(2) ?: "Sin Categoría"
+                    val display = "[$categoria] $nombre"
+                    options.add(Pair(id, display))
+                }
+                cursor.close()
+                options
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+
+        if (childTable == "POSTULANTE") {
+            return try {
+                val cursor = getDb().rawQuery(
+                    "SELECT ID_POSTULANTE, NOMBRE, APELLIDO FROM POSTULANTE WHERE $childFkColumn = ?",
+                    arrayOf(parentId)
+                )
+                val options = mutableListOf<Pair<String, String>>()
+                while (cursor.moveToNext()) {
+                    val id = cursor.getInt(0).toString()
+                    val nombre = cursor.getString(1) ?: ""
+                    val apellido = cursor.getString(2) ?: ""
+                    val display = "$nombre $apellido".trim()
+                    options.add(Pair(id, display.ifBlank { id }))
+                }
+                cursor.close()
+                options
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+
+        if (childTable == "OFERTA_ACADEMICA") {
+            return try {
+                val cursor = getDb().rawQuery(
+                    "SELECT o.ID_OFERTA_ACADEMICA, i.NOMBRE_INSTITUCION, g.NOMBRE_GRADO FROM OFERTA_ACADEMICA o " +
+                    "LEFT JOIN INSTITUCION i ON o.ID_INSTITUCION = i.ID_INSTITUCION " +
+                    "LEFT JOIN GRADO_ACADEMICO g ON o.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO " +
+                    "WHERE o.$childFkColumn = ?",
+                    arrayOf(parentId)
+                )
+                val options = mutableListOf<Pair<String, String>>()
+                while (cursor.moveToNext()) {
+                    val id = cursor.getInt(0).toString()
+                    val institucion = cursor.getString(1) ?: ""
+                    val grado = cursor.getString(2) ?: ""
+                    val display = "$grado - $institucion".take(50)
+                    options.add(Pair(id, display))
+                }
+                cursor.close()
+                options
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+
+        // Caso genérico
         val idColumn = when (childTable) {
             "OFERTA_ACADEMICA" -> "ID_OFERTA_ACADEMICA"
             "OFERTA_TRABAJO" -> "ID_OFERTA"
+            "HABILIDAD" -> "ID_HABILIDAD"
             else -> {
                 val cols = getDb().rawQuery("PRAGMA table_info($childTable)", null)
-                val hasPkSuffix = cols.use { c ->
-                    var found = false
+                var found = "ID"
+                cols.use { c ->
                     while (c.moveToNext()) {
                         val name = c.getString(1) ?: ""
                         if (name.startsWith("ID_") && name != "ID_GENERO" && name != "ID_TIPO_DOCUMENTO") {
-                            found = true
+                            found = name
+                            break
                         }
                     }
-                    found
                 }
-                if (hasPkSuffix) "ID_" else "ID"
+                found
             }
         }
+        
         return try {
             val cursor = getDb().rawQuery("SELECT * FROM $childTable WHERE $childFkColumn = ?", arrayOf(parentId))
             val options = mutableListOf<Pair<String, String>>()
             while (cursor.moveToNext()) {
                 val idColIdx = cursor.getColumnIndex(idColumn)
                 val id = if (idColIdx >= 0) cursor.getInt(idColIdx).toString() else cursor.getInt(0).toString()
-                val nameColIdx = idColIdx + 1
-                val name = if (nameColIdx < cursor.columnCount) cursor.getString(nameColIdx) ?: id else id
+                
+                val name = if (displayColumn != null) {
+                    val colIdx = cursor.getColumnIndex(displayColumn)
+                    if (colIdx >= 0) cursor.getString(colIdx) ?: id else id
+                } else {
+                    // Fallback a la segunda columna si no hay displayColumn
+                    if (cursor.columnCount > 1) cursor.getString(1) ?: id else id
+                }
+
                 options.add(Pair(id, name))
             }
             cursor.close()
@@ -644,7 +766,7 @@ class MainRepository(context: Context) {
             "CERTIFICACION" -> listOf("ID_POSTULANTE", "ID_CERTIFICACION", "ID_INSTITUCION", "NOMBRE_CERTIFICACION", "CODIGO_CERTIFICACION", "FECHA_CERTIFICACION")
             "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "ID_EXPERIENCIA", "ID_EMPRESA", "PUESTO_TRABAJO", "FECHA_INICIO", "FECHA_FIN", "DESCP_EXPERIENCIA_LABORAL", "CONTACTO_REFERENCIA")
             "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_POSTULANTE", "ID_OFERTA_ACADEMICA", "TITULO_OBTENIDO", "FECHA_OBTENCION")
-            "HABILIDAD_POSTULANTE" -> listOf("ID_POSTULANTE", "ID_HABILIDAD", "ID_HABILIDAD_POSTULANTE", "NIVEL_DESTREZA")
+            "HABILIDAD_POSTULANTE" -> listOf("ID_POSTULANTE", "ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "ID_HABILIDAD_POSTULANTE", "NIVEL_DESTREZA")
             "POSTULACION" -> listOf("ID_EMPRESA", "ID_OFERTA", "ID_POSTULANTE", "ID_POSTULACION", "FECHA_APLICACION", "ESTADO_PROCESO")
             "DETALLE_REQUISITO" -> listOf("ID_DETALLE", "ID_EMPRESA", "ID_OFERTA", "DESCRIPCION_REQUISITO")
             "RED_SOCIAL_POSTULANTE" -> listOf("ID_RED_POSTUALNTE", "ID_POSTULANTE", "ID_RED_SOCIAL", "URL_PERFIL")

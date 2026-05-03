@@ -13,31 +13,34 @@ object InputMaskUtils {
     const val TELEFONO_LENGTH = 8
 
     fun formatDUI(text: String): String {
-        if (text.contains("-")) return text
         val digits = text.filter { it.isDigit() }
-        if (digits.length == 9) {
-            return "${digits.substring(0, 8)}-${digits.substring(8)}"
+        val d = if (digits.length > 9) digits.substring(0, 9) else digits
+        
+        return if (d.length == 9) {
+            "${d.substring(0, 8)}-${d.substring(8)}"
+        } else {
+            d
         }
-        return text
     }
 
     fun formatNIT(text: String): String {
-        if (text.contains("-")) return text
         val digits = text.filter { it.isDigit() }
+        val d = if (digits.length > 14) digits.substring(0, 14) else digits
+        
         return when {
-            digits.length <= 4 -> digits
-            digits.length <= 10 -> "${digits.substring(0, 4)}-${digits.substring(4)}"
-            digits.length <= 13 -> "${digits.substring(0, 4)}-${digits.substring(4, 10)}-${digits.substring(10)}"
-            digits.length <= 15 -> "${digits.substring(0, 4)}-${digits.substring(4, 10)}-${digits.substring(10, 13)}-${digits.substring(13)}"
-            else -> digits
+            d.length <= 4 -> d
+            d.length <= 10 -> "${d.substring(0, 4)}-${d.substring(4)}"
+            d.length <= 13 -> "${d.substring(0, 4)}-${d.substring(4, 10)}-${d.substring(10)}"
+            else -> "${d.substring(0, 4)}-${d.substring(4, 10)}-${d.substring(10, 13)}-${d.substring(13)}"
         }
     }
 
     fun formatTelefono(text: String): String {
         val digits = text.filter { it.isDigit() }
-        return when (digits.length) {
-            in 0..4 -> digits
-            else -> "${digits.substring(0, 4)}-${digits.substring(4, minOf(8, digits.length))}"
+        val d = if (digits.length > 8) digits.substring(0, 8) else digits
+        return when {
+            d.length <= 4 -> d
+            else -> "${d.substring(0, 4)}-${d.substring(4)}"
         }
     }
 

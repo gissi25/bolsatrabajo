@@ -103,22 +103,10 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun setupTitle() {
-        btnSave.text = if (isEditMode) getString(R.string.save) else getString(R.string.add)
         tvTitle.text = if (isEditMode) "Editar $tableName" else "Nuevo $tableName"
     }
 
     private fun setupFields() {
-        tilFieldsContainer.removeAllViews()
-        dropDownFields.clear()
-        textFields.clear()
-        nivelDestrezaFields.clear()
-        docTypeColumnIndex = -1
-        numDocColumnIndex = -1
-
-        if (columns.isEmpty()) {
-            columns = listOf("NOMBRE")
-        }
-
         columns.filter { it != getAutoGenColumn(tableName) }.forEachIndexed { idx, column ->
             val colIndex = columns.indexOf(column)
             val isFk = fkRefs.containsKey(column)
@@ -128,7 +116,7 @@ class EditorDialogFragment : DialogFragment() {
 
             if (column == "ID_TIPO_DOCUMENTO") docTypeColumnIndex = colIndex
             if (column == "NUM_DOCUMENTO") numDocColumnIndex = colIndex
-            
+
             if (isFk) {
                 createDropdownField(idx, column, colIndex)
             } else if (isNivelDestreza) {
@@ -141,24 +129,38 @@ class EditorDialogFragment : DialogFragment() {
                 createTextInputField(idx, column, colIndex)
             }
         }
+
+        // Refrescar configuración de documento si existen ambos campos
+        if (docTypeColumnIndex != -1 && numDocColumnIndex != -1) {
+            refreshNumDocHintAndValidation()
+        }
     }
 
     private fun createDropdownField(idx: Int, column: String, colIndex: Int) {
         val fkRef = fkRefs[column] ?: return
-        
+
         var parentId: String? = null
+        var filterColumn: String? = null
+
         if (column == "ID_MUNICIPIO" && fkRefs.containsKey("ID_DEPARTAMENTO")) {
-            val parentAutoComplete = dropDownFields.entries.find { it.value.first == "ID_DEPARTAMENTO" }?.value?.second
+            val parentAutoComplete = dropDownFields.values.find { it.first == "ID_DEPARTAMENTO" }?.second
             parentId = getSelectedDropdownValue(parentAutoComplete)
+            filterColumn = "ID_DEPARTAMENTO"
         }
         if (column == "ID_DISTRITO" && fkRefs.containsKey("ID_MUNICIPIO")) {
-            val parentAutoComplete = dropDownFields.entries.find { it.value.first == "ID_MUNICIPIO" }?.value?.second
+            val parentAutoComplete = dropDownFields.values.find { it.first == "ID_MUNICIPIO" }?.second
             parentId = getSelectedDropdownValue(parentAutoComplete)
+            filterColumn = "ID_MUNICIPIO"
+        }
+        if (column == "ID_HABILIDAD" && fkRefs.containsKey("ID_CATEGORIA_HABILIDAD")) {
+            val parentAutoComplete = dropDownFields.values.find { it.first == "ID_CATEGORIA_HABILIDAD" }?.second
+            parentId = getSelectedDropdownValue(parentAutoComplete)
+            filterColumn = "ID_CATEGORIA_HABILIDAD"
         }
 
-        val options = if (parentId != null && parentId.isNotBlank()) {
-            val parentFk = fkRefs[if (column == "ID_MUNICIPIO") "ID_DEPARTAMENTO" else "ID_MUNICIPIO"]!!
-            viewModel.getFilteredOptions(fkRef.refTable, parentFk.fkColumn, parentId)
+        // Filtrar usando 'filterColumn' (el padre) en vez de la columna hija
+        val options = if (parentId != null && parentId.isNotBlank() && filterColumn != null) {
+            viewModel.getFilteredOptions(fkRef.refTable, filterColumn, parentId, fkRef.refDisplayColumn)
         } else {
             viewModel.getDropdownOptions(fkRef.refTable, fkRef.refDisplayColumn)
         }
@@ -185,7 +187,7 @@ class EditorDialogFragment : DialogFragment() {
         val displayOptions = options.map { it.second }
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
         autoComplete.setAdapter(adapter)
-        
+
         autoComplete.setOnTouchListener { v, event ->
             if (event.action == android.view.MotionEvent.ACTION_UP) {
                 autoComplete.showDropDown()
@@ -201,19 +203,21 @@ class EditorDialogFragment : DialogFragment() {
             }
         }
 
-        autoComplete.setOnItemClickListener { _, _, position, _ ->
-            if (position < options.size) {
-                if (column == "ID_DEPARTAMENTO") {
-                    refreshDependentDropdown("ID_MUNICIPIO")
-                }
-                if (column == "ID_MUNICIPIO") {
-                    refreshDependentDropdown("ID_DISTRITO")
-                }
+        autoComplete.setOnItemClickListener { _, _, _, _ ->
+            if (column == "ID_DEPARTAMENTO") refreshDependentDropdown("ID_MUNICIPIO")
+            if (column == "ID_MUNICIPIO") refreshDependentDropdown("ID_DISTRITO")
+            if (column == "ID_CATEGORIA_HABILIDAD") refreshDependentDropdown("ID_HABILIDAD")
+        }
+
+        autoComplete.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
                 if (column == "ID_TIPO_DOCUMENTO") {
                     refreshNumDocHintAndValidation()
                 }
             }
-        }
+        })
 
         til.addView(autoComplete)
         tilFieldsContainer.addView(til)
@@ -226,7 +230,7 @@ class EditorDialogFragment : DialogFragment() {
             "2" to "Intermedio",
             "3" to "Avanzado"
         )
-        
+
         val til = TextInputLayout(requireContext()).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -249,7 +253,7 @@ class EditorDialogFragment : DialogFragment() {
         val displayOptions = nivelOptions.map { it.second }
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
         autoComplete.setAdapter(adapter)
-        
+
         autoComplete.setOnTouchListener { v, event ->
             if (event.action == android.view.MotionEvent.ACTION_UP) {
                 autoComplete.showDropDown()
@@ -273,9 +277,9 @@ class EditorDialogFragment : DialogFragment() {
 
         til.addView(autoComplete)
         tilFieldsContainer.addView(til)
-        nivelDestrezaFields[colIndex]?.let { 
-            val idx = nivelOptions.indexOfFirst { pair -> pair.first == it }
-            if (idx >= 0) autoComplete.setText(displayOptions[idx], false)
+        nivelDestrezaFields[colIndex]?.let {
+            val id = nivelOptions.indexOfFirst { pair -> pair.first == it }
+            if (id >= 0) autoComplete.setText(displayOptions[id], false)
         }
         dropDownFields[colIndex] = Pair(column, autoComplete)
     }
@@ -287,7 +291,7 @@ class EditorDialogFragment : DialogFragment() {
             "contratado" to "Contratado",
             "rechazado" to "Rechazado"
         )
-        
+
         val til = TextInputLayout(requireContext()).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -310,7 +314,7 @@ class EditorDialogFragment : DialogFragment() {
         val displayOptions = estadoOptions.map { it.second }
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
         autoComplete.setAdapter(adapter)
-        
+
         autoComplete.setOnTouchListener { v, event ->
             if (event.action == android.view.MotionEvent.ACTION_UP) {
                 autoComplete.showDropDown()
@@ -339,7 +343,7 @@ class EditorDialogFragment : DialogFragment() {
 
     private fun createRolDropdown(idx: Int, column: String, colIndex: Int) {
         val roles = arrayOf("postulante", "empresa", "admin")
-        
+
         val til = TextInputLayout(requireContext()).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -361,7 +365,7 @@ class EditorDialogFragment : DialogFragment() {
 
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, roles)
         autoComplete.setAdapter(adapter)
-        
+
         autoComplete.setOnTouchListener { v, event ->
             if (event.action == android.view.MotionEvent.ACTION_UP) {
                 autoComplete.showDropDown()
@@ -400,14 +404,14 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun getSelectedDocType(): String? {
-        if (docTypeColumnIndex == -1 || !fkRefs.containsKey("ID_TIPO_DOCUMENTO")) return null
+        if (docTypeColumnIndex == -1) return null
         val autoComplete = dropDownFields[docTypeColumnIndex]?.second ?: return null
-        val text = autoComplete.text?.toString()?.trim() ?: return null
+        val text = autoComplete.text?.toString()?.trim()?.lowercase() ?: return null
         if (text.isBlank()) return null
-        return when (text.lowercase()) {
-            "dui" -> "DUI"
-            "nit" -> "NIT"
-            "pasaporte" -> "PASAPORTE"
+        return when {
+            text.contains("dui") -> "DUI"
+            text.contains("nit") -> "NIT"
+            text.contains("pasaporte") -> "PASAPORTE"
             else -> text.uppercase()
         }
     }
@@ -416,9 +420,25 @@ class EditorDialogFragment : DialogFragment() {
         if (numDocColumnIndex == -1) return
         val pair = textFields[numDocColumnIndex] ?: return
         val et = pair.second
-        val til = et.parent as? TextInputLayout ?: return
+
+        // Búsqueda robusta del TextInputLayout subiendo en la jerarquía
+        var current = et.parent
+        var til: TextInputLayout? = null
+        while (current != null) {
+            if (current is TextInputLayout) {
+                til = current
+                break
+            }
+            current = current.parent
+        }
+        if (til == null) return
 
         val tipo = getSelectedDocType()
+
+        // BLOQUEO: Deshabilitar el campo si no se ha seleccionado tipo de documento
+        et.isEnabled = tipo != null
+
+        // 1. Actualizar Hint dinámico
         til.hint = when (tipo) {
             "DUI" -> "DUI"
             "NIT" -> "NIT"
@@ -426,6 +446,26 @@ class EditorDialogFragment : DialogFragment() {
             else -> getHintText("NUM_DOCUMENTO")
         }
 
+        // 3. Aplicar Filtros estrictos de caracteres y longitud
+        val filters = mutableListOf<InputFilter>()
+        val maxLength = when (tipo) {
+            "DUI" -> 10 // 8 digitos + guion + 1 digito
+            "NIT" -> 17 // Formato completo con guiones
+            else -> 17
+        }
+        filters.add(InputFilter.LengthFilter(maxLength))
+
+        if (tipo == "DUI" || tipo == "NIT") {
+            filters.add(InputFilter { source, start, end, _, _, _ ->
+                for (i in start until end) {
+                    if (!source[i].isDigit() && source[i] != '-') return@InputFilter ""
+                }
+                null
+            })
+        }
+        et.filters = filters.toTypedArray()
+
+        // 4. Re-formatear si ya hay texto
         val text = et.text?.toString() ?: return
         if (text.isNotBlank()) {
             val formatted = formatInput("NUM_DOCUMENTO", text, tipo)
@@ -439,26 +479,39 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun refreshDependentDropdown(childColumn: String) {
-        val childInfo = dropDownFields.entries.find { it.value.first == childColumn } ?: return
-        val childIdx = childInfo.key
-        val childAutoComplete = childInfo.value.second
-        val childTil = childAutoComplete.parent as? TextInputLayout ?: return
-        
+        val childInfo = dropDownFields.values.find { it.first == childColumn } ?: return
+        val childAutoComplete = childInfo.second
+
+        // Búsqueda robusta del TextInputLayout subiendo en la jerarquía
+        var current = childAutoComplete.parent
+        var childTil: TextInputLayout? = null
+        while (current != null) {
+            if (current is TextInputLayout) {
+                childTil = current
+                break
+            }
+            current = current.parent
+        }
+        if (childTil == null) return
+
         val parentFkColumn = when (childColumn) {
             "ID_MUNICIPIO" -> "ID_DEPARTAMENTO"
             "ID_DISTRITO" -> "ID_MUNICIPIO"
+            "ID_HABILIDAD" -> "ID_CATEGORIA_HABILIDAD"
             else -> return
         }
-        val parentFk = fkRefs[parentFkColumn] ?: return
-        val parentAutoComplete = dropDownFields.entries.find { it.value.first == parentFkColumn }?.value?.second
+
+        val parentAutoComplete = dropDownFields.values.find { it.first == parentFkColumn }?.second
         val parentId = getSelectedDropdownValue(parentAutoComplete) ?: return
 
+        // Usar parentFkColumn como filtro directo en lugar de parentFk.fkColumn
         val newOptions = viewModel.getFilteredOptions(
             fkRefs[childColumn]!!.refTable,
-            parentFk.fkColumn,
-            parentId
+            parentFkColumn,
+            parentId,
+            fkRefs[childColumn]!!.refDisplayColumn
         )
-        
+
         val displayOptions = newOptions.map { it.second }
         childAutoComplete.setAdapter(
             ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
@@ -484,11 +537,11 @@ class EditorDialogFragment : DialogFragment() {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
             setTextColor(getThemeColor(android.R.attr.textColorPrimary))
-            
-            val isMultiline = column.uppercase().contains("DESCRIPCION") || 
-                              column.uppercase().contains("DETALLE") || 
-                              column.uppercase().contains("DESC") ||
-                              column.uppercase().contains("REQUISITO")
+
+            val isMultiline = column.uppercase().contains("DESCRIPCION") ||
+                    column.uppercase().contains("DETALLE") ||
+                    column.uppercase().contains("DESC") ||
+                    column.uppercase().contains("REQUISITO")
 
             inputType = getInputType(column)
 
@@ -612,7 +665,7 @@ class EditorDialogFragment : DialogFragment() {
             col.contains("TELEFONO") || col.contains("TEL") || col == "CONTACTO_REFERENCIA" -> android.text.InputType.TYPE_CLASS_PHONE
             col.contains("PASSWORD") || col.contains("CONTRA") -> android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
             col.contains("EXPERIENCIA_ANIOS") || col.contains("EDAD_MIN") || col.contains("EDAD_MAX") || col.contains("NIVEL_DESTREZA") -> android.text.InputType.TYPE_CLASS_NUMBER
-            col.contains("DESCRIPCION") || col.contains("DETALLE") || col.contains("DESC") || col.contains("REQUISITO") -> 
+            col.contains("DESCRIPCION") || col.contains("DETALLE") || col.contains("DESC") || col.contains("REQUISITO") ->
                 android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
             else -> android.text.InputType.TYPE_CLASS_TEXT
         }
@@ -730,7 +783,7 @@ class EditorDialogFragment : DialogFragment() {
             "CERTIFICACION" -> listOf("ID_POSTULANTE", "ID_CERTIFICACION", "ID_INSTITUCION", "NOMBRE_CERTIFICACION", "CODIGO_CERTIFICACION", "FECHA_CERTIFICACION")
             "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "ID_EXPERIENCIA", "ID_EMPRESA", "PUESTO_TRABAJO", "FECHA_INICIO", "FECHA_FIN", "DESCP_EXPERIENCIA_LABORAL", "CONTACTO_REFERENCIA")
             "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_POSTULANTE", "ID_OFERTA_ACADEMICA", "TITULO_OBTENIDO", "FECHA_OBTENCION")
-            "HABILIDAD_POSTULANTE" -> listOf("ID_POSTULANTE", "ID_HABILIDAD", "ID_HABILIDAD_POSTULANTE", "NIVEL_DESTREZA")
+            "HABILIDAD_POSTULANTE" -> listOf("ID_POSTULANTE", "ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "ID_HABILIDAD_POSTULANTE", "NIVEL_DESTREZA")
             "POSTULACION" -> listOf("ID_EMPRESA", "ID_OFERTA", "ID_POSTULANTE", "ID_POSTULACION", "FECHA_APLICACION", "ESTADO_PROCESO")
             "DETALLE_REQUISITO" -> listOf("ID_DETALLE", "ID_EMPRESA", "ID_OFERTA", "DESCRIPCION_REQUISITO")
             "RED_SOCIAL_POSTULANTE" -> listOf("ID_RED_POSTUALNTE", "ID_POSTULANTE", "ID_RED_SOCIAL", "URL_PERFIL")
@@ -746,24 +799,108 @@ class EditorDialogFragment : DialogFragment() {
     private fun saveData() {
         val editableColumns = columns.filter { it != getAutoGenColumn(tableName) }
         val values = mutableListOf<String>()
+
         for (col in editableColumns) {
             val fkRef = fkRefs[col]
-            if (col == "NIVEL_DESTREZA") {
-                val selected = dropDownFields[columns.indexOf(col)]?.second?.text?.toString() ?: ""
-                values.add(when(selected) { "Básico" -> "1"; "Intermedio" -> "2"; "Avanzado" -> "3"; else -> "" })
-            } else if (col == "ESTADO_PROCESO") {
-                values.add(dropDownFields[columns.indexOf(col)]?.second?.text?.toString()?.lowercase() ?: "")
-            } else if (col == "ROL") {
-                values.add(dropDownFields[columns.indexOf(col)]?.second?.text?.toString() ?: "postulante")
-            } else if (fkRef != null) {
-                val selected = dropDownFields[columns.indexOf(col)]?.second?.text?.toString() ?: ""
-                val options = viewModel.getDropdownOptions(fkRef.refTable, fkRef.refDisplayColumn)
-                values.add(options.find { it.second == selected }?.first ?: "")
-            } else {
-                values.add(textFields[columns.indexOf(col)]?.second?.text?.toString()?.trim() ?: "")
+
+            when {
+                col == "NIVEL_DESTREZA" -> {
+                    val autoComplete = dropDownFields.values.find { it.first == col }?.second
+                    val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
+                    if (selectedText.isBlank()) {
+                        StyledToast.show(requireContext(), "Debe seleccionar un nivel de destreza")
+                        return
+                    }
+                    val nivelValue = when (selectedText) {
+                        "Básico" -> "1"
+                        "Intermedio" -> "2"
+                        "Avanzado" -> "3"
+                        else -> ""
+                    }
+                    values.add(nivelValue)
+                }
+                col == "ESTADO_PROCESO" -> {
+                    val autoComplete = dropDownFields.values.find { it.first == col }?.second
+                    val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
+                    if (selectedText.isBlank()) {
+                        StyledToast.show(requireContext(), "Debe seleccionar un estado")
+                        return
+                    }
+                    val estadoValue = when (selectedText) {
+                        "Activo" -> "activo"
+                        "En Proceso" -> "en proceso"
+                        "Contratado" -> "contratado"
+                        "Rechazado" -> "rechazado"
+                        else -> ""
+                    }
+                    values.add(estadoValue)
+                }
+                col == "ROL" -> {
+                    val autoComplete = dropDownFields.values.find { it.first == col }?.second
+                    val selectedText = autoComplete?.text?.toString()?.trim() ?: "postulante"
+                    values.add(selectedText)
+                }
+                fkRef != null -> {
+                    val options = if (col == "ID_HABILIDAD" && tableName == "HABILIDAD_POSTULANTE") {
+                        val categoryAutoComplete = dropDownFields.values.find { it.first == "ID_CATEGORIA_HABILIDAD" }?.second
+                        val categoryId = getSelectedDropdownValue(categoryAutoComplete)
+                        if (categoryId != null) {
+                            viewModel.getFilteredOptions(fkRef.refTable, "ID_CATEGORIA_HABILIDAD", categoryId, fkRef.refDisplayColumn)
+                        } else {
+                            viewModel.getDropdownOptions(fkRef.refTable, fkRef.refDisplayColumn)
+                        }
+                    } else {
+                        viewModel.getDropdownOptions(fkRef.refTable, fkRef.refDisplayColumn)
+                    }
+
+                    if (options.isEmpty()) {
+                        StyledToast.show(requireContext(), "No hay datos en ${fkRef.refTable}. Créelos primero.")
+                        return
+                    }
+
+                    val autoComplete = dropDownFields.values.find { it.first == col }?.second
+                    val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
+                    if (selectedText.isBlank()) {
+                        StyledToast.show(requireContext(), "Debe seleccionar ${fkRef.refTable}")
+                        return
+                    }
+
+                    val selectedOption = options.find { it.second == selectedText }
+                    if (selectedOption == null) {
+                        StyledToast.show(requireContext(), "Seleccione una opción válida de ${fkRef.refTable}: $selectedText")
+                        return
+                    }
+                    values.add(selectedOption.first)
+                }
+                else -> {
+                    val et = textFields.values.find { it.first == col }?.second
+                    val textValue = et?.text?.toString()?.trim() ?: ""
+
+                    val errorMsg = ValidationRules.validate(tableName, col, textValue)
+
+                    if (errorMsg != null) {
+                        var parent = et?.parent
+                        while (parent != null && parent !is TextInputLayout) {
+                            parent = parent.parent
+                        }
+                        if (parent is TextInputLayout) {
+                            parent.error = errorMsg
+                        }
+                        StyledToast.show(requireContext(), errorMsg)
+                        return
+                    }
+
+                    values.add(textValue)
+                }
             }
         }
-        if (isEditMode) viewModel.updateRecord(tableName, itemData.first(), values) else viewModel.insertRecord(tableName, values)
+
+        btnSave.isEnabled = false // Evitar múltiples clics
+        if (isEditMode) {
+            viewModel.updateRecord(tableName, itemData.first(), values)
+        } else {
+            viewModel.insertRecord(tableName, values)
+        }
     }
 
     private fun getAutoGenColumn(table: String): String {
