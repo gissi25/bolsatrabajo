@@ -9,7 +9,7 @@ class ConnectionHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "bolsadetabajo.db"
-        private const val DATABASE_VERSION = 8
+        private const val DATABASE_VERSION = 9
         private const val TAG = "ConnectionHelper"
     }
 
@@ -238,7 +238,7 @@ class ConnectionHelper(context: Context) :
                 ID_HABILIDAD INTEGER NOT NULL,
                 ID_POSTULANTE INTEGER NOT NULL,
                 ID_HABILIDAD_POSTULANTE INTEGER NOT NULL,
-                NIVEL_DESTREZA INTEGER,
+                NIVEL_DESTREZA VARCHAR(20),
                 PRIMARY KEY (ID_HABILIDAD, ID_POSTULANTE, ID_HABILIDAD_POSTULANTE),
                 FOREIGN KEY (ID_HABILIDAD) REFERENCES HABILIDAD (ID_HABILIDAD),
                 FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE)
@@ -356,8 +356,8 @@ class ConnectionHelper(context: Context) :
         db.execSQL("""
             CREATE TRIGGER TR_HABILIDAD_NIVEL BEFORE INSERT ON HABILIDAD_POSTULANTE
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN NEW.NIVEL_DESTREZA NOT IN (1, 2, 3)
-                THEN RAISE(ABORT, 'Nivel de destreza debe ser 1, 2 o 3') END;
+                SELECT CASE WHEN NEW.NIVEL_DESTREZA NOT IN ('BASICO', 'INTERMEDIO', 'AVANZADO')
+                THEN RAISE(ABORT, 'Nivel de destreza debe ser Básico, Intermedio o Avanzado') END;
             END
         """)
 

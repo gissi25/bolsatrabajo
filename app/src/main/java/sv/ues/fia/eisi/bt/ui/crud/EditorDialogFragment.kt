@@ -311,11 +311,7 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun createNivelDestrezaDropdown(idx: Int, column: String, colIndex: Int) {
-        val nivelOptions = listOf(
-            "1" to "Básico",
-            "2" to "Intermedio",
-            "3" to "Avanzado"
-        )
+        val nivelOptions = listOf("Básico", "Intermedio", "Avanzado")
 
         val til = TextInputLayout(requireContext()).apply {
             layoutParams = LinearLayout.LayoutParams(
@@ -336,8 +332,7 @@ class EditorDialogFragment : DialogFragment() {
             keyListener = null
         }
 
-        val displayOptions = nivelOptions.map { it.second }
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, nivelOptions)
         autoComplete.setAdapter(adapter)
 
         autoComplete.setOnTouchListener { v, event ->
@@ -349,23 +344,23 @@ class EditorDialogFragment : DialogFragment() {
 
         if (isEditMode && colIndex < itemData.size) {
             val currentValue = itemData[colIndex].trim()
-            val optionIndex = nivelOptions.indexOfFirst { it.first == currentValue }
+            val optionIndex = nivelOptions.indexOfFirst { it.equals(currentValue, ignoreCase = true) }
             if (optionIndex >= 0) {
-                autoComplete.setText(displayOptions[optionIndex], false)
+                autoComplete.setText(nivelOptions[optionIndex], false)
             }
         }
 
         autoComplete.setOnItemClickListener { _, _, position, _ ->
             if (position < nivelOptions.size) {
-                nivelDestrezaFields[colIndex] = nivelOptions[position].first
+                nivelDestrezaFields[colIndex] = nivelOptions[position]
             }
         }
 
         til.addView(autoComplete)
         tilFieldsContainer.addView(til)
         nivelDestrezaFields[colIndex]?.let {
-            val id = nivelOptions.indexOfFirst { pair -> pair.first == it }
-            if (id >= 0) autoComplete.setText(displayOptions[id], false)
+            val id = nivelOptions.indexOfFirst { opt -> opt.equals(it, ignoreCase = true) }
+            if (id >= 0) autoComplete.setText(nivelOptions[id], false)
         }
         dropDownFields[colIndex] = Pair(column, autoComplete)
     }
@@ -1205,14 +1200,13 @@ class EditorDialogFragment : DialogFragment() {
             column.contains("NUM_DOCUMENTO") -> 17
             column == "CODIGO_CERTIFICACION" -> 14
             column.contains("CODIGO") || column.contains("CERTIFICACION") -> 30
-            column.contains("NIVEL_DESTREZA") -> 1
             column.contains("EXPERIENCIA_ANIOS") -> 2
             column.contains("EDAD_MINIMA") || column.contains("EDAD_MAXIMA") -> 2
             else -> 0
         }
         val filters = mutableListOf<InputFilter>()
         if (maxLength > 0) filters.add(InputFilter.LengthFilter(maxLength))
-        if (column.contains("EXPERIENCIA_ANIOS") || column.contains("EDAD_MIN") || column.contains("EDAD_MAX") || column == "NIVEL_DESTREZA") {
+        if (column.contains("EXPERIENCIA_ANIOS") || column.contains("EDAD_MIN") || column.contains("EDAD_MAX")) {
             filters.add(InputFilter { source, start, end, _, _, _ ->
                 for (i in start until end) { if (!source[i].isDigit()) return@InputFilter "" }
                 null
@@ -1254,7 +1248,7 @@ class EditorDialogFragment : DialogFragment() {
             col.contains("EMAIL") -> android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
             col.contains("TELEFONO") || col.contains("TEL") || col == "CONTACTO_REFERENCIA" || col == "CONTACTO_DIRECTO" -> android.text.InputType.TYPE_CLASS_PHONE
             col.contains("PASSWORD") || col.contains("CONTRA") -> android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
-            col.contains("EXPERIENCIA_ANIOS") || col.contains("EDAD_MIN") || col.contains("EDAD_MAX") || col.contains("NIVEL_DESTREZA") -> android.text.InputType.TYPE_CLASS_NUMBER
+            col.contains("EXPERIENCIA_ANIOS") || col.contains("EDAD_MIN") || col.contains("EDAD_MAX") -> android.text.InputType.TYPE_CLASS_NUMBER
             col.contains("DESCRIPCION") || col.contains("DETALLE") || col.contains("DESC") || col.contains("REQUISITO") ->
                 android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
             else -> android.text.InputType.TYPE_CLASS_TEXT
@@ -1401,13 +1395,13 @@ class EditorDialogFragment : DialogFragment() {
                         StyledToast.show(requireContext(), "Debe seleccionar un nivel de destreza")
                         return
                     }
-                    val nivelValue = when (selectedText) {
-                        "Básico" -> "1"
-                        "Intermedio" -> "2"
-                        "Avanzado" -> "3"
-                        else -> ""
+                    val normalizedText = when (selectedText.uppercase()) {
+                        "BÁSICO", "BASICO" -> "BASICO"
+                        "INTERMEDIO" -> "INTERMEDIO"
+                        "AVANZADO" -> "AVANZADO"
+                        else -> selectedText.uppercase().replace("Á", "A").replace("É", "E").replace("Í", "I").replace("Ó", "O").replace("Ú", "U")
                     }
-                    values.add(nivelValue)
+                    values.add(normalizedText)
                 }
                 col == "ESTADO_PROCESO" -> {
                     val autoComplete = dropDownFields.values.find { it.first == col }?.second

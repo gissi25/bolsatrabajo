@@ -12,7 +12,7 @@ class HabilidadPostulanteDao(private val db: ConnectionHelper) {
                 id_habilidad = row[0] as Int,
                 id_postulante = row[1] as Int,
                 id_habilidad_postulante = row[2] as Int,
-                nivel_destreza = row[3] as? Int
+                nivel_destreza = row[3] as? String
             )
         }
     }
@@ -24,7 +24,7 @@ class HabilidadPostulanteDao(private val db: ConnectionHelper) {
                 id_habilidad = row[0] as Int,
                 id_postulante = row[1] as Int,
                 id_habilidad_postulante = row[2] as Int,
-                nivel_destreza = row[3] as? Int
+                nivel_destreza = row[3] as? String
             )
         }
     }
@@ -36,19 +36,19 @@ class HabilidadPostulanteDao(private val db: ConnectionHelper) {
                 id_habilidad = row[0] as Int,
                 id_postulante = row[1] as Int,
                 id_habilidad_postulante = row[2] as Int,
-                nivel_destreza = row[3] as? Int
+                nivel_destreza = row[3] as? String
             )
         }
     }
 
     fun insert(data: HabilidadPostulante): Long {
-        val nivel = data.nivel_destreza ?: "NULL"
+        val nivel = data.nivel_destreza?.let { "'$it'" } ?: "NULL"
         val query = "INSERT INTO HABILIDAD_POSTULANTE (ID_HABILIDAD, ID_POSTULANTE, ID_HABILIDAD_POSTULANTE, NIVEL_DESTREZA) VALUES (${data.id_habilidad}, ${data.id_postulante}, ${data.id_habilidad_postulante}, $nivel)"
         return db.executeInsert(query)
     }
 
     fun update(data: HabilidadPostulante): Int {
-        val nivel = data.nivel_destreza ?: "NULL"
+        val nivel = data.nivel_destreza?.let { "'$it'" } ?: "NULL"
         val query = "UPDATE HABILIDAD_POSTULANTE SET NIVEL_DESTREZA = $nivel WHERE ID_HABILIDAD = ${data.id_habilidad} AND ID_POSTULANTE = ${data.id_postulante} AND ID_HABILIDAD_POSTULANTE = ${data.id_habilidad_postulante}"
         return db.executeUpdate(query)
     }

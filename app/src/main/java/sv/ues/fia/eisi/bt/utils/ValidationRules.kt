@@ -77,7 +77,7 @@ object ValidationRules {
                 "ID_CATEGORIA_HABILIDAD" to FieldRule(field = "ID_CATEGORIA_HABILIDAD", required = true, friendlyName = "Categoría")
             )
             "HABILIDAD_POSTULANTE" -> mapOf(
-                "NIVEL_DESTREZA" to FieldRule(field = "NIVEL_DESTREZA", required = true, min = 1, max = 3, friendlyName = "Nivel de destreza"),
+                "NIVEL_DESTREZA" to FieldRule(field = "NIVEL_DESTREZA", required = true, friendlyName = "Nivel de destreza"),
                 "ID_HABILIDAD" to FieldRule(field = "ID_HABILIDAD", required = true, friendlyName = "Habilidad"),
                 "ID_POSTULANTE" to FieldRule(field = "ID_POSTULANTE", required = true, friendlyName = "Postulante")
             )
