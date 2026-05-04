@@ -16,6 +16,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.utils.Constants
+import sv.ues.fia.eisi.bt.utils.StyledToast
 import sv.ues.fia.eisi.bt.utils.ThemeToggleHelper
 import sv.ues.fia.eisi.bt.viewmodel.DashboardViewModel
 
@@ -61,11 +62,16 @@ class DashboardFragment : Fragment() {
 
         viewModel.tables.observe(viewLifecycleOwner) { tables ->
             adapter.submitList(tables)
+            if (tables.isEmpty() && etSearch.text?.toString()?.isNotBlank() == true) {
+                StyledToast.show(requireContext(), "Sin resultados")
+            }
         }
     }
 
     override fun onResume() {
         super.onResume()
+        etSearch.setText("")
+        viewModel.loadOriginalTables()
         viewModel.refreshCounts()
     }
 
