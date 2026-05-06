@@ -47,46 +47,39 @@ class TableAdapter(
             val field0 = getStringSafely(item, 0)
 
             if (tableName == "POSTULANTE") {
-                val nombre = getStringSafely(item, 6)
-                val apellido = getStringSafely(item, 7)
-                tvId.text = "ID: $field0"
+                val nombre = getStringSafely(item, 7)
+                val apellido = getStringSafely(item, 8)
+                tvId.text = field0
                 tvPrimary.text = nombre.ifBlank { "(sin nombre)" }
                 tvSecondary.text = apellido.ifBlank { "(sin apellido)" }
             } else if (tableName == "EXPERIENCIA_LABORAL") {
                 val nombre = getStringSafely(item, 8)
                 val apellido = getStringSafely(item, 9)
                 val puesto = getStringSafely(item, 3)
-                tvId.text = "ID: ${getStringSafely(item, 2)}"
+                tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)}, ${getStringSafely(item, 2)})"
                 tvPrimary.text = "$nombre $apellido".trim().ifBlank { "(sin nombre)" }
                 tvSecondary.text = puesto.ifBlank { "(sin puesto)" }
             } else if (tableName == "HABILIDAD_POSTULANTE") {
                 val nombre = getStringSafely(item, 4)
                 val apellido = getStringSafely(item, 5)
                 val habilidad = getStringSafely(item, 6)
-                val nivelRaw = getStringSafely(item, 3)
-                
-                val nivelText = when(nivelRaw) {
-                    "1" -> "Basico"
-                    "2" -> "Intermedio"
-                    "3" -> "Avanzado"
-                    else -> nivelRaw
-                }
+                val nivelText = getStringSafely(item, 3)
 
-                tvId.text = "${getStringSafely(item, 0)}-${getStringSafely(item, 1)}"
+                tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)}, ${getStringSafely(item, 2)})"
                 tvPrimary.text = "$nombre $apellido".trim().ifBlank { "(sin nombre)" }
                 tvSecondary.text = if (nivelText.isNotBlank()) "$habilidad • $nivelText" else habilidad
             } else if (tableName == "POSTULACION") {
                 val nombre = getStringSafely(item, 6)
                 val apellido = getStringSafely(item, 7)
                 val puesto = getStringSafely(item, 8)
-                tvId.text = "ID: $field0"
+                tvId.text = field0
                 tvPrimary.text = "$nombre $apellido".trim().ifBlank { "(sin nombre)" }
                 tvSecondary.text = puesto.ifBlank { "(sin puesto)" }
             } else if (tableName == "RED_SOCIAL_POSTULANTE") {
                 val nombre = getStringSafely(item, 3)
                 val apellido = getStringSafely(item, 4)
                 val redSocial = getStringSafely(item, 5)
-                tvId.text = "$field0 - ${getStringSafely(item, 1)}"
+                tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)})"
                 tvPrimary.text = "$nombre $apellido".trim().ifBlank { "(sin nombre)" }
                 tvSecondary.text = redSocial.ifBlank { "(sin red social)" }
             } else if (tableName == "MUNICIPIO") {
@@ -110,13 +103,13 @@ class TableAdapter(
             } else if (tableName == "OFERTA_TRABAJO") {
                 val titulo = getStringSafely(item, 3)
                 val empresa = getStringSafely(item, 10)
-                tvId.text = "${getStringSafely(item, 1)}"
+                tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)})"
                 tvPrimary.text = titulo.ifBlank { "(sin titulo)" }
                 tvSecondary.text = empresa.ifBlank { "(sin empresa)" }
             } else if (tableName == "DETALLE_REQUISITO") {
                 val descripcion = getStringSafely(item, 3)
                 val titulo = getStringSafely(item, 4)
-                tvId.text = getStringSafely(item, 2)
+                tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)}, ${getStringSafely(item, 2)})"
                 tvPrimary.text = descripcion.ifBlank { "(sin descripcion)" }
                 tvSecondary.text = titulo.ifBlank { "(sin puesto)" }
             } else if (tableName == "OFERTA_ACADEMICA") {
@@ -127,34 +120,34 @@ class TableAdapter(
                 tvSecondary.text = institucion.ifBlank { "(sin institucion)" }
             } else if (tableName == "CERTIFICACION") {
                 val nombre = getStringSafely(item, 3)
-                val postNombre = getStringSafely(item, 6)
-                val postApellido = getStringSafely(item, 7)
-                tvId.text = field0
+                val postNombre = getStringSafely(item, 5)
+                val postApellido = getStringSafely(item, 6)
+                tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)}, ${getStringSafely(item, 2)})"
                 tvPrimary.text = nombre.ifBlank { "(sin certificacion)" }
                 tvSecondary.text = "$postNombre $postApellido".trim().ifBlank { "(sin postulante)" }
             } else if (tableName == "FORMACION_ACADEMICA") {
                 val titulo = getStringSafely(item, 3)
                 val postNombre = getStringSafely(item, 5)
                 val postApellido = getStringSafely(item, 6)
-                tvId.text = field0
+                tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)})"
                 tvPrimary.text = titulo.ifBlank { "(sin titulo)" }
                 tvSecondary.text = "$postNombre $postApellido".trim().ifBlank { "(sin postulante)" }
             } else if (tableName == "USUARIO") {
                 val username = getStringSafely(item, 1)
                 val rol = getStringSafely(item, 3)
-                tvId.text = "ID: $field0"
+                tvId.text = field0
                 tvPrimary.text = username.ifBlank { "(sin usuario)" }
                 tvSecondary.text = rol.ifBlank { "(sin rol)" }
             } else if (tableName == "EMPRESA") {
                 val nombreEmpresa = getStringSafely(item, 4)
                 val contactoDirecto = getStringSafely(item, 5)
-                tvId.text = "NIT: $field0"
+                tvId.text = field0
                 tvPrimary.text = nombreEmpresa.ifBlank { "(sin nombre)" }
                 tvSecondary.text = contactoDirecto.ifBlank { "(sin contacto)" }
             } else {
                 val field1 = getStringSafely(item, 1)
                 val field2 = getStringSafely(item, 2)
-                tvId.text = "ID: $field0"
+                tvId.text = field0
                 tvPrimary.text = field1.ifBlank { field0.ifBlank { "(vacio)" } }
                 tvSecondary.text = field2
             }

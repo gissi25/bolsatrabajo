@@ -285,7 +285,7 @@ class MainRepository(context: Context) {
             "USERNAME", "ROL"
         )
 
-        val upperFields = setOf("CODIGO_CERTIFICACION")
+        val upperFields = emptySet<String>()
 
         val processedValues = finalValues.mapIndexed { i, v ->
             val col = columns.getOrNull(i) ?: ""
@@ -401,7 +401,7 @@ class MainRepository(context: Context) {
             "OFERTA_TRABAJO" -> listOf("NIT = '{NIT}' AND LOWER(TITULO_PUESTO) = LOWER('{TITULO_PUESTO}')" to "Ya existe una oferta con ese titulo en la empresa")
             "DETALLE_REQUISITO" -> listOf("NIT = '{NIT}' AND ID_OFERTA = '{ID_OFERTA}' AND LOWER(DESCRIPCION_REQUISITO) = LOWER('{DESCRIPCION_REQUISITO}')" to "Ya existe un requisito con esa descripcion en la oferta")
             "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND NIT = '{NIT}' AND LOWER(PUESTO_TRABAJO) = LOWER('{PUESTO_TRABAJO}')" to "Ya existe una experiencia con ese puesto para el postulante")
-            "CERTIFICACION" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND LOWER(CODIGO_CERTIFICACION) = LOWER('{CODIGO_CERTIFICACION}')" to "Ya existe una certificacion con ese codigo para el postulante")
+            "CERTIFICACION" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND LOWER(NOMBRE_CERTIFICACION) = LOWER('{NOMBRE_CERTIFICACION}')" to "Ya existe una certificacion con ese nombre para el postulante")
             "POSTULACION" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND NIT = '{NIT}' AND ID_OFERTA = '{ID_OFERTA}'" to "El postulante ya aplico a esta oferta")
             "RED_SOCIAL_POSTULANTE" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND ID_RED_SOCIAL = {ID_RED_SOCIAL}" to "La red social ya esta vinculada al postulante")
             "HABILIDAD_POSTULANTE" -> listOf("ID_CATEGORIA_HABILIDAD = {ID_CATEGORIA_HABILIDAD} AND ID_HABILIDAD = '{ID_HABILIDAD}' AND ID_POSTULANTE = '{ID_POSTULANTE}'" to "La habilidad ya esta asignada al postulante")
@@ -434,7 +434,7 @@ class MainRepository(context: Context) {
             "USERNAME", "ROL"
         )
 
-        val upperFields = setOf("CODIGO_CERTIFICACION")
+        val upperFields = emptySet<String>()
 
         val processedValues = finalValues.mapIndexed { i, v ->
             val col = columns.getOrNull(i) ?: ""
@@ -617,7 +617,7 @@ class MainRepository(context: Context) {
             "CERTIFICACION" -> {
                 """
                 SELECT c.ID_CERTIFICACION, c.ID_INSTITUCION, c.ID_POSTULANTE,
-                       c.NOMBRE_CERTIFICACION, c.CODIGO_CERTIFICACION, c.FECHA_CERTIFICACION,
+                       c.NOMBRE_CERTIFICACION, c.FECHA_CERTIFICACION,
                        p.NOMBRE, p.APELLIDO, i.NOMBRE_INSTITUCION
                 FROM CERTIFICACION c
                 LEFT JOIN POSTULANTE p ON c.ID_POSTULANTE = p.ID_POSTULANTE
@@ -698,32 +698,32 @@ class MainRepository(context: Context) {
             )
             "CERTIFICACION" -> mapOf(
                 "ID_INSTITUCION" to FkReference("ID_INSTITUCION", "INSTITUCION", "NOMBRE_INSTITUCION"),
-                "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "NOMBRE")
+                "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "ID_POSTULANTE")
             )
             "EXPERIENCIA_LABORAL" -> mapOf(
-                "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "NOMBRE"),
+                "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "ID_POSTULANTE"),
                 "NIT" to FkReference("NIT", "EMPRESA", "NOMBRE_EMPRESA")
             )
             "FORMACION_ACADEMICA" -> mapOf(
-                "ID_OFERTA_ACADEMICA" to FkReference("ID_OFERTA_ACADEMICA", "OFERTA_ACADEMICA", "OFERTA_ACADEMICA"),
-                "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "NOMBRE")
+                "ID_OFERTA_ACADEMICA" to FkReference("ID_OFERTA_ACADEMICA", "OFERTA_ACADEMICA", "ID_OFERTA_ACADEMICA"),
+                "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "ID_POSTULANTE")
             )
             "HABILIDAD_POSTULANTE" -> mapOf(
                 "ID_CATEGORIA_HABILIDAD" to FkReference("ID_CATEGORIA_HABILIDAD", "CATEGORIA_HABILIDAD", "NOMBRE_CATEGORIA"),
                 "ID_HABILIDAD" to FkReference("ID_HABILIDAD", "HABILIDAD", "NOMBRE_HABILIDAD"),
-                "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "NOMBRE")
+                "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "ID_POSTULANTE")
             )
             "POSTULACION" -> mapOf(
                 "NIT" to FkReference("NIT", "EMPRESA", "NOMBRE_EMPRESA"),
                 "ID_OFERTA" to FkReference("ID_OFERTA", "OFERTA_TRABAJO", "TITULO_PUESTO"),
-                "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "NOMBRE")
+                "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "ID_POSTULANTE")
             )
             "DETALLE_REQUISITO" -> mapOf(
                 "NIT" to FkReference("NIT", "EMPRESA", "NOMBRE_EMPRESA"),
                 "ID_OFERTA" to FkReference("ID_OFERTA", "OFERTA_TRABAJO", "TITULO_PUESTO")
             )
             "RED_SOCIAL_POSTULANTE" -> mapOf(
-                "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "NOMBRE"),
+                "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "ID_POSTULANTE"),
                 "ID_RED_SOCIAL" to FkReference("ID_RED_SOCIAL", "RED_SOCIAL", "NOMBRE_RED")
             )
             else -> emptyMap()
@@ -771,10 +771,14 @@ class MainRepository(context: Context) {
                 val options = mutableListOf<Pair<String, String>>()
                 while (cursor.moveToNext()) {
                     val id = cursor.getString(0) ?: ""
-                    val nombre = cursor.getString(1) ?: ""
-                    val apellido = cursor.getString(2) ?: ""
-                    val display = "$nombre $apellido".trim()
-                    options.add(Pair(id, display.ifBlank { id }))
+                    if (displayColumn == "ID_POSTULANTE") {
+                        options.add(Pair(id, id))
+                    } else {
+                        val nombre = cursor.getString(1) ?: ""
+                        val apellido = cursor.getString(2) ?: ""
+                        val display = "$nombre $apellido".trim()
+                        options.add(Pair(id, display.ifBlank { id }))
+                    }
                 }
                 cursor.close()
                 options
@@ -1031,7 +1035,7 @@ class MainRepository(context: Context) {
     fun getColumnsForTable(tableName: String): List<String> {
         return when (tableName) {
             "USUARIO" -> listOf("ID_USUARIO", "USERNAME", "PASSWORD", "ROL")
-            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_GENERO", "ID_TIPO_DOCUMENTO", "ID_DISTRITO_DEPTO", "ID_DISTRITO_MUNICIPIO", "ID_DISTRITO_ID", "NOMBRE", "APELLIDO", "FECHA_NACIMIENTO", "NUM_DOCUMENTO", "NUP", "DIRECCION_DETALLE", "TELEFONO_CASA", "TELEFONO_CELULAR", "EMAIL")
+            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_GENERO", "ID_TIPO_DOCUMENTO", "NUM_DOCUMENTO", "ID_DISTRITO_DEPTO", "ID_DISTRITO_MUNICIPIO", "ID_DISTRITO_ID", "NOMBRE", "APELLIDO", "FECHA_NACIMIENTO", "NUP", "DIRECCION_DETALLE", "TELEFONO_CASA", "TELEFONO_CELULAR", "EMAIL")
             "GENERO" -> listOf("ID_GENERO", "NOMBRE_GENERO")
             "TIPO_DOCUMENTO" -> listOf("ID_TIPO_DOCUMENTO", "NOMBRE_TIPO")
             "DEPARTAMENTO" -> listOf("ID_DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
@@ -1045,7 +1049,7 @@ class MainRepository(context: Context) {
             "RED_SOCIAL" -> listOf("ID_RED_SOCIAL", "NOMBRE_RED")
             "OFERTA_ACADEMICA" -> listOf("ID_OFERTA_ACADEMICA", "ID_GRADO_ACADEMICO", "ID_INSTITUCION")
             "OFERTA_TRABAJO" -> listOf("NIT", "ID_OFERTA", "ID_GRADO_ACADEMICO", "TITULO_PUESTO", "FECHA_PUBLICACION", "FECHA_CADUCIDAD", "EXPERIENCIA_ANIOS", "EDAD_MINIMA", "EDAD_MAXIMA", "DESCRIPCION_OFERTA_TRABAJO")
-            "CERTIFICACION" -> listOf("ID_CERTIFICACION", "ID_INSTITUCION", "ID_POSTULANTE", "NOMBRE_CERTIFICACION", "CODIGO_CERTIFICACION", "FECHA_CERTIFICACION")
+            "CERTIFICACION" -> listOf("ID_CERTIFICACION", "ID_INSTITUCION", "ID_POSTULANTE", "NOMBRE_CERTIFICACION", "FECHA_CERTIFICACION")
             "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "NIT", "ID_EXPERIENCIA", "PUESTO_TRABAJO", "FECHA_INICIO", "FECHA_FIN", "DESCP_EXPERIENCIA_LABORAL", "CONTACTO_REFERENCIA")
             "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_POSTULANTE", "ID_OFERTA_ACADEMICA", "TITULO_OBTENIDO", "FECHA_OBTENCION")
             "HABILIDAD_POSTULANTE" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "ID_POSTULANTE", "NIVEL_DESTREZA")

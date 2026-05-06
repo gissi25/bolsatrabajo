@@ -38,6 +38,15 @@
                 app:srcCompat="@drawable/luna" />
 
             <ImageButton
+                android:id="@+id/btnInsertScript"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Insertar datos de prueba"
+                app:tint="?attr/colorOnPrimary"
+                app:srcCompat="@drawable/ic_insertar_datos_o" />
+
+            <ImageButton
                 android:id="@+id/btnLogout"
                 android:layout_width="48dp"
                 android:layout_height="48dp"

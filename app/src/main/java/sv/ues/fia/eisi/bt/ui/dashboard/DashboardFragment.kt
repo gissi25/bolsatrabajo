@@ -28,6 +28,7 @@ class DashboardFragment : Fragment() {
     private lateinit var adapter: DashboardAdapter
     private lateinit var etSearch: TextInputEditText
     private lateinit var btnThemeToggle: ImageButton
+    private lateinit var btnInsertScript: ImageButton
     private lateinit var btnLogout: ImageButton
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -41,6 +42,7 @@ class DashboardFragment : Fragment() {
         toolbar = view.findViewById(R.id.toolbar)
         etSearch = view.findViewById(R.id.etSearch)
         btnThemeToggle = view.findViewById(R.id.btnThemeToggle)
+        btnInsertScript = view.findViewById(R.id.btnInsertScript)
         btnLogout = view.findViewById(R.id.btnLogout)
 
         val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
@@ -50,6 +52,11 @@ class DashboardFragment : Fragment() {
         btnThemeToggle.setImageResource(ThemeToggleHelper.getIconRes())
         btnThemeToggle.setOnClickListener {
             ThemeToggleHelper.toggle(requireActivity())
+        }
+
+        btnInsertScript.setImageResource(ThemeToggleHelper.getInsertIconRes())
+        btnInsertScript.setOnClickListener {
+            StyledToast.show(requireContext(), "Funcionalidad proximamente")
         }
 
         btnLogout.setImageResource(ThemeToggleHelper.getLogoutIconRes())

@@ -13,8 +13,7 @@ class CertificacionDao(private val db: ConnectionHelper) {
                 id_institucion = row[1].toString(),
                 id_postulante = row[2].toString(),
                 nombre_certificacion = row[3].toString(),
-                codigo_certificacion = row[4].toString().takeIf { it.isNotBlank() },
-                fecha_certificacion = row[5].toString().takeIf { it.isNotBlank() }
+                fecha_certificacion = row[4].toString().takeIf { it.isNotBlank() }
             )
         }
     }
@@ -27,8 +26,7 @@ class CertificacionDao(private val db: ConnectionHelper) {
                 id_institucion = row[1].toString(),
                 id_postulante = row[2].toString(),
                 nombre_certificacion = row[3].toString(),
-                codigo_certificacion = row[4].toString().takeIf { it.isNotBlank() },
-                fecha_certificacion = row[5].toString().takeIf { it.isNotBlank() }
+                fecha_certificacion = row[4].toString().takeIf { it.isNotBlank() }
             )
         }
     }
@@ -41,23 +39,20 @@ class CertificacionDao(private val db: ConnectionHelper) {
                 id_institucion = row[1].toString(),
                 id_postulante = row[2].toString(),
                 nombre_certificacion = row[3].toString(),
-                codigo_certificacion = row[4].toString().takeIf { it.isNotBlank() },
-                fecha_certificacion = row[5].toString().takeIf { it.isNotBlank() }
+                fecha_certificacion = row[4].toString().takeIf { it.isNotBlank() }
             )
         }
     }
 
     fun insert(data: Certificacion): Long {
-        val codigo = if (data.codigo_certificacion != null) "'${data.codigo_certificacion}'" else "NULL"
         val fecha = if (data.fecha_certificacion != null) "'${data.fecha_certificacion}'" else "NULL"
-        val query = "INSERT INTO CERTIFICACION (ID_CERTIFICACION, ID_INSTITUCION, ID_POSTULANTE, NOMBRE_CERTIFICACION, CODIGO_CERTIFICACION, FECHA_CERTIFICACION) VALUES ('${data.id_certificacion}', '${data.id_institucion}', '${data.id_postulante}', '${data.nombre_certificacion}', $codigo, $fecha)"
+        val query = "INSERT INTO CERTIFICACION (ID_CERTIFICACION, ID_INSTITUCION, ID_POSTULANTE, NOMBRE_CERTIFICACION, FECHA_CERTIFICACION) VALUES ('${data.id_certificacion}', '${data.id_institucion}', '${data.id_postulante}', '${data.nombre_certificacion}', $fecha)"
         return db.executeInsert(query)
     }
 
     fun update(data: Certificacion): Int {
-        val codigo = if (data.codigo_certificacion != null) "'${data.codigo_certificacion}'" else "NULL"
         val fecha = if (data.fecha_certificacion != null) "'${data.fecha_certificacion}'" else "NULL"
-        val query = "UPDATE CERTIFICACION SET ID_INSTITUCION = '${data.id_institucion}', NOMBRE_CERTIFICACION = '${data.nombre_certificacion}', CODIGO_CERTIFICACION = $codigo, FECHA_CERTIFICACION = $fecha WHERE ID_CERTIFICACION = '${data.id_certificacion}' AND ID_INSTITUCION = '${data.id_institucion}' AND ID_POSTULANTE = '${data.id_postulante}'"
+        val query = "UPDATE CERTIFICACION SET ID_INSTITUCION = '${data.id_institucion}', NOMBRE_CERTIFICACION = '${data.nombre_certificacion}', FECHA_CERTIFICACION = $fecha WHERE ID_CERTIFICACION = '${data.id_certificacion}' AND ID_INSTITUCION = '${data.id_institucion}' AND ID_POSTULANTE = '${data.id_postulante}'"
         return db.executeUpdate(query)
     }
 

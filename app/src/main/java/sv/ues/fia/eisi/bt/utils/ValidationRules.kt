@@ -28,7 +28,11 @@ object ValidationRules {
                 "EMAIL" to FieldRule(field = "EMAIL", required = true, pattern = "^[^@]+@[^@]+\\.[^@]+$", friendlyName = "Correo electronico"),
                 "FECHA_NACIMIENTO" to FieldRule(field = "FECHA_NACIMIENTO", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha de nacimiento"),
                 "ID_GENERO" to FieldRule(field = "ID_GENERO", required = true, friendlyName = "Genero"),
-                "ID_TIPO_DOCUMENTO" to FieldRule(field = "ID_TIPO_DOCUMENTO", required = true, friendlyName = "Tipo de documento")
+                "ID_TIPO_DOCUMENTO" to FieldRule(field = "ID_TIPO_DOCUMENTO", required = true, friendlyName = "Tipo de documento"),
+                "NUP" to FieldRule(field = "NUP", required = true, friendlyName = "NUP"),
+                "DIRECCION_DETALLE" to FieldRule(field = "DIRECCION_DETALLE", required = true, friendlyName = "Direccion"),
+                "TELEFONO_CASA" to FieldRule(field = "TELEFONO_CASA", required = true, friendlyName = "Telefono casa"),
+                "TELEFONO_CELULAR" to FieldRule(field = "TELEFONO_CELULAR", required = true, friendlyName = "Telefono celular")
             )
             "EMPRESA" -> mapOf(
                 "NIT" to FieldRule(field = "NIT", required = true, minLength = 14, maxLength = 14, pattern = "^\\d{14}$", friendlyName = "NIT"),
@@ -40,8 +44,10 @@ object ValidationRules {
                 "TITULO_PUESTO" to FieldRule(field = "TITULO_PUESTO", required = true, friendlyName = "Titulo del puesto"),
                 "FECHA_PUBLICACION" to FieldRule(field = "FECHA_PUBLICACION", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha de publicacion"),
                 "FECHA_CADUCIDAD" to FieldRule(field = "FECHA_CADUCIDAD", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha de caducidad"),
+                "EXPERIENCIA_ANIOS" to FieldRule(field = "EXPERIENCIA_ANIOS", required = true, friendlyName = "Anios de experiencia"),
                 "EDAD_MINIMA" to FieldRule(field = "EDAD_MINIMA", min = 16, max = 100, friendlyName = "Edad minima"),
-                "EDAD_MAXIMA" to FieldRule(field = "EDAD_MAXIMA", min = 16, max = 100, friendlyName = "Edad maxima")
+                "EDAD_MAXIMA" to FieldRule(field = "EDAD_MAXIMA", min = 16, max = 100, friendlyName = "Edad maxima"),
+                "DESCRIPCION_OFERTA_TRABAJO" to FieldRule(field = "DESCRIPCION_OFERTA_TRABAJO", required = true, friendlyName = "Descripcion de la oferta")
             )
             "CATEGORIA_HABILIDAD" -> mapOf(
                 "NOMBRE_CATEGORIA" to FieldRule(field = "NOMBRE_CATEGORIA", required = true, friendlyName = "Nombre de categoria")
@@ -64,7 +70,7 @@ object ValidationRules {
                 "NOMBRE_DISTRITO" to FieldRule(field = "NOMBRE_DISTRITO", required = true, friendlyName = "Nombre de distrito")
             )
             "INSTITUCION" -> mapOf(
-                "ID_INSTITUCION" to FieldRule(field = "ID_INSTITUCION", required = true, pattern = "^[A-Z]{2,}\\d{2,}$", friendlyName = "Codigo institucion", maxLength = 20),
+                "ID_INSTITUCION" to FieldRule(field = "ID_INSTITUCION", required = true, pattern = "^[A-Za-z]{2,}\\d{2,}$", friendlyName = "Codigo institucion", maxLength = 20),
                 "NOMBRE_INSTITUCION" to FieldRule(field = "NOMBRE_INSTITUCION", required = true, friendlyName = "Nombre de institucion")
             )
             "GRADO_ACADEMICO" -> mapOf(
@@ -79,27 +85,33 @@ object ValidationRules {
                 "NOMBRE_HABILIDAD" to FieldRule(field = "NOMBRE_HABILIDAD", required = true, friendlyName = "Nombre de habilidad")
             )
             "HABILIDAD_POSTULANTE" -> mapOf(
-                "NIVEL_DESTREZA" to FieldRule(field = "NIVEL_DESTREZA", required = true, min = 1, max = 3, friendlyName = "Nivel de destreza")
+                "NIVEL_DESTREZA" to FieldRule(field = "NIVEL_DESTREZA", required = true, friendlyName = "Nivel de destreza")
             )
             "CERTIFICACION" -> mapOf(
                 "ID_CERTIFICACION" to FieldRule(field = "ID_CERTIFICACION", required = true, pattern = "^C\\d{3,}$", friendlyName = "Codigo certificacion", maxLength = 10),
                 "NOMBRE_CERTIFICACION" to FieldRule(field = "NOMBRE_CERTIFICACION", required = true, friendlyName = "Nombre de certificacion"),
-                "CODIGO_CERTIFICACION" to FieldRule(field = "CODIGO_CERTIFICACION", required = true, minLength = 14, maxLength = 14, pattern = "^\\d{14}$", friendlyName = "Codigo de certificacion")
+                "FECHA_CERTIFICACION" to FieldRule(field = "FECHA_CERTIFICACION", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha de certificacion")
             )
             "EXPERIENCIA_LABORAL" -> mapOf(
                 "ID_EXPERIENCIA" to FieldRule(field = "ID_EXPERIENCIA", required = true, pattern = "^EL\\d{2,}$", friendlyName = "Codigo experiencia", maxLength = 10),
                 "PUESTO_TRABAJO" to FieldRule(field = "PUESTO_TRABAJO", required = true, friendlyName = "Puesto de trabajo"),
-                "FECHA_INICIO" to FieldRule(field = "FECHA_INICIO", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha de inicio")
+                "FECHA_INICIO" to FieldRule(field = "FECHA_INICIO", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha de inicio"),
+                "FECHA_FIN" to FieldRule(field = "FECHA_FIN", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha de fin"),
+                "DESCP_EXPERIENCIA_LABORAL" to FieldRule(field = "DESCP_EXPERIENCIA_LABORAL", required = true, friendlyName = "Descripcion de experiencia"),
+                "CONTACTO_REFERENCIA" to FieldRule(field = "CONTACTO_REFERENCIA", required = true, friendlyName = "Contacto de referencia")
             )
             "FORMACION_ACADEMICA" -> mapOf(
                 "ID_FORMACION" to FieldRule(field = "ID_FORMACION", required = true, pattern = "^FOA\\d{3,}$", friendlyName = "Codigo formacion", maxLength = 10),
-                "TITULO_OBTENIDO" to FieldRule(field = "TITULO_OBTENIDO", required = true, friendlyName = "Titulo obtenido")
+                "TITULO_OBTENIDO" to FieldRule(field = "TITULO_OBTENIDO", required = true, friendlyName = "Titulo obtenido"),
+                "FECHA_OBTENCION" to FieldRule(field = "FECHA_OBTENCION", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha de obtencion")
             )
             "OFERTA_ACADEMICA" -> mapOf(
                 "ID_OFERTA_ACADEMICA" to FieldRule(field = "ID_OFERTA_ACADEMICA", required = true, pattern = "^OFA\\d{2,}$", friendlyName = "Codigo oferta academica", maxLength = 10)
             )
             "POSTULACION" -> mapOf(
-                "ID_POSTULACION" to FieldRule(field = "ID_POSTULACION", required = true, pattern = "^POS\\d{3,}$", friendlyName = "Codigo postulacion", maxLength = 10)
+                "ID_POSTULACION" to FieldRule(field = "ID_POSTULACION", required = true, pattern = "^POS\\d{3,}$", friendlyName = "Codigo postulacion", maxLength = 10),
+                "FECHA_APLICACION" to FieldRule(field = "FECHA_APLICACION", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha de aplicacion"),
+                "ESTADO_PROCESO" to FieldRule(field = "ESTADO_PROCESO", required = true, friendlyName = "Estado del proceso")
             )
             "DETALLE_REQUISITO" -> mapOf(
                 "ID_DETALLE" to FieldRule(field = "ID_DETALLE", required = true, pattern = "^D\\d{1,}$", friendlyName = "Codigo detalle", maxLength = 10),
