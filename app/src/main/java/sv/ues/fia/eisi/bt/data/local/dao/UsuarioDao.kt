@@ -9,22 +9,22 @@ class UsuarioDao(private val db: ConnectionHelper) {
         val results = db.executeQuery("SELECT * FROM USUARIO ORDER BY USERNAME")
         return results.map { row ->
             Usuario(
-                id_usuario = (row[0] as? Int) ?: (row[0] as? String)?.toIntOrNull() ?: 0,
-                username = row[1] as? String ?: "",
-                password = row[2] as? String ?: "",
-                rol = row[3] as? String ?: ""
+                id_usuario = row[0].toString().toIntOrNull() ?: 0,
+                username = row[1].toString(),
+                password = row[2].toString(),
+                rol = row[3].toString()
             )
         }
     }
 
     fun getById(id: Int): Usuario? {
-        val results = db.getById("USUARIO", "ID_USUARIO", id)
+        val results = db.getById("USUARIO", "ID_USUARIO", id.toString())
         return results.firstOrNull()?.let { row ->
             Usuario(
-                id_usuario = row[0] as Int,
-                username = row[1] as String,
-                password = row[2] as String,
-                rol = row[3] as String
+                id_usuario = row[0].toString().toIntOrNull() ?: 0,
+                username = row[1].toString(),
+                password = row[2].toString(),
+                rol = row[3].toString()
             )
         }
     }
@@ -33,10 +33,10 @@ class UsuarioDao(private val db: ConnectionHelper) {
         val results = db.executeQuery("SELECT * FROM USUARIO WHERE USERNAME = '$username'")
         return results.firstOrNull()?.let { row ->
             Usuario(
-                id_usuario = row[0] as Int,
-                username = row[1] as String,
-                password = row[2] as String,
-                rol = row[3] as String
+                id_usuario = row[0].toString().toIntOrNull() ?: 0,
+                username = row[1].toString(),
+                password = row[2].toString(),
+                rol = row[3].toString()
             )
         }
     }
@@ -45,16 +45,16 @@ class UsuarioDao(private val db: ConnectionHelper) {
         val results = db.search("USUARIO", "USERNAME", query)
         return results.map { row ->
             Usuario(
-                id_usuario = row[0] as Int,
-                username = row[1] as String,
-                password = row[2] as String,
-                rol = row[3] as String
+                id_usuario = row[0].toString().toIntOrNull() ?: 0,
+                username = row[1].toString(),
+                password = row[2].toString(),
+                rol = row[3].toString()
             )
         }
     }
 
     fun insert(data: Usuario): Long {
-        val query = "INSERT INTO USUARIO (ID_USUARIO, USERNAME, PASSWORD, ROL) VALUES (${data.id_usuario}, '${data.username}', '${data.password}', '${data.rol}')"
+        val query = "INSERT INTO USUARIO (USERNAME, PASSWORD, ROL) VALUES ('${data.username}', '${data.password}', '${data.rol}')"
         return db.executeInsert(query)
     }
 
@@ -63,7 +63,7 @@ class UsuarioDao(private val db: ConnectionHelper) {
         return db.executeUpdate(query)
     }
 
-    fun delete(id: Int): Int = db.deleteById("USUARIO", "ID_USUARIO", id)
+    fun delete(id: Int): Int = db.deleteById("USUARIO", "ID_USUARIO", id.toString())
 
     fun getCount(): Int = db.getCount("USUARIO")
 }

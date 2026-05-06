@@ -59,7 +59,7 @@ class RegisterFragment : Fragment() {
         }
 
         // Setup rol dropdown
-        val roles = arrayOf("postulante", "empresa", "admin")
+        val roles = arrayOf("postulante", "gerente de empresa", "administrador")
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, roles)
         actvRol.setAdapter(adapter)
         actvRol.setText("postulante", false)

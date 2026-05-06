@@ -33,6 +33,8 @@ class TableDetailFragment : Fragment() {
     private var tableName: String = ""
     private var tableDisplayName: String = ""
     private var allItems: List<List<Any>> = emptyList()
+    private var canEdit: Boolean = false
+    private var canDelete: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,10 +63,18 @@ class TableDetailFragment : Fragment() {
             ThemeToggleHelper.toggle(requireActivity())
         }
 
+        val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        val role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
+        val access = Constants.getRoleTables(role)[tableName] ?: Constants.AccessLevel.NONE
+        canEdit = access == Constants.AccessLevel.FULL
+        canDelete = access == Constants.AccessLevel.FULL
+
         setupToolbar()
         setupRecyclerView()
         setupSearchView()
         setupFab()
+
+        if (!canEdit) fabAdd.visibility = View.GONE
 
         viewModel.setTable(tableName)
 
@@ -89,6 +99,8 @@ class TableDetailFragment : Fragment() {
     private fun setupRecyclerView() {
         adapter = TableAdapter(
             tableName = tableName,
+            canEdit = canEdit,
+            canDelete = canDelete,
             onEditClick = { item, position ->
                 showEditDialog(item, true)
             },
@@ -144,6 +156,10 @@ class TableDetailFragment : Fragment() {
     }
 
     private fun showEditDialog(itemData: List<Any>, isEditMode: Boolean) {
+        if (!canEdit) {
+            StyledToast.show(requireContext(), "No tienes permiso para editar esta tabla")
+            return
+        }
         val dialog = EditorDialogFragment()
         val bundle = Bundle().apply {
             putString(Constants.BUNDLE_TABLE_NAME, tableName)
@@ -155,6 +171,10 @@ class TableDetailFragment : Fragment() {
     }
 
     private fun showDeleteDialog(itemData: List<Any>, position: Int) {
+        if (!canDelete) {
+            StyledToast.show(requireContext(), "No tienes permiso para eliminar registros de esta tabla")
+            return
+        }
         val dialog = DeleteConfirmDialog()
         val bundle = Bundle().apply {
             putString("itemData", itemData.joinToString(","))

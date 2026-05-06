@@ -9,18 +9,18 @@ class TipoDocumentoDao(private val db: ConnectionHelper) {
         val results = db.executeQuery("SELECT * FROM TIPO_DOCUMENTO ORDER BY NOMBRE_TIPO")
         return results.map { row ->
             TipoDocumento(
-                id_tipo_documento = row[0] as Int,
-                nombre_tipo = row[1] as String
+                id_tipo_documento = row[0].toString().toIntOrNull() ?: 0,
+                nombre_tipo = row[1].toString()
             )
         }
     }
 
     fun getById(id: Int): TipoDocumento? {
-        val results = db.getById("TIPO_DOCUMENTO", "ID_TIPO_DOCUMENTO", id)
+        val results = db.getById("TIPO_DOCUMENTO", "ID_TIPO_DOCUMENTO", id.toString())
         return results.firstOrNull()?.let { row ->
             TipoDocumento(
-                id_tipo_documento = row[0] as Int,
-                nombre_tipo = row[1] as String
+                id_tipo_documento = row[0].toString().toIntOrNull() ?: 0,
+                nombre_tipo = row[1].toString()
             )
         }
     }
@@ -29,14 +29,14 @@ class TipoDocumentoDao(private val db: ConnectionHelper) {
         val results = db.search("TIPO_DOCUMENTO", "NOMBRE_TIPO", query)
         return results.map { row ->
             TipoDocumento(
-                id_tipo_documento = row[0] as Int,
-                nombre_tipo = row[1] as String
+                id_tipo_documento = row[0].toString().toIntOrNull() ?: 0,
+                nombre_tipo = row[1].toString()
             )
         }
     }
 
     fun insert(data: TipoDocumento): Long {
-        val query = "INSERT INTO TIPO_DOCUMENTO (ID_TIPO_DOCUMENTO, NOMBRE_TIPO) VALUES (${data.id_tipo_documento}, '${data.nombre_tipo}')"
+        val query = "INSERT INTO TIPO_DOCUMENTO (NOMBRE_TIPO) VALUES ('${data.nombre_tipo}')"
         return db.executeInsert(query)
     }
 
@@ -45,7 +45,7 @@ class TipoDocumentoDao(private val db: ConnectionHelper) {
         return db.executeUpdate(query)
     }
 
-    fun delete(id: Int): Int = db.deleteById("TIPO_DOCUMENTO", "ID_TIPO_DOCUMENTO", id)
+    fun delete(id: Int): Int = db.deleteById("TIPO_DOCUMENTO", "ID_TIPO_DOCUMENTO", id.toString())
 
     fun getCount(): Int = db.getCount("TIPO_DOCUMENTO")
 }

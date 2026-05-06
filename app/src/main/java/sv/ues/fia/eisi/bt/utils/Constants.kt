@@ -1,8 +1,8 @@
 package sv.ues.fia.eisi.bt.utils
 
 object Constants {
-    const val DATABASE_NAME = "si.db"
-    const val DATABASE_VERSION = 6
+    const val DATABASE_NAME = "bolsadetabajo.db"
+    const val DATABASE_VERSION = 10
 
     const val PREFS_NAME = "bolsa_trabajo_prefs"
     const val KEY_IS_LOGGED_IN = "is_logged_in"
@@ -10,9 +10,9 @@ object Constants {
     const val KEY_USERNAME = "username"
     const val KEY_USER_ROLE = "user_role"
 
-    const val ROLE_ADMIN = "admin"
+    const val ROLE_ADMIN = "administrador"
     const val ROLE_POSTULANTE = "postulante"
-    const val ROLE_EMPRESA = "empresa"
+    const val ROLE_EMPRESA = "gerente de empresa"
 
     const val TABLE_CATEGORIA_HABILIDAD = "CATEGORIA_HABILIDAD"
     const val TABLE_GENERO = "GENERO"
@@ -52,4 +52,61 @@ object Constants {
     const val BUNDLE_TABLE_DATA = "table_data"
     const val BUNDLE_IS_EDIT_MODE = "is_edit_mode"
     const val BUNDLE_ITEM_ID = "item_id"
+
+    enum class AccessLevel { NONE, READ_ONLY, FULL }
+
+    fun getRoleTables(role: String): Map<String, AccessLevel> {
+        return when (role) {
+            ROLE_ADMIN -> ALL_TABLES.associateWith { AccessLevel.FULL }
+            ROLE_POSTULANTE -> mapOf(
+                TABLE_USUARIO to AccessLevel.FULL,
+                TABLE_POSTULANTE to AccessLevel.FULL,
+                TABLE_EXPERIENCIA_LABORAL to AccessLevel.FULL,
+                TABLE_FORMACION_ACADEMICA to AccessLevel.FULL,
+                TABLE_HABILIDAD_POSTULANTE to AccessLevel.FULL,
+                TABLE_CERTIFICACION to AccessLevel.FULL,
+                TABLE_RED_SOCIAL_POSTULANTE to AccessLevel.FULL,
+                TABLE_POSTULACION to AccessLevel.FULL,
+                TABLE_EMPRESA to AccessLevel.READ_ONLY,
+                TABLE_OFERTA_TRABAJO to AccessLevel.READ_ONLY,
+                TABLE_DETALLE_REQUISITO to AccessLevel.READ_ONLY,
+                TABLE_GENERO to AccessLevel.READ_ONLY,
+                TABLE_TIPO_DOCUMENTO to AccessLevel.READ_ONLY,
+                TABLE_GRADO_ACADEMICO to AccessLevel.READ_ONLY,
+                TABLE_CATEGORIA_HABILIDAD to AccessLevel.READ_ONLY,
+                TABLE_HABILIDAD to AccessLevel.READ_ONLY,
+                TABLE_RED_SOCIAL to AccessLevel.READ_ONLY,
+                TABLE_INSTITUCION to AccessLevel.READ_ONLY,
+                TABLE_OFERTA_ACADEMICA to AccessLevel.READ_ONLY,
+                TABLE_DEPARTAMENTO to AccessLevel.READ_ONLY,
+                TABLE_MUNICIPIO to AccessLevel.READ_ONLY,
+                TABLE_DISTRITO to AccessLevel.READ_ONLY
+            )
+            ROLE_EMPRESA -> mapOf(
+                TABLE_USUARIO to AccessLevel.FULL,
+                TABLE_EMPRESA to AccessLevel.FULL,
+                TABLE_OFERTA_TRABAJO to AccessLevel.FULL,
+                TABLE_DETALLE_REQUISITO to AccessLevel.FULL,
+                TABLE_POSTULACION to AccessLevel.FULL,
+                TABLE_POSTULANTE to AccessLevel.READ_ONLY,
+                TABLE_EXPERIENCIA_LABORAL to AccessLevel.READ_ONLY,
+                TABLE_FORMACION_ACADEMICA to AccessLevel.READ_ONLY,
+                TABLE_HABILIDAD_POSTULANTE to AccessLevel.READ_ONLY,
+                TABLE_CERTIFICACION to AccessLevel.READ_ONLY,
+                TABLE_RED_SOCIAL_POSTULANTE to AccessLevel.READ_ONLY,
+                TABLE_GRADO_ACADEMICO to AccessLevel.READ_ONLY,
+                TABLE_HABILIDAD to AccessLevel.READ_ONLY,
+                TABLE_CATEGORIA_HABILIDAD to AccessLevel.READ_ONLY,
+                TABLE_INSTITUCION to AccessLevel.READ_ONLY,
+                TABLE_DEPARTAMENTO to AccessLevel.READ_ONLY,
+                TABLE_MUNICIPIO to AccessLevel.READ_ONLY,
+                TABLE_DISTRITO to AccessLevel.READ_ONLY,
+                TABLE_GENERO to AccessLevel.READ_ONLY,
+                TABLE_TIPO_DOCUMENTO to AccessLevel.READ_ONLY,
+                TABLE_RED_SOCIAL to AccessLevel.READ_ONLY,
+                TABLE_OFERTA_ACADEMICA to AccessLevel.READ_ONLY
+            )
+            else -> emptyMap()
+        }
+    }
 }

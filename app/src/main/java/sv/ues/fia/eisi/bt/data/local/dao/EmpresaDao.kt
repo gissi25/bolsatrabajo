@@ -9,24 +9,26 @@ class EmpresaDao(private val db: ConnectionHelper) {
         val results = db.executeQuery("SELECT * FROM EMPRESA ORDER BY NOMBRE_EMPRESA")
         return results.map { row ->
             Empresa(
-                id_empresa = row[0] as Int,
-                id_distrito = row[1] as Int,
-                nombre_empresa = row[2] as String,
-                contacto_directo = row[3] as String,
-                nit = row[4] as String
+                nit = row[0].toString(),
+                id_distrito_depto = row[1].toString().toIntOrNull() ?: 0,
+                id_distrito_municipio = row[2].toString().toIntOrNull() ?: 0,
+                id_distrito_id = row[3].toString().toIntOrNull() ?: 0,
+                nombre_empresa = row[4].toString(),
+                contacto_directo = row[5].toString()
             )
         }
     }
 
-    fun getById(id: Int): Empresa? {
-        val results = db.getById("EMPRESA", "ID_EMPRESA", id)
+    fun getByNit(nit: String): Empresa? {
+        val results = db.getById("EMPRESA", "NIT", nit)
         return results.firstOrNull()?.let { row ->
             Empresa(
-                id_empresa = row[0] as Int,
-                id_distrito = row[1] as Int,
-                nombre_empresa = row[2] as String,
-                contacto_directo = row[3] as String,
-                nit = row[4] as String
+                nit = row[0].toString(),
+                id_distrito_depto = row[1].toString().toIntOrNull() ?: 0,
+                id_distrito_municipio = row[2].toString().toIntOrNull() ?: 0,
+                id_distrito_id = row[3].toString().toIntOrNull() ?: 0,
+                nombre_empresa = row[4].toString(),
+                contacto_directo = row[5].toString()
             )
         }
     }
@@ -35,26 +37,27 @@ class EmpresaDao(private val db: ConnectionHelper) {
         val results = db.search("EMPRESA", "NOMBRE_EMPRESA", query)
         return results.map { row ->
             Empresa(
-                id_empresa = row[0] as Int,
-                id_distrito = row[1] as Int,
-                nombre_empresa = row[2] as String,
-                contacto_directo = row[3] as String,
-                nit = row[4] as String
+                nit = row[0].toString(),
+                id_distrito_depto = row[1].toString().toIntOrNull() ?: 0,
+                id_distrito_municipio = row[2].toString().toIntOrNull() ?: 0,
+                id_distrito_id = row[3].toString().toIntOrNull() ?: 0,
+                nombre_empresa = row[4].toString(),
+                contacto_directo = row[5].toString()
             )
         }
     }
 
     fun insert(data: Empresa): Long {
-        val query = "INSERT INTO EMPRESA (ID_EMPRESA, ID_DISTRITO, NOMBRE_EMPRESA, CONTACTO_DIRECTO, NIT) VALUES (${data.id_empresa}, ${data.id_distrito}, '${data.nombre_empresa}', '${data.contacto_directo}', '${data.nit}')"
+        val query = "INSERT INTO EMPRESA (NIT, ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID, NOMBRE_EMPRESA, CONTACTO_DIRECTO) VALUES ('${data.nit}', ${data.id_distrito_depto}, ${data.id_distrito_municipio}, ${data.id_distrito_id}, '${data.nombre_empresa}', '${data.contacto_directo}')"
         return db.executeInsert(query)
     }
 
     fun update(data: Empresa): Int {
-        val query = "UPDATE EMPRESA SET ID_DISTRITO = ${data.id_distrito}, NOMBRE_EMPRESA = '${data.nombre_empresa}', CONTACTO_DIRECTO = '${data.contacto_directo}', NIT = '${data.nit}' WHERE ID_EMPRESA = ${data.id_empresa}"
+        val query = "UPDATE EMPRESA SET ID_DISTRITO_DEPTO = ${data.id_distrito_depto}, ID_DISTRITO_MUNICIPIO = ${data.id_distrito_municipio}, ID_DISTRITO_ID = ${data.id_distrito_id}, NOMBRE_EMPRESA = '${data.nombre_empresa}', CONTACTO_DIRECTO = '${data.contacto_directo}' WHERE NIT = '${data.nit}'"
         return db.executeUpdate(query)
     }
 
-    fun delete(id: Int): Int = db.deleteById("EMPRESA", "ID_EMPRESA", id)
+    fun delete(nit: String): Int = db.deleteById("EMPRESA", "NIT", nit)
 
     fun getCount(): Int = db.getCount("EMPRESA")
 }

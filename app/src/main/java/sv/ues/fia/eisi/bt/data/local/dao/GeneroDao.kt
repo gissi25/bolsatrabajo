@@ -9,8 +9,8 @@ class GeneroDao(private val db: ConnectionHelper) {
         val results = db.executeQuery("SELECT * FROM GENERO ORDER BY NOMBRE_GENERO")
         return results.map { row ->
             Genero(
-                id_genero = (row[0] as? Int) ?: (row[0] as? String)?.toIntOrNull() ?: 0,
-                nombre_genero = row[1] as? String ?: ""
+                id_genero = row[0].toString().toIntOrNull() ?: 0,
+                nombre_genero = row[1].toString()
             )
         }
     }
@@ -20,8 +20,8 @@ class GeneroDao(private val db: ConnectionHelper) {
         val results = db.executeQuery(sql)
         return results.map { row ->
             Genero(
-                id_genero = (row[0] as? Int) ?: (row[0] as? String)?.toIntOrNull() ?: 0,
-                nombre_genero = row[1] as? String ?: ""
+                id_genero = row[0].toString().toIntOrNull() ?: 0,
+                nombre_genero = row[1].toString()
             )
         }
     }
@@ -36,7 +36,7 @@ class GeneroDao(private val db: ConnectionHelper) {
         return db.executeUpdate(query)
     }
 
-    fun delete(id: Int): Int = db.deleteById("GENERO", "ID_GENERO", id)
+    fun delete(id: Int): Int = db.deleteById("GENERO", "ID_GENERO", id.toString())
 
     fun getCount(): Int = db.getCount("GENERO")
 }

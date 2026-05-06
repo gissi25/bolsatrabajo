@@ -33,7 +33,7 @@
     <string name="search_tables">Buscar tablas...</string>
     <string name="welcome_user">Bienvenido/a %1$s</string>
     <string name="logout_confirm_message">¿Estás seguro que deseas cerrar sesión?</string>
-    <string name="password_too_short">La contraseña debe tener al menos 6 caracteres</string>
+    <string name="password_too_short">La contraseña debe tener al menos 8 caracteres</string>
 
     <!-- Navegacion -->
     <string name="logout">Cerrar Sesión</string>

@@ -9,18 +9,18 @@ class GradoAcademicoDao(private val db: ConnectionHelper) {
         val results = db.executeQuery("SELECT * FROM GRADO_ACADEMICO ORDER BY NOMBRE_GRADO")
         return results.map { row ->
             GradoAcademico(
-                id_grado_academico = row[0] as Int,
-                nombre_grado = row[1] as String
+                id_grado_academico = row[0].toString().toIntOrNull() ?: 0,
+                nombre_grado = row[1].toString()
             )
         }
     }
 
     fun getById(id: Int): GradoAcademico? {
-        val results = db.getById("GRADO_ACADEMICO", "ID_GRADO_ACADEMICO", id)
+        val results = db.getById("GRADO_ACADEMICO", "ID_GRADO_ACADEMICO", id.toString())
         return results.firstOrNull()?.let { row ->
             GradoAcademico(
-                id_grado_academico = row[0] as Int,
-                nombre_grado = row[1] as String
+                id_grado_academico = row[0].toString().toIntOrNull() ?: 0,
+                nombre_grado = row[1].toString()
             )
         }
     }
@@ -29,14 +29,14 @@ class GradoAcademicoDao(private val db: ConnectionHelper) {
         val results = db.search("GRADO_ACADEMICO", "NOMBRE_GRADO", query)
         return results.map { row ->
             GradoAcademico(
-                id_grado_academico = row[0] as Int,
-                nombre_grado = row[1] as String
+                id_grado_academico = row[0].toString().toIntOrNull() ?: 0,
+                nombre_grado = row[1].toString()
             )
         }
     }
 
     fun insert(data: GradoAcademico): Long {
-        val query = "INSERT INTO GRADO_ACADEMICO (ID_GRADO_ACADEMICO, NOMBRE_GRADO) VALUES (${data.id_grado_academico}, '${data.nombre_grado}')"
+        val query = "INSERT INTO GRADO_ACADEMICO (NOMBRE_GRADO) VALUES ('${data.nombre_grado}')"
         return db.executeInsert(query)
     }
 
@@ -45,7 +45,7 @@ class GradoAcademicoDao(private val db: ConnectionHelper) {
         return db.executeUpdate(query)
     }
 
-    fun delete(id: Int): Int = db.deleteById("GRADO_ACADEMICO", "ID_GRADO_ACADEMICO", id)
+    fun delete(id: Int): Int = db.deleteById("GRADO_ACADEMICO", "ID_GRADO_ACADEMICO", id.toString())
 
     fun getCount(): Int = db.getCount("GRADO_ACADEMICO")
 }

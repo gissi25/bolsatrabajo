@@ -1,10 +1,12 @@
 package sv.ues.fia.eisi.bt.data.local.entities
 
 data class Postulante(
-    val id_postulante: Int,
+    val id_postulante: String,
     val id_genero: Int,
     val id_tipo_documento: Int,
-    val id_distrito: Int?,
+    val id_distrito_depto: Int?,
+    val id_distrito_municipio: Int?,
+    val id_distrito_id: Int?,
     val nombre: String,
     val apellido: String,
     val fecha_nacimiento: String?,

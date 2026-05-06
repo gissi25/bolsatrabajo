@@ -1,10 +1,10 @@
 package sv.ues.fia.eisi.bt.data.local.entities
 
 data class Postulacion(
-    val id_empresa: Int,
-    val id_oferta: Int,
-    val id_postulante: Int,
-    val id_postulacion: Int,
+    val id_postulacion: String,
+    val nit: String,
+    val id_oferta: String,
+    val id_postulante: String,
     val fecha_aplicacion: String?,
     val estado_proceso: String?
 )

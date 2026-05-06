@@ -54,6 +54,8 @@ class EditorDialogFragment : DialogFragment() {
 
     private var docTypeColumnIndex: Int = -1
     private var numDocColumnIndex: Int = -1
+    private var savedUsername: String = ""
+    private var savedNewRole: String = ""
 
     private var distritoDepartamentoAutoComplete: MaterialAutoCompleteTextView? = null
     private var distritoMunicipioAutoComplete: MaterialAutoCompleteTextView? = null
@@ -99,6 +101,17 @@ class EditorDialogFragment : DialogFragment() {
             btnSave.text = if (isEditMode) "Actualizar" else "Guardar"
             when (result) {
                 is Resource.Success -> {
+                    if (tableName == "USUARIO" && isEditMode) {
+                        val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+                        val currentUserId = prefs.getInt(Constants.KEY_USER_ID, -1)
+                        val editedUserId = itemData.firstOrNull()?.trim()?.toIntOrNull() ?: -1
+                        if (editedUserId == currentUserId) {
+                            prefs.edit()
+                                .putString(Constants.KEY_USERNAME, savedUsername)
+                                .putString(Constants.KEY_USER_ROLE, savedNewRole)
+                                .apply()
+                        }
+                    }
                     StyledToast.show(requireContext(), result.message)
                     viewModel.clearResult()
                     dismiss()
@@ -116,19 +129,13 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun setupFields() {
-        if (tableName == "DISTRITO") {
-            createDistritoDepartamentoField()
-        }
 
-        if (tableName == "EMPRESA") {
-            createEmpresaDepartamentoField()
-            createEmpresaMunicipioField()
-        }
 
+        val autoGenCol = getAutoGenColumn(tableName)
         val columnsToIterate = if (tableName == "POSTULANTE") {
-            columns.filter { it != getAutoGenColumn(tableName) && it != "ID_DISTRITO" && it != "NOMBRE" && it != "APELLIDO" }
+            columns.filter { it != autoGenCol && it != "NOMBRE" && it != "APELLIDO" }
         } else {
-            columns.filter { it != getAutoGenColumn(tableName) }
+            columns.filter { it != autoGenCol }
         }
 
         var numDocumentoCreated = false
@@ -159,11 +166,6 @@ class EditorDialogFragment : DialogFragment() {
             }
             if (tableName == "POSTULANTE" && numDocumentoCreated && column != "NUM_DOCUMENTO") {
                 numDocumentoCreated = false
-                createPostulanteDepartamentoField()
-                createPostulanteMunicipioField()
-                val distritoColIndex = columns.indexOf("ID_DISTRITO")
-                createDropdownField(distritoColIndex, "ID_DISTRITO", distritoColIndex)
-
                 val nombreColIndex = columns.indexOf("NOMBRE")
                 createTextInputField(nombreColIndex, "NOMBRE", nombreColIndex)
                 val apellidoColIndex = columns.indexOf("APELLIDO")
@@ -222,14 +224,14 @@ class EditorDialogFragment : DialogFragment() {
             filterColumn = "ID_CATEGORIA_HABILIDAD"
         }
         if (column == "ID_OFERTA" && tableName == "POSTULACION") {
-            val empresaAutoComplete = dropDownFields.values.find { it.first == "ID_EMPRESA" }?.second
+            val empresaAutoComplete = dropDownFields.values.find { it.first == "NIT" }?.second
             parentId = getSelectedDropdownValue(empresaAutoComplete)
-            filterColumn = "ID_EMPRESA"
+            filterColumn = "NIT"
         }
         if (column == "ID_OFERTA" && tableName == "DETALLE_REQUISITO") {
-            val empresaAutoComplete = dropDownFields.values.find { it.first == "ID_EMPRESA" }?.second
+            val empresaAutoComplete = dropDownFields.values.find { it.first == "NIT" }?.second
             parentId = getSelectedDropdownValue(empresaAutoComplete)
-            filterColumn = "ID_EMPRESA"
+            filterColumn = "NIT"
         }
 
         val options = if (parentId != null && parentId.isNotBlank() && filterColumn != null) {
@@ -278,9 +280,10 @@ class EditorDialogFragment : DialogFragment() {
 
         autoComplete.setOnItemClickListener { _, _, _, _ ->
             if (column == "ID_DEPARTAMENTO") refreshDependentDropdown("ID_MUNICIPIO")
-            if (column == "ID_MUNICIPIO") refreshDependentDropdown("ID_DISTRITO")
             if (column == "ID_CATEGORIA_HABILIDAD") refreshDependentDropdown("ID_HABILIDAD")
-            if (column == "ID_EMPRESA" && (tableName == "POSTULACION" || tableName == "DETALLE_REQUISITO")) refreshDependentDropdown("ID_OFERTA")
+            if (column == "NIT" && (tableName == "POSTULACION" || tableName == "DETALLE_REQUISITO")) refreshDependentDropdown("ID_OFERTA")
+            if (column == "ID_DISTRITO_DEPTO") refreshDependentDropdown("ID_DISTRITO_MUNICIPIO")
+            if (column == "ID_DISTRITO_MUNICIPIO") refreshDependentDropdown("ID_DISTRITO_ID")
         }
 
         autoComplete.addTextChangedListener(object : TextWatcher {
@@ -428,7 +431,7 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun createRolDropdown(idx: Int, column: String, colIndex: Int) {
-        val roles = arrayOf("postulante", "empresa", "admin")
+        val roles = arrayOf("postulante", "gerente de empresa", "administrador")
 
         val til = TextInputLayout(requireContext()).apply {
             layoutParams = LinearLayout.LayoutParams(
@@ -1027,6 +1030,7 @@ class EditorDialogFragment : DialogFragment() {
     private fun refreshDependentDropdown(childColumn: String) {
         val childInfo = dropDownFields.values.find { it.first == childColumn } ?: return
         val childAutoComplete = childInfo.second
+        val childFkRef = fkRefs[childColumn] ?: return
 
         // Búsqueda robusta del TextInputLayout subiendo en la jerarquía
         var current = childAutoComplete.parent
@@ -1042,21 +1046,35 @@ class EditorDialogFragment : DialogFragment() {
 
         val parentFkColumn = when (childColumn) {
             "ID_MUNICIPIO" -> "ID_DEPARTAMENTO"
-            "ID_DISTRITO" -> "ID_MUNICIPIO"
             "ID_HABILIDAD" -> "ID_CATEGORIA_HABILIDAD"
-            "ID_OFERTA" -> "ID_EMPRESA"
+            "ID_OFERTA" -> "NIT"
+            "ID_DISTRITO_MUNICIPIO" -> "ID_DISTRITO_DEPTO"
+            "ID_DISTRITO_ID" -> "ID_DISTRITO_MUNICIPIO"
             else -> return
         }
 
-        val parentAutoComplete = dropDownFields.values.find { it.first == parentFkColumn }?.second
-        val parentId = getSelectedDropdownValue(parentAutoComplete) ?: return
+        val actualFilterColumn = when (childColumn) {
+            "ID_DISTRITO_MUNICIPIO" -> "ID_DEPARTAMENTO"
+            "ID_DISTRITO_ID" -> "ID_MUNICIPIO"
+            else -> parentFkColumn
+        }
 
-        // Usar parentFkColumn como filtro directo en lugar de parentFk.fkColumn
+        val parentAutoComplete = dropDownFields.values.find { it.first == parentFkColumn }?.second
+        var parentId = getSelectedDropdownValue(parentAutoComplete) ?: return
+
+        if (childColumn == "ID_DISTRITO_ID") {
+            val deptoAutoComplete = dropDownFields.values.find { it.first == "ID_DISTRITO_DEPTO" }?.second
+            val deptoId = getSelectedDropdownValue(deptoAutoComplete)
+            if (deptoId != null) {
+                parentId = "$deptoId|$parentId"
+            }
+        }
+
         val newOptions = viewModel.getFilteredOptions(
-            fkRefs[childColumn]!!.refTable,
-            parentFkColumn,
+            childFkRef.refTable,
+            actualFilterColumn,
             parentId,
-            fkRefs[childColumn]!!.refDisplayColumn
+            childFkRef.refDisplayColumn
         )
 
         val displayOptions = newOptions.map { it.second }
@@ -1247,8 +1265,15 @@ class EditorDialogFragment : DialogFragment() {
 
     private fun getInputType(column: String): Int {
         val col = column.uppercase()
+        val stringIdCols = setOf("ID_HABILIDAD", "ID_POSTULANTE", "ID_INSTITUCION", "ID_OFERTA_ACADEMICA",
+            "ID_POSTULACION", "ID_OFERTA", "ID_FORMACION", "ID_CERTIFICACION", "ID_EXPERIENCIA", "ID_DETALLE",
+            "NIT")
+        val numericIdCols = setOf("ID_GENERO", "ID_TIPO_DOCUMENTO", "ID_GRADO_ACADEMICO", "ID_RED_SOCIAL",
+            "ID_CATEGORIA_HABILIDAD", "ID_USUARIO", "ID_DISTRITO_DEPTO", "ID_DISTRITO_MUNICIPIO", "ID_DISTRITO_ID",
+            "ID_DEPARTAMENTO", "ID_MUNICIPIO")
         return when {
-            col.startsWith("ID_") || col.contains("NUP") || col == "CODIGO_CERTIFICACION" -> android.text.InputType.TYPE_CLASS_NUMBER
+            col in stringIdCols -> android.text.InputType.TYPE_CLASS_TEXT
+            col in numericIdCols || col.contains("NUP") || col == "CODIGO_CERTIFICACION" -> android.text.InputType.TYPE_CLASS_NUMBER
             col.contains("NUM_") || col.contains("DOCUMENTO") -> android.text.InputType.TYPE_CLASS_TEXT
             col.contains("FECHA") || col.contains("DATE") -> android.text.InputType.TYPE_CLASS_TEXT
             col.contains("EMAIL") -> android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
@@ -1274,7 +1299,7 @@ class EditorDialogFragment : DialogFragment() {
             "ID_GENERO" -> "Género"
             "ID_TIPO_DOCUMENTO" -> "Tipo de documento"
             "NUM_DOCUMENTO" -> "Número de documento"
-            "ID_DISTRITO" -> "Distrito"
+            "ID_DISTRITO" -> "Id Distrito"
             "NOMBRE" -> "Nombre"
             "APELLIDO" -> "Apellido"
             "FECHA_NACIMIENTO" -> "Fecha de nacimiento"
@@ -1284,7 +1309,7 @@ class EditorDialogFragment : DialogFragment() {
             "TELEFONO_CELULAR" -> "Teléfono celular"
             "EMAIL", "CORREO" -> "Correo electrónico"
             "ID_DEPARTAMENTO" -> "Departamento"
-            "ID_MUNICIPIO" -> "Municipio"
+            "ID_MUNICIPIO" -> "Id Municipio"
             "NOMBRE_CATEGORIA" -> "Nombre de categoría"
             "NOMBRE_GENERO" -> "Nombre de género"
             "NOMBRE_TIPO" -> "Nombre de tipo"
@@ -1295,7 +1320,6 @@ class EditorDialogFragment : DialogFragment() {
             "ID_CATEGORIA_HABILIDAD" -> "Categoría de habilidad"
             "NOMBRE_EMPRESA" -> "Nombre de empresa"
             "CONTACTO_DIRECTO" -> "Contacto directo"
-            "NIT" -> "NIT"
             "NOMBRE_INSTITUCION" -> "Nombre de institución"
             "NOMBRE_GRADO" -> "Nombre de grado"
             "NOMBRE_RED" -> "Nombre de red social"
@@ -1308,34 +1332,35 @@ class EditorDialogFragment : DialogFragment() {
             "EDAD_MINIMA" -> "Edad mínima"
             "EDAD_MAXIMA" -> "Edad máxima"
             "DESCRIPCION_OFERTA_TRABAJO", "DESCRIPCION", "DESC" -> "Descripción"
-            "DESCRIPCION_REQUISITO" -> "Descripción del requisito"
-            "ID_EMPRESA" -> "Empresa"
-            "ID_OFERTA" -> "Oferta de trabajo"
-            "ID_POSTULANTE" -> "Postulante"
-            "ID_CERTIFICACION" -> "Certificación"
-            "NOMBRE_CERTIFICACION" -> "Nombre de certificación"
-            "CODIGO_CERTIFICACION" -> "Código de certificación"
-            "FECHA_CERTIFICACION" -> "Fecha de certificación"
-            "ID_EXPERIENCIA" -> "Experiencia"
+            "DESCRIPCION_REQUISITO" -> "Descripcion del requisito"
+            "NIT" -> "NIT de empresa"
+            "ID_OFERTA" -> "Codigo de oferta"
+            "ID_POSTULANTE" -> "Codigo postulante"
+            "ID_CERTIFICACION" -> "Codigo certificacion"
+            "NOMBRE_CERTIFICACION" -> "Nombre de certificacion"
+            "CODIGO_CERTIFICACION" -> "Codigo de certificacion"
+            "FECHA_CERTIFICACION" -> "Fecha de certificacion"
+            "ID_EXPERIENCIA" -> "Codigo experiencia"
             "PUESTO_TRABAJO" -> "Puesto de trabajo"
             "FECHA_INICIO" -> "Fecha de inicio"
             "FECHA_FIN" -> "Fecha de fin"
-            "DESCP_EXPERIENCIA_LABORAL" -> "Descripción de experiencia"
+            "DESCP_EXPERIENCIA_LABORAL" -> "Descripcion de experiencia"
             "CONTACTO_REFERENCIA" -> "Contacto de referencia"
-            "ID_FORMACION" -> "Formación"
-            "ID_OFERTA_ACADEMICA" -> "Oferta académica"
-            "TITULO_OBTENIDO" -> "Título obtenido"
-            "FECHA_OBTENCION" -> "Fecha de obtención"
-            "ID_HABILIDAD" -> "Habilidad"
-            "ID_HABILIDAD_POSTULANTE" -> "Habilidad postulante"
+            "ID_FORMACION" -> "Codigo formacion"
+            "ID_OFERTA_ACADEMICA" -> "Codigo oferta academica"
+            "TITULO_OBTENIDO" -> "Titulo obtenido"
+            "FECHA_OBTENCION" -> "Fecha de obtencion"
+            "ID_HABILIDAD" -> "Codigo habilidad"
             "NIVEL_DESTREZA" -> "Nivel de destreza"
-            "ID_POSTULACION" -> "Postulación"
-            "FECHA_APLICACION" -> "Fecha de aplicación"
+            "ID_POSTULACION" -> "Codigo postulacion"
+            "FECHA_APLICACION" -> "Fecha de aplicacion"
             "ESTADO_PROCESO" -> "Estado del proceso"
-            "ID_DETALLE" -> "Detalle"
-            "ID_RED_POSTUALNTE" -> "Red social postulante"
+            "ID_DETALLE" -> "Codigo detalle"
             "ID_RED_SOCIAL" -> "Red social"
             "URL_PERFIL" -> "URL del perfil"
+            "ID_DISTRITO_DEPTO" -> "Departamento"
+            "ID_DISTRITO_MUNICIPIO" -> "Municipio"
+            "ID_DISTRITO_ID" -> "Distrito"
             "USERNAME", "USER" -> "Nombre de usuario"
             "PASSWORD", "CONTRA" -> "Contraseña"
             "ROL" -> "Rol"
@@ -1356,27 +1381,27 @@ class EditorDialogFragment : DialogFragment() {
     private fun getColumnsForTable(table: String): List<String> {
         return when (table) {
             "USUARIO" -> listOf("ID_USUARIO", "USERNAME", "PASSWORD", "ROL")
-            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_GENERO", "ID_TIPO_DOCUMENTO", "NUM_DOCUMENTO", "ID_DISTRITO", "NOMBRE", "APELLIDO", "FECHA_NACIMIENTO", "NUP", "DIRECCION_DETALLE", "TELEFONO_CASA", "TELEFONO_CELULAR", "EMAIL")
+            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_GENERO", "ID_TIPO_DOCUMENTO", "ID_DISTRITO_DEPTO", "ID_DISTRITO_MUNICIPIO", "ID_DISTRITO_ID", "NOMBRE", "APELLIDO", "FECHA_NACIMIENTO", "NUM_DOCUMENTO", "NUP", "DIRECCION_DETALLE", "TELEFONO_CASA", "TELEFONO_CELULAR", "EMAIL")
             "GENERO" -> listOf("ID_GENERO", "NOMBRE_GENERO")
             "TIPO_DOCUMENTO" -> listOf("ID_TIPO_DOCUMENTO", "NOMBRE_TIPO")
             "DEPARTAMENTO" -> listOf("ID_DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
-            "MUNICIPIO" -> listOf("ID_MUNICIPIO", "ID_DEPARTAMENTO", "NOMBRE_MUNICIPIO")
-            "DISTRITO" -> listOf("ID_DISTRITO", "ID_MUNICIPIO", "NOMBRE_DISTRITO")
-            "HABILIDAD" -> listOf("ID_HABILIDAD", "ID_CATEGORIA_HABILIDAD", "NOMBRE_HABILIDAD")
+            "MUNICIPIO" -> listOf("ID_DEPARTAMENTO", "ID_MUNICIPIO", "NOMBRE_MUNICIPIO")
+            "DISTRITO" -> listOf("ID_DEPARTAMENTO", "ID_MUNICIPIO", "ID_DISTRITO", "NOMBRE_DISTRITO")
+            "HABILIDAD" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "NOMBRE_HABILIDAD")
             "CATEGORIA_HABILIDAD" -> listOf("ID_CATEGORIA_HABILIDAD", "NOMBRE_CATEGORIA")
-            "EMPRESA" -> listOf("ID_EMPRESA", "ID_DISTRITO", "NOMBRE_EMPRESA", "CONTACTO_DIRECTO", "NIT")
+            "EMPRESA" -> listOf("NIT", "ID_DISTRITO_DEPTO", "ID_DISTRITO_MUNICIPIO", "ID_DISTRITO_ID", "NOMBRE_EMPRESA", "CONTACTO_DIRECTO")
             "INSTITUCION" -> listOf("ID_INSTITUCION", "NOMBRE_INSTITUCION")
             "GRADO_ACADEMICO" -> listOf("ID_GRADO_ACADEMICO", "NOMBRE_GRADO")
             "RED_SOCIAL" -> listOf("ID_RED_SOCIAL", "NOMBRE_RED")
             "OFERTA_ACADEMICA" -> listOf("ID_OFERTA_ACADEMICA", "ID_GRADO_ACADEMICO", "ID_INSTITUCION")
-            "OFERTA_TRABAJO" -> listOf("ID_EMPRESA", "ID_OFERTA", "ID_GRADO_ACADEMICO", "TITULO_PUESTO", "FECHA_PUBLICACION", "FECHA_CADUCIDAD", "EXPERIENCIA_ANIOS", "EDAD_MINIMA", "EDAD_MAXIMA", "DESCRIPCION_OFERTA_TRABAJO")
-            "CERTIFICACION" -> listOf("ID_POSTULANTE", "ID_CERTIFICACION", "ID_INSTITUCION", "NOMBRE_CERTIFICACION", "CODIGO_CERTIFICACION", "FECHA_CERTIFICACION")
-            "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "ID_EXPERIENCIA", "ID_EMPRESA", "PUESTO_TRABAJO", "FECHA_INICIO", "FECHA_FIN", "DESCP_EXPERIENCIA_LABORAL", "CONTACTO_REFERENCIA")
+            "OFERTA_TRABAJO" -> listOf("NIT", "ID_OFERTA", "ID_GRADO_ACADEMICO", "TITULO_PUESTO", "FECHA_PUBLICACION", "FECHA_CADUCIDAD", "EXPERIENCIA_ANIOS", "EDAD_MINIMA", "EDAD_MAXIMA", "DESCRIPCION_OFERTA_TRABAJO")
+            "CERTIFICACION" -> listOf("ID_CERTIFICACION", "ID_INSTITUCION", "ID_POSTULANTE", "NOMBRE_CERTIFICACION", "CODIGO_CERTIFICACION", "FECHA_CERTIFICACION")
+            "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "NIT", "ID_EXPERIENCIA", "PUESTO_TRABAJO", "FECHA_INICIO", "FECHA_FIN", "DESCP_EXPERIENCIA_LABORAL", "CONTACTO_REFERENCIA")
             "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_POSTULANTE", "ID_OFERTA_ACADEMICA", "TITULO_OBTENIDO", "FECHA_OBTENCION")
-            "HABILIDAD_POSTULANTE" -> listOf("ID_POSTULANTE", "ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "ID_HABILIDAD_POSTULANTE", "NIVEL_DESTREZA")
-            "POSTULACION" -> listOf("ID_EMPRESA", "ID_OFERTA", "ID_POSTULANTE", "ID_POSTULACION", "FECHA_APLICACION", "ESTADO_PROCESO")
-            "DETALLE_REQUISITO" -> listOf("ID_DETALLE", "ID_EMPRESA", "ID_OFERTA", "DESCRIPCION_REQUISITO")
-            "RED_SOCIAL_POSTULANTE" -> listOf("ID_RED_POSTUALNTE", "ID_POSTULANTE", "ID_RED_SOCIAL", "URL_PERFIL")
+            "HABILIDAD_POSTULANTE" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "ID_POSTULANTE", "NIVEL_DESTREZA")
+            "POSTULACION" -> listOf("ID_POSTULACION", "NIT", "ID_OFERTA", "ID_POSTULANTE", "FECHA_APLICACION", "ESTADO_PROCESO")
+            "DETALLE_REQUISITO" -> listOf("NIT", "ID_OFERTA", "ID_DETALLE", "DESCRIPCION_REQUISITO")
+            "RED_SOCIAL_POSTULANTE" -> listOf("ID_POSTULANTE", "ID_RED_SOCIAL", "URL_PERFIL")
             else -> listOf("ID", "NOMBRE")
         }
     }
@@ -1387,6 +1412,14 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun saveData() {
+        val role = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+            .getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
+        val access = Constants.getRoleTables(role)[tableName] ?: Constants.AccessLevel.NONE
+        if (access != Constants.AccessLevel.FULL) {
+            StyledToast.show(requireContext(), "No tienes permiso para modificar esta tabla")
+            return
+        }
+
         val editableColumns = columns.filter { it != getAutoGenColumn(tableName) }
         val values = mutableListOf<String>()
 
@@ -1485,22 +1518,61 @@ class EditorDialogFragment : DialogFragment() {
             }
         }
 
-        btnSave.isEnabled = false // Evitar múltiples clics
+        if (tableName == "USUARIO") {
+            val usernameIndex = editableColumns.indexOf("USERNAME")
+            if (usernameIndex >= 0 && usernameIndex < values.size) {
+                savedUsername = values[usernameIndex]
+            }
+            val roleIndex = editableColumns.indexOf("ROL")
+            if (roleIndex >= 0 && roleIndex < values.size) {
+                savedNewRole = values[roleIndex]
+            }
+        }
+
+        btnSave.isEnabled = false
         if (isEditMode) {
-            viewModel.updateRecord(tableName, itemData.first(), values)
+            val pkCols = getPrimaryKeyColumns(tableName)
+            val pkString = pkCols.map { col ->
+                val idx = columns.indexOf(col)
+                if (idx >= 0 && idx < itemData.size) itemData[idx].trim() else ""
+            }.joinToString("|")
+            viewModel.updateRecord(tableName, pkString, values)
         } else {
             viewModel.insertRecord(tableName, values)
         }
     }
 
-    private fun getAutoGenColumn(table: String): String {
+    private fun getPrimaryKeyColumns(table: String): List<String> {
         return when (table) {
-            "OFERTA_TRABAJO" -> "ID_OFERTA"
-            "EXPERIENCIA_LABORAL" -> "ID_EXPERIENCIA"
-            "CERTIFICACION" -> "ID_CERTIFICACION"
-            "HABILIDAD_POSTULANTE" -> "ID_HABILIDAD_POSTULANTE"
-            "POSTULACION" -> "ID_POSTULACION"
-            else -> columns.firstOrNull() ?: "ID"
+            "MUNICIPIO" -> listOf("ID_DEPARTAMENTO", "ID_MUNICIPIO")
+            "DISTRITO" -> listOf("ID_DEPARTAMENTO", "ID_MUNICIPIO", "ID_DISTRITO")
+            "EMPRESA" -> listOf("NIT")
+            "OFERTA_TRABAJO" -> listOf("NIT", "ID_OFERTA")
+            "DETALLE_REQUISITO" -> listOf("NIT", "ID_OFERTA", "ID_DETALLE")
+            "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "NIT", "ID_EXPERIENCIA")
+            "CERTIFICACION" -> listOf("ID_CERTIFICACION", "ID_INSTITUCION", "ID_POSTULANTE")
+            "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_POSTULANTE")
+            "HABILIDAD_POSTULANTE" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "ID_POSTULANTE")
+            "RED_SOCIAL_POSTULANTE" -> listOf("ID_POSTULANTE", "ID_RED_SOCIAL")
+            "POSTULACION" -> listOf("ID_POSTULACION")
+            "POSTULANTE" -> listOf("ID_POSTULANTE")
+            "HABILIDAD" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD")
+            "INSTITUCION" -> listOf("ID_INSTITUCION")
+            "OFERTA_ACADEMICA" -> listOf("ID_OFERTA_ACADEMICA")
+            else -> listOf(getAutoGenColumn(table) ?: columns.firstOrNull() ?: "ID")
+        }
+    }
+
+    private fun getAutoGenColumn(table: String): String? {
+        return when (table) {
+            "GENERO" -> "ID_GENERO"
+            "TIPO_DOCUMENTO" -> "ID_TIPO_DOCUMENTO"
+            "DEPARTAMENTO" -> "ID_DEPARTAMENTO"
+            "GRADO_ACADEMICO" -> "ID_GRADO_ACADEMICO"
+            "RED_SOCIAL" -> "ID_RED_SOCIAL"
+            "CATEGORIA_HABILIDAD" -> "ID_CATEGORIA_HABILIDAD"
+            "USUARIO" -> "ID_USUARIO"
+            else -> null
         }
     }
 }
