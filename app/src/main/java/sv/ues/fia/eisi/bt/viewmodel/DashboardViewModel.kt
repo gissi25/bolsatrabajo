@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
+import sv.ues.fia.eisi.bt.utils.Constants
 
 class DashboardViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -18,6 +19,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     val tables: LiveData<List<MainRepository.TableInfo>> = _tables
 
     private var allTablesOriginal: List<MainRepository.TableInfo> = emptyList()
+    private var currentRole: String = Constants.ROLE_ADMIN
 
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
@@ -25,20 +27,19 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
 
-    init {
-        loadTables()
-    }
-
-    fun loadTables() {
+    fun loadTables(role: String? = null) {
+        if (role != null) currentRole = role
         _isLoading.value = true
         _error.value = null
         viewModelScope.launch {
             try {
-                val result = withContext(Dispatchers.IO) {
+                val all = withContext(Dispatchers.IO) {
                     repository.getAllTablesWithCount()
                 }
-                allTablesOriginal = result
-                _tables.postValue(result)
+                val roleTables = Constants.getRoleTables(currentRole)
+                val filtered = all.filter { roleTables.containsKey(it.name) }
+                allTablesOriginal = filtered
+                _tables.postValue(filtered)
             } catch (e: Exception) {
                 _error.postValue(e.message ?: "Error al cargar las tablas")
             } finally {
@@ -50,11 +51,13 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     fun refreshCounts() {
         viewModelScope.launch {
             try {
-                val result = withContext(Dispatchers.IO) {
+                val all = withContext(Dispatchers.IO) {
                     repository.getAllTablesWithCount()
                 }
-                allTablesOriginal = result
-                _tables.postValue(result)
+                val roleTables = Constants.getRoleTables(currentRole)
+                val filtered = all.filter { roleTables.containsKey(it.name) }
+                allTablesOriginal = filtered
+                _tables.postValue(filtered)
             } catch (e: Exception) {
                 _error.postValue(e.message ?: "Error al actualizar contadores")
             }

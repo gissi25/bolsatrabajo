@@ -66,13 +66,17 @@ class DashboardFragment : Fragment() {
                 StyledToast.show(requireContext(), "Sin resultados")
             }
         }
+
+        val role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
+        viewModel.loadTables(role)
     }
 
     override fun onResume() {
         super.onResume()
         etSearch.setText("")
-        viewModel.loadOriginalTables()
-        viewModel.refreshCounts()
+        val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        val role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
+        viewModel.loadTables(role)
     }
 
     private fun setupSearch() {

@@ -9,37 +9,24 @@ class FormacionAcademicaDao(private val db: ConnectionHelper) {
         val results = db.executeQuery("SELECT * FROM FORMACION_ACADEMICA ORDER BY FECHA_OBTENCION DESC")
         return results.map { row ->
             FormacionAcademica(
-                id_formacion = row[0] as Int,
-                id_postulante = row[1] as Int,
-                id_oferta_academica = row[2] as? Int,
-                titulo_obtenido = row[3] as String,
-                fecha_obtencion = row[4] as? String
+                id_formacion = row[0].toString(),
+                id_postulante = row[1].toString(),
+                id_oferta_academica = row[2].toString().takeIf { it.isNotBlank() },
+                titulo_obtenido = row[3].toString(),
+                fecha_obtencion = row[4].toString().takeIf { it.isNotBlank() }
             )
         }
     }
 
-    fun getById(id: Int): FormacionAcademica? {
-        val results = db.getById("FORMACION_ACADEMICA", "ID_FORMACION", id)
-        return results.firstOrNull()?.let { row ->
-            FormacionAcademica(
-                id_formacion = row[0] as Int,
-                id_postulante = row[1] as Int,
-                id_oferta_academica = row[2] as? Int,
-                titulo_obtenido = row[3] as String,
-                fecha_obtencion = row[4] as? String
-            )
-        }
-    }
-
-    fun getByPostulante(postulanteId: Int): List<FormacionAcademica> {
-        val results = db.executeQuery("SELECT * FROM FORMACION_ACADEMICA WHERE ID_POSTULANTE = $postulanteId ORDER BY FECHA_OBTENCION DESC")
+    fun getByPostulante(postulanteId: String): List<FormacionAcademica> {
+        val results = db.executeQuery("SELECT * FROM FORMACION_ACADEMICA WHERE ID_POSTULANTE = '$postulanteId' ORDER BY FECHA_OBTENCION DESC")
         return results.map { row ->
             FormacionAcademica(
-                id_formacion = row[0] as Int,
-                id_postulante = row[1] as Int,
-                id_oferta_academica = row[2] as? Int,
-                titulo_obtenido = row[3] as String,
-                fecha_obtencion = row[4] as? String
+                id_formacion = row[0].toString(),
+                id_postulante = row[1].toString(),
+                id_oferta_academica = row[2].toString().takeIf { it.isNotBlank() },
+                titulo_obtenido = row[3].toString(),
+                fecha_obtencion = row[4].toString().takeIf { it.isNotBlank() }
             )
         }
     }
@@ -48,30 +35,32 @@ class FormacionAcademicaDao(private val db: ConnectionHelper) {
         val results = db.search("FORMACION_ACADEMICA", "TITULO_OBTENIDO", query)
         return results.map { row ->
             FormacionAcademica(
-                id_formacion = row[0] as Int,
-                id_postulante = row[1] as Int,
-                id_oferta_academica = row[2] as? Int,
-                titulo_obtenido = row[3] as String,
-                fecha_obtencion = row[4] as? String
+                id_formacion = row[0].toString(),
+                id_postulante = row[1].toString(),
+                id_oferta_academica = row[2].toString().takeIf { it.isNotBlank() },
+                titulo_obtenido = row[3].toString(),
+                fecha_obtencion = row[4].toString().takeIf { it.isNotBlank() }
             )
         }
     }
 
     fun insert(data: FormacionAcademica): Long {
-        val ofertaId = data.id_oferta_academica ?: "NULL"
+        val ofertaId = if (data.id_oferta_academica != null) "'${data.id_oferta_academica}'" else "NULL"
         val fecha = if (data.fecha_obtencion != null) "'${data.fecha_obtencion}'" else "NULL"
-        val query = "INSERT INTO FORMACION_ACADEMICA (ID_FORMACION, ID_POSTULANTE, ID_OFERTA_ACADEMICA, TITULO_OBTENIDO, FECHA_OBTENCION) VALUES (${data.id_formacion}, ${data.id_postulante}, $ofertaId, '${data.titulo_obtenido}', $fecha)"
+        val query = "INSERT INTO FORMACION_ACADEMICA (ID_FORMACION, ID_POSTULANTE, ID_OFERTA_ACADEMICA, TITULO_OBTENIDO, FECHA_OBTENCION) VALUES ('${data.id_formacion}', '${data.id_postulante}', $ofertaId, '${data.titulo_obtenido}', $fecha)"
         return db.executeInsert(query)
     }
 
     fun update(data: FormacionAcademica): Int {
-        val ofertaId = data.id_oferta_academica ?: "NULL"
+        val ofertaId = if (data.id_oferta_academica != null) "'${data.id_oferta_academica}'" else "NULL"
         val fecha = if (data.fecha_obtencion != null) "'${data.fecha_obtencion}'" else "NULL"
-        val query = "UPDATE FORMACION_ACADEMICA SET ID_POSTULANTE = ${data.id_postulante}, ID_OFERTA_ACADEMICA = $ofertaId, TITULO_OBTENIDO = '${data.titulo_obtenido}', FECHA_OBTENCION = $fecha WHERE ID_FORMACION = ${data.id_formacion}"
+        val query = "UPDATE FORMACION_ACADEMICA SET ID_OFERTA_ACADEMICA = $ofertaId, TITULO_OBTENIDO = '${data.titulo_obtenido}', FECHA_OBTENCION = $fecha WHERE ID_FORMACION = '${data.id_formacion}' AND ID_POSTULANTE = '${data.id_postulante}'"
         return db.executeUpdate(query)
     }
 
-    fun delete(id: Int): Int = db.deleteById("FORMACION_ACADEMICA", "ID_FORMACION", id)
+    fun delete(formacionId: String, postulanteId: String): Int {
+        return db.executeDelete("DELETE FROM FORMACION_ACADEMICA WHERE ID_FORMACION = '$formacionId' AND ID_POSTULANTE = '$postulanteId'")
+    }
 
     fun getCount(): Int = db.getCount("FORMACION_ACADEMICA")
 }

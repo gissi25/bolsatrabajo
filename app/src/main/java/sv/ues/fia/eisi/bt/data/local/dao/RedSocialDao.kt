@@ -9,18 +9,18 @@ class RedSocialDao(private val db: ConnectionHelper) {
         val results = db.executeQuery("SELECT * FROM RED_SOCIAL ORDER BY NOMBRE_RED")
         return results.map { row ->
             RedSocial(
-                id_red_social = row[0] as Int,
-                nombre_red = row[1] as? String
+                id_red_social = row[0].toString().toIntOrNull() ?: 0,
+                nombre_red = row[1].toString()
             )
         }
     }
 
     fun getById(id: Int): RedSocial? {
-        val results = db.getById("RED_SOCIAL", "ID_RED_SOCIAL", id)
+        val results = db.getById("RED_SOCIAL", "ID_RED_SOCIAL", id.toString())
         return results.firstOrNull()?.let { row ->
             RedSocial(
-                id_red_social = row[0] as Int,
-                nombre_red = row[1] as? String
+                id_red_social = row[0].toString().toIntOrNull() ?: 0,
+                nombre_red = row[1].toString()
             )
         }
     }
@@ -29,14 +29,14 @@ class RedSocialDao(private val db: ConnectionHelper) {
         val results = db.search("RED_SOCIAL", "NOMBRE_RED", query)
         return results.map { row ->
             RedSocial(
-                id_red_social = row[0] as Int,
-                nombre_red = row[1] as? String
+                id_red_social = row[0].toString().toIntOrNull() ?: 0,
+                nombre_red = row[1].toString()
             )
         }
     }
 
     fun insert(data: RedSocial): Long {
-        val query = "INSERT INTO RED_SOCIAL (ID_RED_SOCIAL, NOMBRE_RED) VALUES (${data.id_red_social}, '${data.nombre_red}')"
+        val query = "INSERT INTO RED_SOCIAL (NOMBRE_RED) VALUES ('${data.nombre_red}')"
         return db.executeInsert(query)
     }
 
@@ -45,7 +45,7 @@ class RedSocialDao(private val db: ConnectionHelper) {
         return db.executeUpdate(query)
     }
 
-    fun delete(id: Int): Int = db.deleteById("RED_SOCIAL", "ID_RED_SOCIAL", id)
+    fun delete(id: Int): Int = db.deleteById("RED_SOCIAL", "ID_RED_SOCIAL", id.toString())
 
     fun getCount(): Int = db.getCount("RED_SOCIAL")
 }

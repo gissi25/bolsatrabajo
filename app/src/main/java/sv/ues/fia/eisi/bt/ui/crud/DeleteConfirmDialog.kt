@@ -107,7 +107,10 @@ class DeleteConfirmDialog : DialogFragment() {
             progressBar.visibility = View.GONE
             loadingText.visibility = View.GONE
 
-            if (deps.isEmpty()) {
+            val hasGrandchildren = deps.any { it.depth >= 2 }
+            if (hasGrandchildren) {
+                showCannotDeleteDialog(deps, titleTv, depsLayout, buttonsLayout)
+            } else if (deps.isEmpty()) {
                 showSimpleConfirm(titleTv, depsLayout, buttonsLayout)
             } else {
                 showDependenciesConfirm(deps, titleTv, depsLayout, buttonsLayout)
@@ -135,7 +138,27 @@ class DeleteConfirmDialog : DialogFragment() {
 
         val dataList = itemData.split(",")
         if (dataList.isNotEmpty()) {
-            viewModel.checkDeleteDependencies(dataList.first().trim())
+            val needsComposite = tableName in listOf(
+                "MUNICIPIO", "DISTRITO",
+                "OFERTA_TRABAJO", "DETALLE_REQUISITO",
+                "EXPERIENCIA_LABORAL", "CERTIFICACION",
+                "FORMACION_ACADEMICA", "HABILIDAD_POSTULANTE",
+                "RED_SOCIAL_POSTULANTE", "HABILIDAD"
+            )
+            if (needsComposite) {
+                val pkChunks = when (tableName) {
+                    "MUNICIPIO" -> 2; "DISTRITO" -> 3; "OFERTA_TRABAJO" -> 2
+                    "DETALLE_REQUISITO" -> 3; "EXPERIENCIA_LABORAL" -> 3
+                    "CERTIFICACION" -> 3; "FORMACION_ACADEMICA" -> 2
+                    "HABILIDAD_POSTULANTE" -> 3; "RED_SOCIAL_POSTULANTE" -> 2
+                    "HABILIDAD" -> 2
+                    else -> 1
+                }
+                val pkString = (0 until pkChunks).joinToString("|") { dataList.getOrElse(it) { "" }.trim() }
+                viewModel.checkDeleteDependencies(pkString)
+            } else {
+                viewModel.checkDeleteDependencies(dataList.first().trim())
+            }
         }
 
         return layout
@@ -199,8 +222,76 @@ class DeleteConfirmDialog : DialogFragment() {
         buttonsLayout.visibility = View.VISIBLE
     }
 
+    private fun showCannotDeleteDialog(
+        deps: List<MainRepository.DependencyInfo>,
+        titleTv: TextView,
+        depsLayout: LinearLayout,
+        buttonsLayout: LinearLayout
+    ) {
+        titleTv.text = "No se puede eliminar"
+        depsLayout.removeAllViews()
+        val warningText = TextView(requireContext()).apply {
+            text = "Este registro tiene dependencias en cadena. No se puede eliminar porque afectaria datos en varios niveles:"
+            setPadding(0, 0, 0, 16)
+            setTextColor(requireContext().getColor(R.color.text_primary))
+            setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Body1)
+        }
+        depsLayout.addView(warningText)
+
+        val grouped = deps.groupBy { it.depth }
+        for ((depth, items) in grouped) {
+            val levelLabel = if (depth == 1) "Directos:" else "Nivel $depth:"
+            val levelTitle = TextView(requireContext()).apply {
+                text = "\n$levelLabel"
+                setPadding(16, 8, 0, 4)
+                setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Body2)
+                setTextColor(requireContext().getColor(R.color.text_secondary))
+            }
+            depsLayout.addView(levelTitle)
+            for (item in items) {
+                val depText = TextView(requireContext()).apply {
+                    text = "  \u2022 ${item.count} ${item.displayName}"
+                    setPadding(32, 0, 0, 4)
+                    setTextColor(requireContext().getColor(R.color.text_secondary))
+                }
+                depsLayout.addView(depText)
+            }
+        }
+
+        val totalRecords = deps.sumOf { it.count }
+        val totalText = TextView(requireContext()).apply {
+            text = "\nTotal: $totalRecords registros vinculados"
+            setPadding(0, 0, 0, 32)
+            gravity = android.view.Gravity.CENTER
+            setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Body1)
+            setTextColor(android.graphics.Color.parseColor("#D32F2F"))
+        }
+        depsLayout.addView(totalText)
+
+        val btnOk = MaterialButton(requireContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = "Aceptar"
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setOnClickListener { dismiss() }
+        }
+        buttonsLayout.removeAllViews()
+        buttonsLayout.addView(btnOk)
+        buttonsLayout.visibility = View.VISIBLE
+    }
+
     private fun performDelete() {
         if (isLoading) return
+
+        val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        val role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
+        val access = Constants.getRoleTables(role)[tableName] ?: Constants.AccessLevel.NONE
+        if (access != Constants.AccessLevel.FULL) {
+            StyledToast.show(requireContext(), "No tienes permiso para eliminar registros de esta tabla")
+            dismiss()
+            return
+        }
 
         val dataList = itemData.split(",").map { it.trim() }
         val idToDelete = dataList.firstOrNull()
@@ -217,8 +308,11 @@ class DeleteConfirmDialog : DialogFragment() {
 
         isLoading = true
         val needsComposite = tableName in listOf(
-            "OFERTA_TRABAJO", "EXPERIENCIA_LABORAL", "CERTIFICACION",
-            "HABILIDAD_POSTULANTE", "POSTULACION", "DETALLE_REQUISITO"
+            "MUNICIPIO", "DISTRITO",
+            "OFERTA_TRABAJO", "DETALLE_REQUISITO",
+            "EXPERIENCIA_LABORAL", "CERTIFICACION",
+            "FORMACION_ACADEMICA", "HABILIDAD_POSTULANTE",
+            "RED_SOCIAL_POSTULANTE", "HABILIDAD"
         )
 
         if (needsComposite && dataList.size > 1) {

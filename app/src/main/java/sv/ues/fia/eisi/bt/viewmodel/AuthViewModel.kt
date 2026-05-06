@@ -50,8 +50,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
-        if (password.length < 6) {
-            _registerResult.value = Result.failure(Exception("La contraseña debe tener al menos 6 caracteres"))
+        if (password.length < 8) {
+            _registerResult.value = Result.failure(Exception("La contraseña debe tener al menos 8 caracteres"))
             return
         }
 

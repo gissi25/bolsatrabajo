@@ -7,8 +7,8 @@ class HabilidadDao(private val db: ConnectionHelper) {
 
     private fun mapRowToHabilidad(row: List<Any>): Habilidad {
         return Habilidad(
-            id_habilidad = row[0].toString().toIntOrNull() ?: 0,
-            id_categoria_habilidad = row[1].toString().toIntOrNull() ?: 0,
+            id_habilidad = row[1].toString(),
+            id_categoria_habilidad = row[0].toString().toIntOrNull() ?: 0,
             nombre_habilidad = row[2].toString(),
             nombre_categoria = if (row.size > 3) row[3].toString() else null
         )
@@ -24,12 +24,12 @@ class HabilidadDao(private val db: ConnectionHelper) {
         return db.executeQuery(sql).map { mapRowToHabilidad(it) }
     }
 
-    fun getById(id: Int): Habilidad? {
+    fun getById(categoriaId: Int, habilidadId: String): Habilidad? {
         val sql = """
             SELECT h.*, c.NOMBRE_CATEGORIA 
             FROM HABILIDAD h
             INNER JOIN CATEGORIA_HABILIDAD c ON h.ID_CATEGORIA_HABILIDAD = c.ID_CATEGORIA_HABILIDAD
-            WHERE h.ID_HABILIDAD = $id
+            WHERE h.ID_CATEGORIA_HABILIDAD = $categoriaId AND h.ID_HABILIDAD = '$habilidadId'
         """.trimIndent()
         return db.executeQuery(sql).firstOrNull()?.let { mapRowToHabilidad(it) }
     }
@@ -57,16 +57,18 @@ class HabilidadDao(private val db: ConnectionHelper) {
     }
 
     fun insert(data: Habilidad): Long {
-        val query = "INSERT INTO HABILIDAD (ID_HABILIDAD, ID_CATEGORIA_HABILIDAD, NOMBRE_HABILIDAD) VALUES (${data.id_habilidad}, ${data.id_categoria_habilidad}, '${data.nombre_habilidad}')"
+        val query = "INSERT INTO HABILIDAD (ID_CATEGORIA_HABILIDAD, ID_HABILIDAD, NOMBRE_HABILIDAD) VALUES (${data.id_categoria_habilidad}, '${data.id_habilidad}', '${data.nombre_habilidad}')"
         return db.executeInsert(query)
     }
 
     fun update(data: Habilidad): Int {
-        val query = "UPDATE HABILIDAD SET ID_CATEGORIA_HABILIDAD = ${data.id_categoria_habilidad}, NOMBRE_HABILIDAD = '${data.nombre_habilidad}' WHERE ID_HABILIDAD = ${data.id_habilidad}"
+        val query = "UPDATE HABILIDAD SET NOMBRE_HABILIDAD = '${data.nombre_habilidad}' WHERE ID_CATEGORIA_HABILIDAD = ${data.id_categoria_habilidad} AND ID_HABILIDAD = '${data.id_habilidad}'"
         return db.executeUpdate(query)
     }
 
-    fun delete(id: Int): Int = db.deleteById("HABILIDAD", "ID_HABILIDAD", id)
+    fun delete(categoriaId: Int, habilidadId: String): Int {
+        return db.executeDelete("DELETE FROM HABILIDAD WHERE ID_CATEGORIA_HABILIDAD = $categoriaId AND ID_HABILIDAD = '$habilidadId'")
+    }
 
     fun getCount(): Int = db.getCount("HABILIDAD")
 }
