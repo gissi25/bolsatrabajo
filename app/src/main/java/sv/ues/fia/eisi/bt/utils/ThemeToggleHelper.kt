@@ -1,20 +1,21 @@
 package sv.ues.fia.eisi.bt.utils
 
 import android.app.Activity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import sv.ues.fia.eisi.bt.R
 
 object ThemeToggleHelper {
 
     fun toggle(activity: Activity) {
-        val currentMode = AppCompatDelegate.getDefaultNightMode()
+        val compat = activity as? AppCompatActivity ?: return
+        val currentMode = compat.delegate.localNightMode
         val newMode = if (currentMode == AppCompatDelegate.MODE_NIGHT_YES) {
             AppCompatDelegate.MODE_NIGHT_NO
         } else {
             AppCompatDelegate.MODE_NIGHT_YES
         }
-        AppCompatDelegate.setDefaultNightMode(newMode)
-        activity.recreate()
+        compat.delegate.localNightMode = newMode
     }
 
     fun getIconRes(): Int {

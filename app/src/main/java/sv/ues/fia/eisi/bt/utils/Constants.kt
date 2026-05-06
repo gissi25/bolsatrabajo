@@ -55,6 +55,69 @@ object Constants {
 
     enum class AccessLevel { NONE, READ_ONLY, FULL }
 
+    fun getColumnsForTable(tableName: String): List<String> {
+        return when (tableName) {
+            "USUARIO" -> listOf("ID_USUARIO", "USERNAME", "PASSWORD", "ROL")
+            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_GENERO", "ID_TIPO_DOCUMENTO", "NUM_DOCUMENTO", "ID_DISTRITO_DEPTO", "ID_DISTRITO_MUNICIPIO", "ID_DISTRITO_ID", "NOMBRE", "APELLIDO", "FECHA_NACIMIENTO", "NUP", "DIRECCION_DETALLE", "TELEFONO_CASA", "TELEFONO_CELULAR", "EMAIL")
+            "GENERO" -> listOf("ID_GENERO", "NOMBRE_GENERO")
+            "TIPO_DOCUMENTO" -> listOf("ID_TIPO_DOCUMENTO", "NOMBRE_TIPO")
+            "DEPARTAMENTO" -> listOf("ID_DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
+            "MUNICIPIO" -> listOf("ID_DEPARTAMENTO", "ID_MUNICIPIO", "NOMBRE_MUNICIPIO")
+            "DISTRITO" -> listOf("ID_DEPARTAMENTO", "ID_MUNICIPIO", "ID_DISTRITO", "NOMBRE_DISTRITO")
+            "HABILIDAD" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "NOMBRE_HABILIDAD")
+            "CATEGORIA_HABILIDAD" -> listOf("ID_CATEGORIA_HABILIDAD", "NOMBRE_CATEGORIA")
+            "EMPRESA" -> listOf("NIT", "ID_DISTRITO_DEPTO", "ID_DISTRITO_MUNICIPIO", "ID_DISTRITO_ID", "NOMBRE_EMPRESA", "CONTACTO_DIRECTO")
+            "INSTITUCION" -> listOf("ID_INSTITUCION", "NOMBRE_INSTITUCION")
+            "GRADO_ACADEMICO" -> listOf("ID_GRADO_ACADEMICO", "NOMBRE_GRADO")
+            "RED_SOCIAL" -> listOf("ID_RED_SOCIAL", "NOMBRE_RED")
+            "OFERTA_ACADEMICA" -> listOf("ID_OFERTA_ACADEMICA", "ID_GRADO_ACADEMICO", "ID_INSTITUCION")
+            "OFERTA_TRABAJO" -> listOf("NIT", "ID_OFERTA", "ID_GRADO_ACADEMICO", "TITULO_PUESTO", "FECHA_PUBLICACION", "FECHA_CADUCIDAD", "EXPERIENCIA_ANIOS", "EDAD_MINIMA", "EDAD_MAXIMA", "DESCRIPCION_OFERTA_TRABAJO")
+            "CERTIFICACION" -> listOf("ID_CERTIFICACION", "ID_INSTITUCION", "ID_POSTULANTE", "NOMBRE_CERTIFICACION", "FECHA_CERTIFICACION")
+            "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "NIT", "ID_EXPERIENCIA", "PUESTO_TRABAJO", "FECHA_INICIO", "FECHA_FIN", "DESCP_EXPERIENCIA_LABORAL", "CONTACTO_REFERENCIA")
+            "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_POSTULANTE", "ID_OFERTA_ACADEMICA", "TITULO_OBTENIDO", "FECHA_OBTENCION")
+            "HABILIDAD_POSTULANTE" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "ID_POSTULANTE", "NIVEL_DESTREZA")
+            "POSTULACION" -> listOf("ID_POSTULACION", "NIT", "ID_OFERTA", "ID_POSTULANTE", "FECHA_APLICACION", "ESTADO_PROCESO")
+            "DETALLE_REQUISITO" -> listOf("NIT", "ID_OFERTA", "ID_DETALLE", "DESCRIPCION_REQUISITO")
+            "RED_SOCIAL_POSTULANTE" -> listOf("ID_POSTULANTE", "ID_RED_SOCIAL", "URL_PERFIL")
+            else -> listOf("ID", "NOMBRE")
+        }
+    }
+
+    fun getPrimaryKeyColumns(tableName: String): List<String> {
+        return when (tableName) {
+            "MUNICIPIO" -> listOf("ID_DEPARTAMENTO", "ID_MUNICIPIO")
+            "DISTRITO" -> listOf("ID_DEPARTAMENTO", "ID_MUNICIPIO", "ID_DISTRITO")
+            "EMPRESA" -> listOf("NIT")
+            "OFERTA_TRABAJO" -> listOf("NIT", "ID_OFERTA")
+            "DETALLE_REQUISITO" -> listOf("NIT", "ID_OFERTA", "ID_DETALLE")
+            "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "NIT", "ID_EXPERIENCIA")
+            "CERTIFICACION" -> listOf("ID_CERTIFICACION", "ID_INSTITUCION", "ID_POSTULANTE")
+            "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_POSTULANTE")
+            "HABILIDAD_POSTULANTE" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "ID_POSTULANTE")
+            "POSTULACION" -> listOf("ID_POSTULACION")
+            "RED_SOCIAL_POSTULANTE" -> listOf("ID_POSTULANTE", "ID_RED_SOCIAL")
+            "USUARIO" -> listOf("ID_USUARIO")
+            "POSTULANTE" -> listOf("ID_POSTULANTE")
+            "HABILIDAD" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD")
+            "INSTITUCION" -> listOf("ID_INSTITUCION")
+            "OFERTA_ACADEMICA" -> listOf("ID_OFERTA_ACADEMICA")
+            else -> listOf(getAutoGenColumn(tableName) ?: "ID")
+        }
+    }
+
+    fun getAutoGenColumn(tableName: String): String? {
+        return when (tableName) {
+            "GENERO" -> "ID_GENERO"
+            "TIPO_DOCUMENTO" -> "ID_TIPO_DOCUMENTO"
+            "DEPARTAMENTO" -> "ID_DEPARTAMENTO"
+            "GRADO_ACADEMICO" -> "ID_GRADO_ACADEMICO"
+            "RED_SOCIAL" -> "ID_RED_SOCIAL"
+            "CATEGORIA_HABILIDAD" -> "ID_CATEGORIA_HABILIDAD"
+            "USUARIO" -> "ID_USUARIO"
+            else -> null
+        }
+    }
+
     fun getRoleTables(role: String): Map<String, AccessLevel> {
         return when (role) {
             ROLE_ADMIN -> ALL_TABLES.associateWith { AccessLevel.FULL }

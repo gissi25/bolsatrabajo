@@ -6,7 +6,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
@@ -50,7 +49,6 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
         _isLoading.value = true
         viewModelScope.launch {
             try {
-                delay(300)
                 val result = withContext(Dispatchers.IO) {
                     repository.searchTable(currentTable, "")
                 }
@@ -72,7 +70,6 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
                 withContext(Dispatchers.IO) {
                     repository.deleteRecord(currentTable, id)
                 }
-                delay(300)
                 loadItems()
                 _operationResult.value = Resource.Success("Eliminado correctamente")
             } catch (e: Exception) {
@@ -92,7 +89,6 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
                 withContext(Dispatchers.IO) {
                     repository.deleteRecordByRow(currentTable, rowData)
                 }
-                delay(300)
                 loadItems()
                 _operationResult.value = Resource.Success("Eliminado correctamente")
             } catch (e: Exception) {
@@ -127,7 +123,6 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
                 withContext(Dispatchers.IO) {
                     repository.insertRecord(tableName, values)
                 }
-                delay(300)
                 currentTable = tableName
                 loadItems()
                 _operationResult.value = Resource.Success("Guardado correctamente")
@@ -146,7 +141,6 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
                 withContext(Dispatchers.IO) {
                     repository.updateRecord(tableName, id, values)
                 }
-                delay(300)
                 currentTable = tableName
                 loadItems()
                 _operationResult.value = Resource.Success("Actualizado correctamente")

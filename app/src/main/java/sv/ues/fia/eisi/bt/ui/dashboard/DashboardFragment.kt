@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.content.Context
 import android.widget.ImageButton
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
@@ -37,6 +38,12 @@ class DashboardFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        val sessionPrefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
+        if (!sessionPrefs.getBoolean(Constants.KEY_IS_LOGGED_IN, false)) {
+            findNavController().navigate(R.id.action_dashboard_to_login)
+            return
+        }
 
         recyclerView = view.findViewById(R.id.recyclerTables)
         toolbar = view.findViewById(R.id.toolbar)

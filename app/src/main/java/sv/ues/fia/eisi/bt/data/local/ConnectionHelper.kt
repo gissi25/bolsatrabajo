@@ -173,7 +173,7 @@ class ConnectionHelper(context: Context) :
                 ID_CATEGORIA_HABILIDAD INTEGER NOT NULL,
                 ID_HABILIDAD VARCHAR(10) NOT NULL,
                 ID_POSTULANTE VARCHAR(20) NOT NULL,
-                NIVEL_DESTREZA INTEGER,
+                NIVEL_DESTREZA VARCHAR(12),
                 PRIMARY KEY (ID_CATEGORIA_HABILIDAD, ID_HABILIDAD, ID_POSTULANTE),
                 FOREIGN KEY (ID_CATEGORIA_HABILIDAD, ID_HABILIDAD) REFERENCES HABILIDAD (ID_CATEGORIA_HABILIDAD, ID_HABILIDAD),
                 FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE)
@@ -309,10 +309,26 @@ class ConnectionHelper(context: Context) :
                 THEN RAISE(ABORT, 'El postulante debe ser mayor de edad') END;
             END
         """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_POSTULANTE_EDAD_UPD BEFORE UPDATE ON POSTULANTE
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.FECHA_NACIMIENTO > date('now')
+                THEN RAISE(ABORT, 'La fecha de nacimiento no puede ser futura') END;
+                SELECT CASE WHEN (strftime('%Y', 'now') - strftime('%Y', NEW.FECHA_NACIMIENTO)) < 18
+                THEN RAISE(ABORT, 'El postulante debe ser mayor de edad') END;
+            END
+        """)
 
         db.execSQL("DROP TRIGGER IF EXISTS TR_OFERTA_RANGO_EDAD")
         db.execSQL("""
             CREATE TRIGGER TR_OFERTA_RANGO_EDAD BEFORE INSERT ON OFERTA_TRABAJO
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.EDAD_MINIMA > NEW.EDAD_MAXIMA
+                THEN RAISE(ABORT, 'Edad minima no puede ser mayor a la maxima') END;
+            END
+        """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_OFERTA_RANGO_EDAD_UPD BEFORE UPDATE ON OFERTA_TRABAJO
             FOR EACH ROW BEGIN
                 SELECT CASE WHEN NEW.EDAD_MINIMA > NEW.EDAD_MAXIMA
                 THEN RAISE(ABORT, 'Edad minima no puede ser mayor a la maxima') END;
@@ -327,10 +343,24 @@ class ConnectionHelper(context: Context) :
                 THEN RAISE(ABORT, 'La oferta ya caduco o fecha invalida') END;
             END
         """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_OFERTA_VIGENCIA_UPD BEFORE UPDATE ON OFERTA_TRABAJO
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.FECHA_CADUCIDAD <= NEW.FECHA_PUBLICACION
+                THEN RAISE(ABORT, 'La oferta ya caduco o fecha invalida') END;
+            END
+        """)
 
         db.execSQL("DROP TRIGGER IF EXISTS TR_EXP_LABORAL_FECHAS")
         db.execSQL("""
             CREATE TRIGGER TR_EXP_LABORAL_FECHAS BEFORE INSERT ON EXPERIENCIA_LABORAL
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
+                THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin') END;
+            END
+        """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_EXP_LABORAL_FECHAS_UPD BEFORE UPDATE ON EXPERIENCIA_LABORAL
             FOR EACH ROW BEGIN
                 SELECT CASE WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
                 THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin') END;
@@ -345,10 +375,24 @@ class ConnectionHelper(context: Context) :
                 THEN RAISE(ABORT, 'Nivel de destreza debe ser Basico, Intermedio o Avanzado') END;
             END
         """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_HABILIDAD_NIVEL_UPD BEFORE UPDATE ON HABILIDAD_POSTULANTE
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.NIVEL_DESTREZA NOT IN ('Básico', 'Intermedio', 'Avanzado')
+                THEN RAISE(ABORT, 'Nivel de destreza debe ser Basico, Intermedio o Avanzado') END;
+            END
+        """)
 
         db.execSQL("DROP TRIGGER IF EXISTS TR_USUARIO_FORMATO")
         db.execSQL("""
             CREATE TRIGGER TR_USUARIO_FORMATO BEFORE INSERT ON USUARIO
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN LENGTH(NEW.PASSWORD) < 8
+                THEN RAISE(ABORT, 'Password minimo 8 caracteres') END;
+            END
+        """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_USUARIO_FORMATO_UPD BEFORE UPDATE ON USUARIO
             FOR EACH ROW BEGIN
                 SELECT CASE WHEN LENGTH(NEW.PASSWORD) < 8
                 THEN RAISE(ABORT, 'Password minimo 8 caracteres') END;
@@ -402,10 +446,24 @@ class ConnectionHelper(context: Context) :
                 THEN RAISE(ABORT, 'El departamento asociado no existe') END;
             END
         """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_MUNICIPIO_DEPTO_UPD BEFORE UPDATE ON MUNICIPIO
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT 1 FROM DEPARTAMENTO WHERE ID_DEPARTAMENTO = NEW.ID_DEPARTAMENTO) IS NULL
+                THEN RAISE(ABORT, 'El departamento asociado no existe') END;
+            END
+        """)
 
         db.execSQL("DROP TRIGGER IF EXISTS TR_DISTRITO_MUNICIPIO")
         db.execSQL("""
             CREATE TRIGGER TR_DISTRITO_MUNICIPIO BEFORE INSERT ON DISTRITO
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT 1 FROM MUNICIPIO WHERE ID_DEPARTAMENTO = NEW.ID_DEPARTAMENTO AND ID_MUNICIPIO = NEW.ID_MUNICIPIO) IS NULL
+                THEN RAISE(ABORT, 'El municipio asociado no existe') END;
+            END
+        """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_DISTRITO_MUNICIPIO_UPD BEFORE UPDATE ON DISTRITO
             FOR EACH ROW BEGIN
                 SELECT CASE WHEN (SELECT 1 FROM MUNICIPIO WHERE ID_DEPARTAMENTO = NEW.ID_DEPARTAMENTO AND ID_MUNICIPIO = NEW.ID_MUNICIPIO) IS NULL
                 THEN RAISE(ABORT, 'El municipio asociado no existe') END;
@@ -420,6 +478,13 @@ class ConnectionHelper(context: Context) :
                 THEN RAISE(ABORT, 'La categoria asociada no existe') END;
             END
         """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_HABILIDAD_CATEGORIA_UPD BEFORE UPDATE ON HABILIDAD
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT 1 FROM CATEGORIA_HABILIDAD WHERE ID_CATEGORIA_HABILIDAD = NEW.ID_CATEGORIA_HABILIDAD) IS NULL
+                THEN RAISE(ABORT, 'La categoria asociada no existe') END;
+            END
+        """)
 
         db.execSQL("DROP TRIGGER IF EXISTS TR_EMPRESA_DISTRITO")
         db.execSQL("""
@@ -429,10 +494,26 @@ class ConnectionHelper(context: Context) :
                 THEN RAISE(ABORT, 'El distrito asociado no existe') END;
             END
         """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_EMPRESA_DISTRITO_UPD BEFORE UPDATE ON EMPRESA
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT 1 FROM DISTRITO WHERE ID_DEPARTAMENTO = NEW.ID_DISTRITO_DEPTO AND ID_MUNICIPIO = NEW.ID_DISTRITO_MUNICIPIO AND ID_DISTRITO = NEW.ID_DISTRITO_ID) IS NULL
+                THEN RAISE(ABORT, 'El distrito asociado no existe') END;
+            END
+        """)
 
         db.execSQL("DROP TRIGGER IF EXISTS TR_POSTULANTE_FK")
         db.execSQL("""
             CREATE TRIGGER TR_POSTULANTE_FK BEFORE INSERT ON POSTULANTE
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT 1 FROM GENERO WHERE ID_GENERO = NEW.ID_GENERO) IS NULL
+                THEN RAISE(ABORT, 'El genero asociado no existe') END;
+                SELECT CASE WHEN (SELECT 1 FROM TIPO_DOCUMENTO WHERE ID_TIPO_DOCUMENTO = NEW.ID_TIPO_DOCUMENTO) IS NULL
+                THEN RAISE(ABORT, 'El tipo de documento asociado no existe') END;
+            END
+        """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_POSTULANTE_FK_UPD BEFORE UPDATE ON POSTULANTE
             FOR EACH ROW BEGIN
                 SELECT CASE WHEN (SELECT 1 FROM GENERO WHERE ID_GENERO = NEW.ID_GENERO) IS NULL
                 THEN RAISE(ABORT, 'El genero asociado no existe') END;
