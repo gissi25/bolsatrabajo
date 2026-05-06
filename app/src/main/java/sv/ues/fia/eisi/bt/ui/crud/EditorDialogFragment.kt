@@ -3,6 +3,7 @@ package sv.ues.fia.eisi.bt.ui.crud
 import android.content.res.TypedArray
 import android.graphics.Color
 import android.os.Bundle
+import android.view.WindowManager
 import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
@@ -79,6 +80,15 @@ class EditorDialogFragment : DialogFragment() {
         fkRefs = viewModel.getFkReferences(tableName)
     }
 
+    override fun onStart() {
+        super.onStart()
+        dialog?.setCanceledOnTouchOutside(false)
+        dialog?.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.92).toInt(),
+            WindowManager.LayoutParams.WRAP_CONTENT
+        )
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.dialog_editor, container, false)
     }
@@ -130,15 +140,9 @@ class EditorDialogFragment : DialogFragment() {
 
     private fun setupFields() {
 
-
         val autoGenCol = getAutoGenColumn(tableName)
-        val columnsToIterate = if (tableName == "POSTULANTE") {
-            columns.filter { it != autoGenCol && it != "NOMBRE" && it != "APELLIDO" }
-        } else {
-            columns.filter { it != autoGenCol }
-        }
+        val columnsToIterate = columns.filter { it != autoGenCol }
 
-        var numDocumentoCreated = false
         columnsToIterate.forEachIndexed { idx, column ->
             val colIndex = columns.indexOf(column)
             val isFk = fkRefs.containsKey(column)
@@ -159,17 +163,6 @@ class EditorDialogFragment : DialogFragment() {
                 createRolDropdown(idx, column, colIndex)
             } else {
                 createTextInputField(idx, column, colIndex)
-            }
-
-            if (tableName == "POSTULANTE" && column == "NUM_DOCUMENTO") {
-                numDocumentoCreated = true
-            }
-            if (tableName == "POSTULANTE" && numDocumentoCreated && column != "NUM_DOCUMENTO") {
-                numDocumentoCreated = false
-                val nombreColIndex = columns.indexOf("NOMBRE")
-                createTextInputField(nombreColIndex, "NOMBRE", nombreColIndex)
-                val apellidoColIndex = columns.indexOf("APELLIDO")
-                createTextInputField(apellidoColIndex, "APELLIDO", apellidoColIndex)
             }
         }
 
@@ -315,9 +308,9 @@ class EditorDialogFragment : DialogFragment() {
 
     private fun createNivelDestrezaDropdown(idx: Int, column: String, colIndex: Int) {
         val nivelOptions = listOf(
-            "1" to "Básico",
-            "2" to "Intermedio",
-            "3" to "Avanzado"
+            "Básico" to "Básico",
+            "Intermedio" to "Intermedio",
+            "Avanzado" to "Avanzado"
         )
 
         val til = TextInputLayout(requireContext()).apply {
@@ -1221,16 +1214,15 @@ class EditorDialogFragment : DialogFragment() {
             column == "NIT" && tableName == "EMPRESA" -> InputMaskUtils.NIT_LENGTH_SIMPLE
             column.contains("NUP") -> InputMaskUtils.NUP_LENGTH
             column.contains("NUM_DOCUMENTO") -> 17
-            column == "CODIGO_CERTIFICACION" -> 14
             column.contains("CODIGO") || column.contains("CERTIFICACION") -> 30
-            column.contains("NIVEL_DESTREZA") -> 1
+            column.contains("NIVEL_DESTREZA") -> 12
             column.contains("EXPERIENCIA_ANIOS") -> 2
             column.contains("EDAD_MINIMA") || column.contains("EDAD_MAXIMA") -> 2
             else -> 0
         }
         val filters = mutableListOf<InputFilter>()
         if (maxLength > 0) filters.add(InputFilter.LengthFilter(maxLength))
-        if (column.contains("EXPERIENCIA_ANIOS") || column.contains("EDAD_MIN") || column.contains("EDAD_MAX") || column == "NIVEL_DESTREZA") {
+        if (column.contains("EXPERIENCIA_ANIOS") || column.contains("EDAD_MIN") || column.contains("EDAD_MAX")) {
             filters.add(InputFilter { source, start, end, _, _, _ ->
                 for (i in start until end) { if (!source[i].isDigit()) return@InputFilter "" }
                 null
@@ -1243,12 +1235,6 @@ class EditorDialogFragment : DialogFragment() {
             })
         }
         if (column == "NIT" && tableName == "EMPRESA") {
-            filters.add(InputFilter { source, start, end, _, _, _ ->
-                for (i in start until end) { if (!source[i].isDigit()) return@InputFilter "" }
-                null
-            })
-        }
-        if (column == "CODIGO_CERTIFICACION") {
             filters.add(InputFilter { source, start, end, _, _, _ ->
                 for (i in start until end) { if (!source[i].isDigit()) return@InputFilter "" }
                 null
@@ -1273,13 +1259,13 @@ class EditorDialogFragment : DialogFragment() {
             "ID_DEPARTAMENTO", "ID_MUNICIPIO")
         return when {
             col in stringIdCols -> android.text.InputType.TYPE_CLASS_TEXT
-            col in numericIdCols || col.contains("NUP") || col == "CODIGO_CERTIFICACION" -> android.text.InputType.TYPE_CLASS_NUMBER
+            col in numericIdCols || col.contains("NUP") -> android.text.InputType.TYPE_CLASS_NUMBER
             col.contains("NUM_") || col.contains("DOCUMENTO") -> android.text.InputType.TYPE_CLASS_TEXT
             col.contains("FECHA") || col.contains("DATE") -> android.text.InputType.TYPE_CLASS_TEXT
             col.contains("EMAIL") -> android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
             col.contains("TELEFONO") || col.contains("TEL") || col == "CONTACTO_REFERENCIA" || col == "CONTACTO_DIRECTO" -> android.text.InputType.TYPE_CLASS_PHONE
             col.contains("PASSWORD") || col.contains("CONTRA") -> android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
-            col.contains("EXPERIENCIA_ANIOS") || col.contains("EDAD_MIN") || col.contains("EDAD_MAX") || col.contains("NIVEL_DESTREZA") -> android.text.InputType.TYPE_CLASS_NUMBER
+            col.contains("EXPERIENCIA_ANIOS") || col.contains("EDAD_MIN") || col.contains("EDAD_MAX") -> android.text.InputType.TYPE_CLASS_NUMBER
             col.contains("DESCRIPCION") || col.contains("DETALLE") || col.contains("DESC") || col.contains("REQUISITO") ->
                 android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
             else -> android.text.InputType.TYPE_CLASS_TEXT
@@ -1294,6 +1280,25 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun getHintText(column: String): String {
+        if (tableName == "EMPRESA" && column == "NIT") {
+            return "NIT EMPRESA"
+        }
+        if (tableName == "DETALLE_REQUISITO") {
+            when (column) {
+                "NIT" -> return "Empresa"
+                "ID_OFERTA" -> return "Titulo puesto"
+            }
+        }
+        if (tableName == "FORMACION_ACADEMICA") {
+            when (column) {
+                "ID_OFERTA_ACADEMICA" -> return "Oferta academica"
+            }
+        }
+        if (tableName == "POSTULACION") {
+            when (column) {
+                "ID_OFERTA" -> return "Oferta de trabajo"
+            }
+        }
         val col = column.uppercase()
         return when (col) {
             "ID_GENERO" -> "Género"
@@ -1333,12 +1338,11 @@ class EditorDialogFragment : DialogFragment() {
             "EDAD_MAXIMA" -> "Edad máxima"
             "DESCRIPCION_OFERTA_TRABAJO", "DESCRIPCION", "DESC" -> "Descripción"
             "DESCRIPCION_REQUISITO" -> "Descripcion del requisito"
-            "NIT" -> "NIT de empresa"
+            "NIT" -> "Empresa"
             "ID_OFERTA" -> "Codigo de oferta"
             "ID_POSTULANTE" -> "Codigo postulante"
             "ID_CERTIFICACION" -> "Codigo certificacion"
             "NOMBRE_CERTIFICACION" -> "Nombre de certificacion"
-            "CODIGO_CERTIFICACION" -> "Codigo de certificacion"
             "FECHA_CERTIFICACION" -> "Fecha de certificacion"
             "ID_EXPERIENCIA" -> "Codigo experiencia"
             "PUESTO_TRABAJO" -> "Puesto de trabajo"
@@ -1381,7 +1385,7 @@ class EditorDialogFragment : DialogFragment() {
     private fun getColumnsForTable(table: String): List<String> {
         return when (table) {
             "USUARIO" -> listOf("ID_USUARIO", "USERNAME", "PASSWORD", "ROL")
-            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_GENERO", "ID_TIPO_DOCUMENTO", "ID_DISTRITO_DEPTO", "ID_DISTRITO_MUNICIPIO", "ID_DISTRITO_ID", "NOMBRE", "APELLIDO", "FECHA_NACIMIENTO", "NUM_DOCUMENTO", "NUP", "DIRECCION_DETALLE", "TELEFONO_CASA", "TELEFONO_CELULAR", "EMAIL")
+            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_GENERO", "ID_TIPO_DOCUMENTO", "NUM_DOCUMENTO", "ID_DISTRITO_DEPTO", "ID_DISTRITO_MUNICIPIO", "ID_DISTRITO_ID", "NOMBRE", "APELLIDO", "FECHA_NACIMIENTO", "NUP", "DIRECCION_DETALLE", "TELEFONO_CASA", "TELEFONO_CELULAR", "EMAIL")
             "GENERO" -> listOf("ID_GENERO", "NOMBRE_GENERO")
             "TIPO_DOCUMENTO" -> listOf("ID_TIPO_DOCUMENTO", "NOMBRE_TIPO")
             "DEPARTAMENTO" -> listOf("ID_DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
@@ -1395,7 +1399,7 @@ class EditorDialogFragment : DialogFragment() {
             "RED_SOCIAL" -> listOf("ID_RED_SOCIAL", "NOMBRE_RED")
             "OFERTA_ACADEMICA" -> listOf("ID_OFERTA_ACADEMICA", "ID_GRADO_ACADEMICO", "ID_INSTITUCION")
             "OFERTA_TRABAJO" -> listOf("NIT", "ID_OFERTA", "ID_GRADO_ACADEMICO", "TITULO_PUESTO", "FECHA_PUBLICACION", "FECHA_CADUCIDAD", "EXPERIENCIA_ANIOS", "EDAD_MINIMA", "EDAD_MAXIMA", "DESCRIPCION_OFERTA_TRABAJO")
-            "CERTIFICACION" -> listOf("ID_CERTIFICACION", "ID_INSTITUCION", "ID_POSTULANTE", "NOMBRE_CERTIFICACION", "CODIGO_CERTIFICACION", "FECHA_CERTIFICACION")
+            "CERTIFICACION" -> listOf("ID_CERTIFICACION", "ID_INSTITUCION", "ID_POSTULANTE", "NOMBRE_CERTIFICACION", "FECHA_CERTIFICACION")
             "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "NIT", "ID_EXPERIENCIA", "PUESTO_TRABAJO", "FECHA_INICIO", "FECHA_FIN", "DESCP_EXPERIENCIA_LABORAL", "CONTACTO_REFERENCIA")
             "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_POSTULANTE", "ID_OFERTA_ACADEMICA", "TITULO_OBTENIDO", "FECHA_OBTENCION")
             "HABILIDAD_POSTULANTE" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "ID_POSTULANTE", "NIVEL_DESTREZA")
@@ -1434,13 +1438,7 @@ class EditorDialogFragment : DialogFragment() {
                         StyledToast.show(requireContext(), "Debe seleccionar un nivel de destreza")
                         return
                     }
-                    val nivelValue = when (selectedText) {
-                        "Básico" -> "1"
-                        "Intermedio" -> "2"
-                        "Avanzado" -> "3"
-                        else -> ""
-                    }
-                    values.add(nivelValue)
+                    values.add(selectedText)
                 }
                 col == "ESTADO_PROCESO" -> {
                     val autoComplete = dropDownFields.values.find { it.first == col }?.second

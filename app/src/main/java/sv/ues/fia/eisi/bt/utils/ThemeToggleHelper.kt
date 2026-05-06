@@ -32,4 +32,12 @@ object ThemeToggleHelper {
             R.drawable.cerrar_sesion_o
         }
     }
+
+    fun getInsertIconRes(): Int {
+        return if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
+            R.drawable.ic_insertar_datos_c
+        } else {
+            R.drawable.ic_insertar_datos_o
+        }
+    }
 }

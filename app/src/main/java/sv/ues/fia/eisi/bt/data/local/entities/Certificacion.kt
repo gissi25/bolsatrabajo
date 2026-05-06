@@ -5,6 +5,5 @@ data class Certificacion(
     val id_institucion: String,
     val id_postulante: String,
     val nombre_certificacion: String,
-    val codigo_certificacion: String?,
     val fecha_certificacion: String?
 )

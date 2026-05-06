@@ -148,7 +148,6 @@ class ConnectionHelper(context: Context) :
                 ID_INSTITUCION VARCHAR(20) NOT NULL,
                 ID_POSTULANTE VARCHAR(20) NOT NULL,
                 NOMBRE_CERTIFICACION VARCHAR(150),
-                CODIGO_CERTIFICACION VARCHAR(50),
                 FECHA_CERTIFICACION DATE,
                 PRIMARY KEY (ID_CERTIFICACION, ID_INSTITUCION, ID_POSTULANTE),
                 FOREIGN KEY (ID_INSTITUCION) REFERENCES INSTITUCION (ID_INSTITUCION),
@@ -342,8 +341,8 @@ class ConnectionHelper(context: Context) :
         db.execSQL("""
             CREATE TRIGGER TR_HABILIDAD_NIVEL BEFORE INSERT ON HABILIDAD_POSTULANTE
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN NEW.NIVEL_DESTREZA NOT IN (1, 2, 3)
-                THEN RAISE(ABORT, 'Nivel de destreza debe ser 1, 2 o 3') END;
+                SELECT CASE WHEN NEW.NIVEL_DESTREZA NOT IN ('Básico', 'Intermedio', 'Avanzado')
+                THEN RAISE(ABORT, 'Nivel de destreza debe ser Basico, Intermedio o Avanzado') END;
             END
         """)
 

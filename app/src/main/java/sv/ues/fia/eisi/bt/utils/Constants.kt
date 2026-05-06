@@ -59,7 +59,6 @@ object Constants {
         return when (role) {
             ROLE_ADMIN -> ALL_TABLES.associateWith { AccessLevel.FULL }
             ROLE_POSTULANTE -> mapOf(
-                TABLE_USUARIO to AccessLevel.FULL,
                 TABLE_POSTULANTE to AccessLevel.FULL,
                 TABLE_EXPERIENCIA_LABORAL to AccessLevel.FULL,
                 TABLE_FORMACION_ACADEMICA to AccessLevel.FULL,
@@ -69,21 +68,9 @@ object Constants {
                 TABLE_POSTULACION to AccessLevel.FULL,
                 TABLE_EMPRESA to AccessLevel.READ_ONLY,
                 TABLE_OFERTA_TRABAJO to AccessLevel.READ_ONLY,
-                TABLE_DETALLE_REQUISITO to AccessLevel.READ_ONLY,
-                TABLE_GENERO to AccessLevel.READ_ONLY,
-                TABLE_TIPO_DOCUMENTO to AccessLevel.READ_ONLY,
-                TABLE_GRADO_ACADEMICO to AccessLevel.READ_ONLY,
-                TABLE_CATEGORIA_HABILIDAD to AccessLevel.READ_ONLY,
-                TABLE_HABILIDAD to AccessLevel.READ_ONLY,
-                TABLE_RED_SOCIAL to AccessLevel.READ_ONLY,
-                TABLE_INSTITUCION to AccessLevel.READ_ONLY,
-                TABLE_OFERTA_ACADEMICA to AccessLevel.READ_ONLY,
-                TABLE_DEPARTAMENTO to AccessLevel.READ_ONLY,
-                TABLE_MUNICIPIO to AccessLevel.READ_ONLY,
-                TABLE_DISTRITO to AccessLevel.READ_ONLY
+                TABLE_DETALLE_REQUISITO to AccessLevel.READ_ONLY
             )
             ROLE_EMPRESA -> mapOf(
-                TABLE_USUARIO to AccessLevel.FULL,
                 TABLE_EMPRESA to AccessLevel.FULL,
                 TABLE_OFERTA_TRABAJO to AccessLevel.FULL,
                 TABLE_DETALLE_REQUISITO to AccessLevel.FULL,
@@ -93,18 +80,7 @@ object Constants {
                 TABLE_FORMACION_ACADEMICA to AccessLevel.READ_ONLY,
                 TABLE_HABILIDAD_POSTULANTE to AccessLevel.READ_ONLY,
                 TABLE_CERTIFICACION to AccessLevel.READ_ONLY,
-                TABLE_RED_SOCIAL_POSTULANTE to AccessLevel.READ_ONLY,
-                TABLE_GRADO_ACADEMICO to AccessLevel.READ_ONLY,
-                TABLE_HABILIDAD to AccessLevel.READ_ONLY,
-                TABLE_CATEGORIA_HABILIDAD to AccessLevel.READ_ONLY,
-                TABLE_INSTITUCION to AccessLevel.READ_ONLY,
-                TABLE_DEPARTAMENTO to AccessLevel.READ_ONLY,
-                TABLE_MUNICIPIO to AccessLevel.READ_ONLY,
-                TABLE_DISTRITO to AccessLevel.READ_ONLY,
-                TABLE_GENERO to AccessLevel.READ_ONLY,
-                TABLE_TIPO_DOCUMENTO to AccessLevel.READ_ONLY,
-                TABLE_RED_SOCIAL to AccessLevel.READ_ONLY,
-                TABLE_OFERTA_ACADEMICA to AccessLevel.READ_ONLY
+                TABLE_RED_SOCIAL_POSTULANTE to AccessLevel.READ_ONLY
             )
             else -> emptyMap()
         }

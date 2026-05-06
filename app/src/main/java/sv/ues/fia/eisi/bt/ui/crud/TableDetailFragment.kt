@@ -66,6 +66,11 @@ class TableDetailFragment : Fragment() {
         val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
         val role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
         val access = Constants.getRoleTables(role)[tableName] ?: Constants.AccessLevel.NONE
+        if (access == Constants.AccessLevel.NONE) {
+            StyledToast.show(requireContext(), "No tienes acceso a esta tabla")
+            requireActivity().onBackPressedDispatcher.onBackPressed()
+            return
+        }
         canEdit = access == Constants.AccessLevel.FULL
         canDelete = access == Constants.AccessLevel.FULL
 
