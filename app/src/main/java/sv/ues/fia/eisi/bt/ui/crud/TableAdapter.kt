@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import sv.ues.fia.eisi.bt.R
@@ -14,15 +15,9 @@ class TableAdapter(
     private val canEdit: Boolean = true,
     private val canDelete: Boolean = true,
     private val onEditClick: (List<Any>, Int) -> Unit,
-    private val onDeleteClick: (List<Any>, Int) -> Unit
-) : RecyclerView.Adapter<TableAdapter.ViewHolder>() {
-
-    private var items: List<List<Any>> = emptyList()
-
-    fun submitList(newItems: List<List<Any>>) {
-        items = newItems
-        notifyDataSetChanged()
-    }
+    private val onDeleteClick: (List<Any>, Int) -> Unit,
+    private val onViewClick: ((List<Any>, Int) -> Unit)? = null
+) : ListAdapter<List<Any>, TableAdapter.ViewHolder>(RowDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_table_row, parent, false)
@@ -30,18 +25,35 @@ class TableAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(items[position], position)
+        holder.bind(getItem(position), position)
     }
 
-    override fun getItemCount(): Int = items.size
-
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        
+
         private val tvId: TextView = itemView.findViewById(R.id.tvId)
         private val tvPrimary: TextView = itemView.findViewById(R.id.tvPrimary)
         private val tvSecondary: TextView = itemView.findViewById(R.id.tvSecondary)
         private val fabEdit: FloatingActionButton = itemView.findViewById(R.id.fabEdit)
         private val fabDelete: FloatingActionButton = itemView.findViewById(R.id.fabDelete)
+
+        init {
+            fabEdit.visibility = if (canEdit) View.VISIBLE else View.GONE
+            fabDelete.visibility = if (canDelete) View.VISIBLE else View.GONE
+            fabEdit.setOnClickListener {
+                val pos = bindingAdapterPosition
+                if (pos != RecyclerView.NO_POSITION) onEditClick(getItem(pos), pos)
+            }
+            fabDelete.setOnClickListener {
+                val pos = bindingAdapterPosition
+                if (pos != RecyclerView.NO_POSITION) onDeleteClick(getItem(pos), pos)
+            }
+            if (!canEdit && onViewClick != null) {
+                itemView.setOnClickListener {
+                    val pos = bindingAdapterPosition
+                    if (pos != RecyclerView.NO_POSITION) onViewClick(getItem(pos), pos)
+                }
+            }
+        }
 
         fun bind(item: List<Any>, position: Int) {
             val field0 = getStringSafely(item, 0)
@@ -151,11 +163,6 @@ class TableAdapter(
                 tvPrimary.text = field1.ifBlank { field0.ifBlank { "(vacio)" } }
                 tvSecondary.text = field2
             }
-
-            fabEdit.visibility = if (canEdit) View.VISIBLE else View.GONE
-            fabDelete.visibility = if (canDelete) View.VISIBLE else View.GONE
-            if (canEdit) fabEdit.setOnClickListener { onEditClick(item, position) }
-            if (canDelete) fabDelete.setOnClickListener { onDeleteClick(item, position) }
         }
 
         private fun getStringSafely(list: List<Any>, index: Int): String {

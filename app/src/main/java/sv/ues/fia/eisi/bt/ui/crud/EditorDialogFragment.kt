@@ -39,6 +39,7 @@ class EditorDialogFragment : DialogFragment() {
     private val viewModel: CrudViewModel by viewModels({ requireParentFragment() })
     private var tableName: String = ""
     private var isEditMode: Boolean = false
+    private var isViewMode: Boolean = false
     private var itemData: List<String> = emptyList()
 
     private lateinit var tilFieldsContainer: LinearLayout
@@ -71,9 +72,10 @@ class EditorDialogFragment : DialogFragment() {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NORMAL, R.style.AestheticDialog)
         arguments?.let {
-            tableName = it.getString(Constants.BUNDLE_TABLE_NAME, "")
-            isEditMode = it.getBoolean(Constants.BUNDLE_IS_EDIT_MODE, false)
-            val dataString = it.getString(Constants.BUNDLE_TABLE_DATA, "")
+        tableName = it.getString(Constants.BUNDLE_TABLE_NAME, "")
+        isEditMode = it.getBoolean(Constants.BUNDLE_IS_EDIT_MODE, false)
+        isViewMode = it.getBoolean(Constants.BUNDLE_IS_VIEW_MODE, false)
+        val dataString = it.getString(Constants.BUNDLE_TABLE_DATA, "")
             itemData = if (dataString.isNotBlank()) dataString.split(",") else emptyList()
         }
         columns = getColumnsForTable(tableName)
@@ -103,6 +105,7 @@ class EditorDialogFragment : DialogFragment() {
 
         setupTitle()
         setupFields()
+        if (isViewMode) setupViewMode()
         setupButtons()
 
         viewModel.operationResult.observe(viewLifecycleOwner) { result ->
@@ -135,7 +138,11 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun setupTitle() {
-        tvTitle.text = if (isEditMode) "Editar $tableName" else "Nuevo $tableName"
+        tvTitle.text = when {
+            isViewMode -> "Ver $tableName"
+            isEditMode -> "Editar $tableName"
+            else -> "Nuevo $tableName"
+        }
     }
 
     private fun setupFields() {
@@ -263,7 +270,7 @@ class EditorDialogFragment : DialogFragment() {
             true
         }
 
-        if (isEditMode && colIndex < itemData.size) {
+        if ((isEditMode || isViewMode) && colIndex < itemData.size) {
             val currentId = itemData[colIndex].trim()
             val optionIndex = options.indexOfFirst { it.first == currentId }
             if (optionIndex >= 0) {
@@ -343,7 +350,7 @@ class EditorDialogFragment : DialogFragment() {
             true
         }
 
-        if (isEditMode && colIndex < itemData.size) {
+        if ((isEditMode || isViewMode) && colIndex < itemData.size) {
             val currentValue = itemData[colIndex].trim()
             val optionIndex = nivelOptions.indexOfFirst { it.first == currentValue }
             if (optionIndex >= 0) {
@@ -404,7 +411,7 @@ class EditorDialogFragment : DialogFragment() {
             true
         }
 
-        if (isEditMode && colIndex < itemData.size) {
+        if ((isEditMode || isViewMode) && colIndex < itemData.size) {
             val currentValue = itemData[colIndex].trim()
             val optionIndex = estadoOptions.indexOfFirst { it.first == currentValue }
             if (optionIndex >= 0) {
@@ -455,7 +462,7 @@ class EditorDialogFragment : DialogFragment() {
             true
         }
 
-        if (isEditMode && colIndex < itemData.size) {
+        if ((isEditMode || isViewMode) && colIndex < itemData.size) {
             val currentValue = itemData[colIndex].trim()
             if (roles.contains(currentValue)) {
                 autoComplete.setText(currentValue, false)
@@ -504,7 +511,7 @@ class EditorDialogFragment : DialogFragment() {
             true
         }
 
-        if (isEditMode && itemData.size >= 2) {
+        if ((isEditMode || isViewMode) && itemData.size >= 2) {
             val currentMunicipioId = itemData[1].trim()
             val departamentoId = viewModel.getDepartamentoByMunicipio(currentMunicipioId)
             if (departamentoId != null) {
@@ -598,7 +605,7 @@ class EditorDialogFragment : DialogFragment() {
             true
         }
 
-        if (isEditMode && itemData.size >= 2) {
+        if ((isEditMode || isViewMode) && itemData.size >= 2) {
             val currentDistritoId = itemData[1].trim()
             val municipioId = viewModel.getMunicipioByDistrito(currentDistritoId)
             if (municipioId != null) {
@@ -781,7 +788,7 @@ class EditorDialogFragment : DialogFragment() {
             true
         }
 
-        if (isEditMode && itemData.size >= 5) {
+        if ((isEditMode || isViewMode) && itemData.size >= 5) {
             val currentDistritoId = itemData[4].trim()
             val municipioId = viewModel.getMunicipioByDistrito(currentDistritoId)
             if (municipioId != null) {
@@ -1131,7 +1138,7 @@ class EditorDialogFragment : DialogFragment() {
             et.setOnClickListener { showDatePicker(et) }
         }
 
-        if (isEditMode && colIndex < itemData.size) {
+        if ((isEditMode || isViewMode) && colIndex < itemData.size) {
             et.setText(itemData[colIndex].trim())
         }
 
@@ -1273,10 +1280,9 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun getThemeColor(attr: Int): Int {
-        val ta: TypedArray = requireContext().obtainStyledAttributes(intArrayOf(attr))
-        val color = ta.getColor(0, android.graphics.Color.BLACK)
-        ta.recycle()
-        return color
+        return requireContext().obtainStyledAttributes(intArrayOf(attr)).use { ta ->
+            ta.getColor(0, android.graphics.Color.BLACK)
+        }
     }
 
     private fun getHintText(column: String): String {
@@ -1382,40 +1388,34 @@ class EditorDialogFragment : DialogFragment() {
         }
     }
 
-    private fun getColumnsForTable(table: String): List<String> {
-        return when (table) {
-            "USUARIO" -> listOf("ID_USUARIO", "USERNAME", "PASSWORD", "ROL")
-            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_GENERO", "ID_TIPO_DOCUMENTO", "NUM_DOCUMENTO", "ID_DISTRITO_DEPTO", "ID_DISTRITO_MUNICIPIO", "ID_DISTRITO_ID", "NOMBRE", "APELLIDO", "FECHA_NACIMIENTO", "NUP", "DIRECCION_DETALLE", "TELEFONO_CASA", "TELEFONO_CELULAR", "EMAIL")
-            "GENERO" -> listOf("ID_GENERO", "NOMBRE_GENERO")
-            "TIPO_DOCUMENTO" -> listOf("ID_TIPO_DOCUMENTO", "NOMBRE_TIPO")
-            "DEPARTAMENTO" -> listOf("ID_DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
-            "MUNICIPIO" -> listOf("ID_DEPARTAMENTO", "ID_MUNICIPIO", "NOMBRE_MUNICIPIO")
-            "DISTRITO" -> listOf("ID_DEPARTAMENTO", "ID_MUNICIPIO", "ID_DISTRITO", "NOMBRE_DISTRITO")
-            "HABILIDAD" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "NOMBRE_HABILIDAD")
-            "CATEGORIA_HABILIDAD" -> listOf("ID_CATEGORIA_HABILIDAD", "NOMBRE_CATEGORIA")
-            "EMPRESA" -> listOf("NIT", "ID_DISTRITO_DEPTO", "ID_DISTRITO_MUNICIPIO", "ID_DISTRITO_ID", "NOMBRE_EMPRESA", "CONTACTO_DIRECTO")
-            "INSTITUCION" -> listOf("ID_INSTITUCION", "NOMBRE_INSTITUCION")
-            "GRADO_ACADEMICO" -> listOf("ID_GRADO_ACADEMICO", "NOMBRE_GRADO")
-            "RED_SOCIAL" -> listOf("ID_RED_SOCIAL", "NOMBRE_RED")
-            "OFERTA_ACADEMICA" -> listOf("ID_OFERTA_ACADEMICA", "ID_GRADO_ACADEMICO", "ID_INSTITUCION")
-            "OFERTA_TRABAJO" -> listOf("NIT", "ID_OFERTA", "ID_GRADO_ACADEMICO", "TITULO_PUESTO", "FECHA_PUBLICACION", "FECHA_CADUCIDAD", "EXPERIENCIA_ANIOS", "EDAD_MINIMA", "EDAD_MAXIMA", "DESCRIPCION_OFERTA_TRABAJO")
-            "CERTIFICACION" -> listOf("ID_CERTIFICACION", "ID_INSTITUCION", "ID_POSTULANTE", "NOMBRE_CERTIFICACION", "FECHA_CERTIFICACION")
-            "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "NIT", "ID_EXPERIENCIA", "PUESTO_TRABAJO", "FECHA_INICIO", "FECHA_FIN", "DESCP_EXPERIENCIA_LABORAL", "CONTACTO_REFERENCIA")
-            "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_POSTULANTE", "ID_OFERTA_ACADEMICA", "TITULO_OBTENIDO", "FECHA_OBTENCION")
-            "HABILIDAD_POSTULANTE" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "ID_POSTULANTE", "NIVEL_DESTREZA")
-            "POSTULACION" -> listOf("ID_POSTULACION", "NIT", "ID_OFERTA", "ID_POSTULANTE", "FECHA_APLICACION", "ESTADO_PROCESO")
-            "DETALLE_REQUISITO" -> listOf("NIT", "ID_OFERTA", "ID_DETALLE", "DESCRIPCION_REQUISITO")
-            "RED_SOCIAL_POSTULANTE" -> listOf("ID_POSTULANTE", "ID_RED_SOCIAL", "URL_PERFIL")
-            else -> listOf("ID", "NOMBRE")
-        }
-    }
+    private fun getColumnsForTable(table: String): List<String> = Constants.getColumnsForTable(table)
 
     private fun setupButtons() {
+        if (isViewMode) {
+            btnSave.visibility = View.GONE
+            btnCancel.text = "Cerrar"
+        }
         btnSave.setOnClickListener { saveData() }
         btnCancel.setOnClickListener { dismiss() }
     }
 
+    private fun setupViewMode() {
+        for (i in 0 until tilFieldsContainer.childCount) {
+            val child = tilFieldsContainer.getChildAt(i)
+            if (child is com.google.android.material.textfield.TextInputLayout) {
+                val editText = child.editText
+                if (editText != null) {
+                    editText.isEnabled = false
+                    editText.isFocusable = false
+                    editText.isClickable = false
+                }
+            }
+        }
+    }
+
     private fun saveData() {
+        if (isViewMode) return
+
         val role = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
             .getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
         val access = Constants.getRoleTables(role)[tableName] ?: Constants.AccessLevel.NONE
@@ -1540,37 +1540,7 @@ class EditorDialogFragment : DialogFragment() {
         }
     }
 
-    private fun getPrimaryKeyColumns(table: String): List<String> {
-        return when (table) {
-            "MUNICIPIO" -> listOf("ID_DEPARTAMENTO", "ID_MUNICIPIO")
-            "DISTRITO" -> listOf("ID_DEPARTAMENTO", "ID_MUNICIPIO", "ID_DISTRITO")
-            "EMPRESA" -> listOf("NIT")
-            "OFERTA_TRABAJO" -> listOf("NIT", "ID_OFERTA")
-            "DETALLE_REQUISITO" -> listOf("NIT", "ID_OFERTA", "ID_DETALLE")
-            "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "NIT", "ID_EXPERIENCIA")
-            "CERTIFICACION" -> listOf("ID_CERTIFICACION", "ID_INSTITUCION", "ID_POSTULANTE")
-            "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_POSTULANTE")
-            "HABILIDAD_POSTULANTE" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "ID_POSTULANTE")
-            "RED_SOCIAL_POSTULANTE" -> listOf("ID_POSTULANTE", "ID_RED_SOCIAL")
-            "POSTULACION" -> listOf("ID_POSTULACION")
-            "POSTULANTE" -> listOf("ID_POSTULANTE")
-            "HABILIDAD" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD")
-            "INSTITUCION" -> listOf("ID_INSTITUCION")
-            "OFERTA_ACADEMICA" -> listOf("ID_OFERTA_ACADEMICA")
-            else -> listOf(getAutoGenColumn(table) ?: columns.firstOrNull() ?: "ID")
-        }
-    }
+    private fun getPrimaryKeyColumns(table: String): List<String> = Constants.getPrimaryKeyColumns(table)
 
-    private fun getAutoGenColumn(table: String): String? {
-        return when (table) {
-            "GENERO" -> "ID_GENERO"
-            "TIPO_DOCUMENTO" -> "ID_TIPO_DOCUMENTO"
-            "DEPARTAMENTO" -> "ID_DEPARTAMENTO"
-            "GRADO_ACADEMICO" -> "ID_GRADO_ACADEMICO"
-            "RED_SOCIAL" -> "ID_RED_SOCIAL"
-            "CATEGORIA_HABILIDAD" -> "ID_CATEGORIA_HABILIDAD"
-            "USUARIO" -> "ID_USUARIO"
-            else -> null
-        }
-    }
+    private fun getAutoGenColumn(table: String): String? = Constants.getAutoGenColumn(table)
 }

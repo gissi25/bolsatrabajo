@@ -115,7 +115,7 @@ class RegisterFragment : Fragment() {
         if (password.isBlank()) {
             tilPassword.error = getString(R.string.field_required)
             isValid = false
-        } else if (password.length < 6) {
+        } else if (password.length < 8) {
             tilPassword.error = getString(R.string.password_too_short)
             isValid = false
         } else {

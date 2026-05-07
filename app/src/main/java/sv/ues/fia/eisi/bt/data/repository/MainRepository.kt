@@ -4,6 +4,7 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import sv.ues.fia.eisi.bt.data.local.ConnectionHelper
+import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.PasswordHasher
 import sv.ues.fia.eisi.bt.utils.TriggerErrorTranslator
 
@@ -207,27 +208,7 @@ class MainRepository(context: Context) {
         }
     }
 
-    private fun getPrimaryKeyColumns(tableName: String): List<String> {
-        return when (tableName) {
-            "MUNICIPIO" -> listOf("ID_DEPARTAMENTO", "ID_MUNICIPIO")
-            "DISTRITO" -> listOf("ID_DEPARTAMENTO", "ID_MUNICIPIO", "ID_DISTRITO")
-            "EMPRESA" -> listOf("NIT")
-            "OFERTA_TRABAJO" -> listOf("NIT", "ID_OFERTA")
-            "DETALLE_REQUISITO" -> listOf("NIT", "ID_OFERTA", "ID_DETALLE")
-            "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "NIT", "ID_EXPERIENCIA")
-            "CERTIFICACION" -> listOf("ID_CERTIFICACION", "ID_INSTITUCION", "ID_POSTULANTE")
-            "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_POSTULANTE")
-            "HABILIDAD_POSTULANTE" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "ID_POSTULANTE")
-            "POSTULACION" -> listOf("ID_POSTULACION")
-            "RED_SOCIAL_POSTULANTE" -> listOf("ID_POSTULANTE", "ID_RED_SOCIAL")
-            "USUARIO" -> listOf("ID_USUARIO")
-            "POSTULANTE" -> listOf("ID_POSTULANTE")
-            "HABILIDAD" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD")
-            "INSTITUCION" -> listOf("ID_INSTITUCION")
-            "OFERTA_ACADEMICA" -> listOf("ID_OFERTA_ACADEMICA")
-            else -> listOf(getIdColumn(tableName))
-        }
-    }
+    private fun getPrimaryKeyColumns(tableName: String): List<String> = Constants.getPrimaryKeyColumns(tableName)
 
     private fun getAutoGenColumns(): Set<String> {
         return setOf(
@@ -237,18 +218,7 @@ class MainRepository(context: Context) {
         )
     }
 
-    private fun getAutoGenColumn(tableName: String): String? {
-        return when (tableName) {
-            "GENERO" -> "ID_GENERO"
-            "TIPO_DOCUMENTO" -> "ID_TIPO_DOCUMENTO"
-            "DEPARTAMENTO" -> "ID_DEPARTAMENTO"
-            "GRADO_ACADEMICO" -> "ID_GRADO_ACADEMICO"
-            "RED_SOCIAL" -> "ID_RED_SOCIAL"
-            "CATEGORIA_HABILIDAD" -> "ID_CATEGORIA_HABILIDAD"
-            "USUARIO" -> "ID_USUARIO"
-            else -> null
-        }
-    }
+    private fun getAutoGenColumn(tableName: String): String? = Constants.getAutoGenColumn(tableName)
 
     fun insertRecord(tableName: String, values: List<Any>): Long {
         val idCol = getAutoGenColumn(tableName)
@@ -268,7 +238,7 @@ class MainRepository(context: Context) {
             val pwdIndex = columns.indexOf("PASSWORD")
             if (pwdIndex >= 0 && pwdIndex < finalValues.size) {
                 val plainPassword = finalValues[pwdIndex].toString()
-                if (plainPassword.isNotBlank() && !plainPassword.startsWith("$2")) {
+                if (plainPassword.isNotBlank() && plainPassword.length < 50) {
                     finalValues[pwdIndex] = PasswordHasher.hash(plainPassword)
                 }
             }
@@ -412,8 +382,14 @@ class MainRepository(context: Context) {
 
     private fun replacePlaceholders(sql: String, cols: Map<String, Any>): String {
         var result = sql
-        for ((key, value) in cols) {
-            result = result.replace("{$key}", value.toString())
+        val tokens = mutableMapOf<String, String>()
+        cols.forEach { (key, _) ->
+            val token = "\u0000$key\u0000"
+            result = result.replace("{$key}", token)
+            tokens[key] = token
+        }
+        tokens.forEach { (key, token) ->
+            result = result.replace(token, cols[key]?.toString() ?: "")
         }
         return result
     }
@@ -496,13 +472,74 @@ class MainRepository(context: Context) {
         
         return try {
             tables.map { tableName ->
-                val count = getDb().rawQuery("SELECT COUNT(*) FROM $tableName", null).apply {
-                    moveToFirst()
-                }.getInt(0)
+                val cursor = getDb().rawQuery("SELECT COUNT(*) FROM $tableName", null)
+                cursor.moveToFirst()
+                val count = cursor.getInt(0)
+                cursor.close()
                 TableInfo(tableName, tableName.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }, count)
             }
         } catch (e: Exception) {
             emptyList()
+        }
+    }
+
+    fun insertSeedData(): String? {
+        val tablesToCheck = listOf(
+            "CATEGORIA_HABILIDAD", "GENERO", "DEPARTAMENTO", "MUNICIPIO",
+            "DISTRITO", "INSTITUCION", "GRADO_ACADEMICO", "RED_SOCIAL",
+            "HABILIDAD", "EMPRESA"
+        )
+
+        try {
+            for (table in tablesToCheck) {
+                val cursor = getDb().rawQuery("SELECT COUNT(*) FROM $table", null)
+                cursor.moveToFirst()
+                val count = cursor.getInt(0)
+                cursor.close()
+                if (count > 0) {
+                    return "Ya existen datos en la base de datos"
+                }
+            }
+
+            getDb().beginTransaction()
+            try {
+                for (nombre in SeedData.DEPARTAMENTOS) {
+                    insertRecord("DEPARTAMENTO", listOf(nombre))
+                }
+                for (nombre in SeedData.GENEROS) {
+                    insertRecord("GENERO", listOf(nombre))
+                }
+                for (nombre in SeedData.CATEGORIAS_HABILIDAD) {
+                    insertRecord("CATEGORIA_HABILIDAD", listOf(nombre))
+                }
+                for (nombre in SeedData.GRADOS_ACADEMICOS) {
+                    insertRecord("GRADO_ACADEMICO", listOf(nombre))
+                }
+                for (nombre in SeedData.REDES_SOCIALES) {
+                    insertRecord("RED_SOCIAL", listOf(nombre))
+                }
+                for (row in SeedData.INSTITUCIONES) {
+                    insertRecord("INSTITUCION", row)
+                }
+                for (row in SeedData.MUNICIPIOS) {
+                    insertRecord("MUNICIPIO", row)
+                }
+                for (row in SeedData.DISTRITOS) {
+                    insertRecord("DISTRITO", row)
+                }
+                for (row in SeedData.HABILIDADES) {
+                    insertRecord("HABILIDAD", row)
+                }
+                for (row in SeedData.EMPRESAS) {
+                    insertRecord("EMPRESA", row)
+                }
+                getDb().setTransactionSuccessful()
+            } finally {
+                getDb().endTransaction()
+            }
+            return null
+        } catch (e: Exception) {
+            return "Error al insertar datos: ${e.message}"
         }
     }
 
@@ -591,6 +628,7 @@ class MainRepository(context: Context) {
                 FROM OFERTA_TRABAJO o
                 LEFT JOIN EMPRESA e ON o.NIT = e.NIT
                 LEFT JOIN GRADO_ACADEMICO g ON o.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO
+                WHERE o.TITULO_PUESTO LIKE '%$query%' OR e.NOMBRE_EMPRESA LIKE '%$query%' OR o.DESCRIPCION_OFERTA_TRABAJO LIKE '%$query%'
                 ORDER BY o.FECHA_PUBLICACION DESC
                 """.trimIndent()
             }
@@ -601,6 +639,7 @@ class MainRepository(context: Context) {
                 FROM DETALLE_REQUISITO d
                 LEFT JOIN OFERTA_TRABAJO o ON d.NIT = o.NIT AND d.ID_OFERTA = o.ID_OFERTA
                 LEFT JOIN EMPRESA e ON d.NIT = e.NIT
+                WHERE d.DESCRIPCION_REQUISITO LIKE '%$query%' OR o.TITULO_PUESTO LIKE '%$query%' OR e.NOMBRE_EMPRESA LIKE '%$query%'
                 ORDER BY d.ID_DETALLE DESC
                 """.trimIndent()
             }
@@ -611,6 +650,7 @@ class MainRepository(context: Context) {
                 FROM OFERTA_ACADEMICA o
                 LEFT JOIN INSTITUCION i ON o.ID_INSTITUCION = i.ID_INSTITUCION
                 LEFT JOIN GRADO_ACADEMICO g ON o.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO
+                WHERE o.ID_OFERTA_ACADEMICA LIKE '%$query%' OR i.NOMBRE_INSTITUCION LIKE '%$query%' OR g.NOMBRE_GRADO LIKE '%$query%'
                 ORDER BY i.NOMBRE_INSTITUCION
                 """.trimIndent()
             }
@@ -1032,31 +1072,5 @@ class MainRepository(context: Context) {
         }
     }
 
-    fun getColumnsForTable(tableName: String): List<String> {
-        return when (tableName) {
-            "USUARIO" -> listOf("ID_USUARIO", "USERNAME", "PASSWORD", "ROL")
-            "POSTULANTE" -> listOf("ID_POSTULANTE", "ID_GENERO", "ID_TIPO_DOCUMENTO", "NUM_DOCUMENTO", "ID_DISTRITO_DEPTO", "ID_DISTRITO_MUNICIPIO", "ID_DISTRITO_ID", "NOMBRE", "APELLIDO", "FECHA_NACIMIENTO", "NUP", "DIRECCION_DETALLE", "TELEFONO_CASA", "TELEFONO_CELULAR", "EMAIL")
-            "GENERO" -> listOf("ID_GENERO", "NOMBRE_GENERO")
-            "TIPO_DOCUMENTO" -> listOf("ID_TIPO_DOCUMENTO", "NOMBRE_TIPO")
-            "DEPARTAMENTO" -> listOf("ID_DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
-            "MUNICIPIO" -> listOf("ID_DEPARTAMENTO", "ID_MUNICIPIO", "NOMBRE_MUNICIPIO")
-            "DISTRITO" -> listOf("ID_DEPARTAMENTO", "ID_MUNICIPIO", "ID_DISTRITO", "NOMBRE_DISTRITO")
-            "HABILIDAD" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "NOMBRE_HABILIDAD")
-            "CATEGORIA_HABILIDAD" -> listOf("ID_CATEGORIA_HABILIDAD", "NOMBRE_CATEGORIA")
-            "EMPRESA" -> listOf("NIT", "ID_DISTRITO_DEPTO", "ID_DISTRITO_MUNICIPIO", "ID_DISTRITO_ID", "NOMBRE_EMPRESA", "CONTACTO_DIRECTO")
-            "INSTITUCION" -> listOf("ID_INSTITUCION", "NOMBRE_INSTITUCION")
-            "GRADO_ACADEMICO" -> listOf("ID_GRADO_ACADEMICO", "NOMBRE_GRADO")
-            "RED_SOCIAL" -> listOf("ID_RED_SOCIAL", "NOMBRE_RED")
-            "OFERTA_ACADEMICA" -> listOf("ID_OFERTA_ACADEMICA", "ID_GRADO_ACADEMICO", "ID_INSTITUCION")
-            "OFERTA_TRABAJO" -> listOf("NIT", "ID_OFERTA", "ID_GRADO_ACADEMICO", "TITULO_PUESTO", "FECHA_PUBLICACION", "FECHA_CADUCIDAD", "EXPERIENCIA_ANIOS", "EDAD_MINIMA", "EDAD_MAXIMA", "DESCRIPCION_OFERTA_TRABAJO")
-            "CERTIFICACION" -> listOf("ID_CERTIFICACION", "ID_INSTITUCION", "ID_POSTULANTE", "NOMBRE_CERTIFICACION", "FECHA_CERTIFICACION")
-            "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE", "NIT", "ID_EXPERIENCIA", "PUESTO_TRABAJO", "FECHA_INICIO", "FECHA_FIN", "DESCP_EXPERIENCIA_LABORAL", "CONTACTO_REFERENCIA")
-            "FORMACION_ACADEMICA" -> listOf("ID_FORMACION", "ID_POSTULANTE", "ID_OFERTA_ACADEMICA", "TITULO_OBTENIDO", "FECHA_OBTENCION")
-            "HABILIDAD_POSTULANTE" -> listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD", "ID_POSTULANTE", "NIVEL_DESTREZA")
-            "POSTULACION" -> listOf("ID_POSTULACION", "NIT", "ID_OFERTA", "ID_POSTULANTE", "FECHA_APLICACION", "ESTADO_PROCESO")
-            "DETALLE_REQUISITO" -> listOf("NIT", "ID_OFERTA", "ID_DETALLE", "DESCRIPCION_REQUISITO")
-            "RED_SOCIAL_POSTULANTE" -> listOf("ID_POSTULANTE", "ID_RED_SOCIAL", "URL_PERFIL")
-            else -> listOf("NOMBRE")
-        }
-    }
+    fun getColumnsForTable(tableName: String): List<String> = Constants.getColumnsForTable(tableName)
 }

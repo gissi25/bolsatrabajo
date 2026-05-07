@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.content.Context
 import android.widget.ImageButton
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
@@ -19,6 +20,7 @@ import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.StyledToast
 import sv.ues.fia.eisi.bt.utils.ThemeToggleHelper
 import sv.ues.fia.eisi.bt.viewmodel.DashboardViewModel
+import sv.ues.fia.eisi.bt.viewmodel.Resource
 
 class DashboardFragment : Fragment() {
 
@@ -38,6 +40,12 @@ class DashboardFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val sessionPrefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
+        if (!sessionPrefs.getBoolean(Constants.KEY_IS_LOGGED_IN, false)) {
+            findNavController().navigate(R.id.action_dashboard_to_login)
+            return
+        }
+
         recyclerView = view.findViewById(R.id.recyclerTables)
         toolbar = view.findViewById(R.id.toolbar)
         etSearch = view.findViewById(R.id.etSearch)
@@ -55,8 +63,20 @@ class DashboardFragment : Fragment() {
         }
 
         btnInsertScript.setImageResource(ThemeToggleHelper.getInsertIconRes())
+        val role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
+        if (role != Constants.ROLE_ADMIN) {
+            btnInsertScript.visibility = View.GONE
+        }
         btnInsertScript.setOnClickListener {
-            StyledToast.show(requireContext(), "Funcionalidad proximamente")
+            viewModel.insertSeedData()
+        }
+
+        viewModel.seedResult.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is Resource.Success -> StyledToast.show(requireContext(), result.message)
+                is Resource.Error -> StyledToast.show(requireContext(), result.translatedMessage)
+                null -> {}
+            }
         }
 
         btnLogout.setImageResource(ThemeToggleHelper.getLogoutIconRes())
@@ -74,7 +94,6 @@ class DashboardFragment : Fragment() {
             }
         }
 
-        val role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
         viewModel.loadTables(role)
     }
 

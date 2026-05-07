@@ -1,5 +1,9 @@
 package sv.ues.fia.eisi.bt.utils
 
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 object ValidationRules {
 
     data class FieldRule(
@@ -144,6 +148,13 @@ object ValidationRules {
 
         if (rules.pattern != null && !Regex(rules.pattern).matches(trimmed)) {
             return "${rules.friendlyName} no tiene un formato valido"
+        }
+
+        if (tableName == "CERTIFICACION" && column == "FECHA_CERTIFICACION") {
+            val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            if (trimmed > today) {
+                return "${rules.friendlyName} no puede ser una fecha futura"
+            }
         }
 
         if (rules.min != null) {

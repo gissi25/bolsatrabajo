@@ -3,6 +3,7 @@ package sv.ues.fia.eisi.bt.ui.dashboard
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -24,14 +25,19 @@ class DashboardAdapter(
     }
 
     inner class ViewHolder(itemView: MaterialCardView) : RecyclerView.ViewHolder(itemView) {
+        private val tvTableName: TextView = itemView.findViewById(R.id.tvTableName)
+        private val tvRecordCount: TextView = itemView.findViewById(R.id.tvRecordCount)
+
+        init {
+            itemView.setOnClickListener {
+                val pos = bindingAdapterPosition
+                if (pos != RecyclerView.NO_POSITION) onItemClick(getItem(pos))
+            }
+        }
 
         fun bind(table: MainRepository.TableInfo) {
-            itemView.findViewById<android.widget.TextView>(R.id.tvTableName).text = table.displayName
-            itemView.findViewById<android.widget.TextView>(R.id.tvRecordCount).text = "${table.count} ${itemView.context.getString(R.string.records)}"
-
-            itemView.setOnClickListener {
-                onItemClick(table)
-            }
+            tvTableName.text = table.displayName
+            tvRecordCount.text = "${table.count} ${itemView.context.getString(R.string.records)}"
         }
     }
 
