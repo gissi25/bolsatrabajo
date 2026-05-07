@@ -44,7 +44,11 @@ class TableDetailFragment : Fragment() {
         }
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_table_detail, container, false)
     }
 
@@ -63,8 +67,12 @@ class TableDetailFragment : Fragment() {
             ThemeToggleHelper.toggle(requireActivity())
         }
 
-        val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
-        val role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
+        val prefs = requireContext().getSharedPreferences(
+            Constants.PREFS_NAME,
+            android.content.Context.MODE_PRIVATE
+        )
+        val role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE)
+            ?: Constants.ROLE_POSTULANTE
         val access = Constants.getRoleTables(role)[tableName] ?: Constants.AccessLevel.NONE
         if (access == Constants.AccessLevel.NONE) {
             StyledToast.show(requireContext(), "No tienes acceso a esta tabla")
@@ -111,7 +119,10 @@ class TableDetailFragment : Fragment() {
             },
             onDeleteClick = { item, position ->
                 showDeleteDialog(item, position)
-            }
+            },
+            onViewClick = if (!canEdit) { item, _ ->
+                showViewDialog(item)
+            } else null
         )
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -148,7 +159,7 @@ class TableDetailFragment : Fragment() {
             }
         }
         adapter.submitList(filtered)
-        
+
         if (filtered.isEmpty()) {
             StyledToast.show(requireContext(), "Sin resultados")
         }
@@ -177,7 +188,10 @@ class TableDetailFragment : Fragment() {
 
     private fun showDeleteDialog(itemData: List<Any>, position: Int) {
         if (!canDelete) {
-            StyledToast.show(requireContext(), "No tienes permiso para eliminar registros de esta tabla")
+            StyledToast.show(
+                requireContext(),
+                "No tienes permiso para eliminar registros de esta tabla"
+            )
             return
         }
         val dialog = DeleteConfirmDialog()
@@ -188,5 +202,16 @@ class TableDetailFragment : Fragment() {
         }
         dialog.arguments = bundle
         dialog.show(childFragmentManager, "delete_confirm")
+    }
+
+    private fun showViewDialog(itemData: List<Any>) {
+        val dialog = EditorDialogFragment()
+        val bundle = Bundle().apply {
+            putString(Constants.BUNDLE_TABLE_NAME, tableName)
+            putBoolean(Constants.BUNDLE_IS_VIEW_MODE, true)
+            putString(Constants.BUNDLE_TABLE_DATA, itemData.joinToString(","))
+        }
+        dialog.arguments = bundle
+        dialog.show(childFragmentManager, "editor")
     }
 }

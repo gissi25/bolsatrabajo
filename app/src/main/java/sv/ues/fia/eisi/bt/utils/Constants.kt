@@ -51,6 +51,7 @@ object Constants {
     const val BUNDLE_TABLE_NAME = "table_name"
     const val BUNDLE_TABLE_DATA = "table_data"
     const val BUNDLE_IS_EDIT_MODE = "is_edit_mode"
+    const val BUNDLE_IS_VIEW_MODE = "is_view_mode"
     const val BUNDLE_ITEM_ID = "item_id"
 
     enum class AccessLevel { NONE, READ_ONLY, FULL }

@@ -483,6 +483,66 @@ class MainRepository(context: Context) {
         }
     }
 
+    fun insertSeedData(): String? {
+        val tablesToCheck = listOf(
+            "CATEGORIA_HABILIDAD", "GENERO", "DEPARTAMENTO", "MUNICIPIO",
+            "DISTRITO", "INSTITUCION", "GRADO_ACADEMICO", "RED_SOCIAL",
+            "HABILIDAD", "EMPRESA"
+        )
+
+        try {
+            for (table in tablesToCheck) {
+                val cursor = getDb().rawQuery("SELECT COUNT(*) FROM $table", null)
+                cursor.moveToFirst()
+                val count = cursor.getInt(0)
+                cursor.close()
+                if (count > 0) {
+                    return "Ya existen datos en la base de datos"
+                }
+            }
+
+            getDb().beginTransaction()
+            try {
+                for (nombre in SeedData.DEPARTAMENTOS) {
+                    insertRecord("DEPARTAMENTO", listOf(nombre))
+                }
+                for (nombre in SeedData.GENEROS) {
+                    insertRecord("GENERO", listOf(nombre))
+                }
+                for (nombre in SeedData.CATEGORIAS_HABILIDAD) {
+                    insertRecord("CATEGORIA_HABILIDAD", listOf(nombre))
+                }
+                for (nombre in SeedData.GRADOS_ACADEMICOS) {
+                    insertRecord("GRADO_ACADEMICO", listOf(nombre))
+                }
+                for (nombre in SeedData.REDES_SOCIALES) {
+                    insertRecord("RED_SOCIAL", listOf(nombre))
+                }
+                for (row in SeedData.INSTITUCIONES) {
+                    insertRecord("INSTITUCION", row)
+                }
+                for (row in SeedData.MUNICIPIOS) {
+                    insertRecord("MUNICIPIO", row)
+                }
+                for (row in SeedData.DISTRITOS) {
+                    insertRecord("DISTRITO", row)
+                }
+                for (row in SeedData.HABILIDADES) {
+                    insertRecord("HABILIDAD", row)
+                }
+                for (row in SeedData.EMPRESAS) {
+                    insertRecord("EMPRESA", row)
+                }
+                getDb().setTransactionSuccessful()
+            } finally {
+                getDb().endTransaction()
+            }
+            return null
+        } catch (e: Exception) {
+            return "Error al insertar datos: ${e.message}"
+        }
+    }
+
     fun searchTable(tableName: String, query: String): List<List<Any>> {
         val sql = when (tableName) {
             "USUARIO" -> {

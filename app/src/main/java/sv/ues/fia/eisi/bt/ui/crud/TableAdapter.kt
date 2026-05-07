@@ -15,7 +15,8 @@ class TableAdapter(
     private val canEdit: Boolean = true,
     private val canDelete: Boolean = true,
     private val onEditClick: (List<Any>, Int) -> Unit,
-    private val onDeleteClick: (List<Any>, Int) -> Unit
+    private val onDeleteClick: (List<Any>, Int) -> Unit,
+    private val onViewClick: ((List<Any>, Int) -> Unit)? = null
 ) : ListAdapter<List<Any>, TableAdapter.ViewHolder>(RowDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -45,6 +46,12 @@ class TableAdapter(
             fabDelete.setOnClickListener {
                 val pos = bindingAdapterPosition
                 if (pos != RecyclerView.NO_POSITION) onDeleteClick(getItem(pos), pos)
+            }
+            if (!canEdit && onViewClick != null) {
+                itemView.setOnClickListener {
+                    val pos = bindingAdapterPosition
+                    if (pos != RecyclerView.NO_POSITION) onViewClick(getItem(pos), pos)
+                }
             }
         }
 

@@ -20,6 +20,7 @@ import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.StyledToast
 import sv.ues.fia.eisi.bt.utils.ThemeToggleHelper
 import sv.ues.fia.eisi.bt.viewmodel.DashboardViewModel
+import sv.ues.fia.eisi.bt.viewmodel.Resource
 
 class DashboardFragment : Fragment() {
 
@@ -62,8 +63,20 @@ class DashboardFragment : Fragment() {
         }
 
         btnInsertScript.setImageResource(ThemeToggleHelper.getInsertIconRes())
+        val role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
+        if (role != Constants.ROLE_ADMIN) {
+            btnInsertScript.visibility = View.GONE
+        }
         btnInsertScript.setOnClickListener {
-            StyledToast.show(requireContext(), "Funcionalidad proximamente")
+            viewModel.insertSeedData()
+        }
+
+        viewModel.seedResult.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is Resource.Success -> StyledToast.show(requireContext(), result.message)
+                is Resource.Error -> StyledToast.show(requireContext(), result.translatedMessage)
+                null -> {}
+            }
         }
 
         btnLogout.setImageResource(ThemeToggleHelper.getLogoutIconRes())
@@ -81,7 +94,6 @@ class DashboardFragment : Fragment() {
             }
         }
 
-        val role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
         viewModel.loadTables(role)
     }
 

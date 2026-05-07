@@ -27,6 +27,9 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
 
+    private val _seedResult = MutableLiveData<Resource?>()
+    val seedResult: LiveData<Resource?> get() = _seedResult
+
     fun loadTables(role: String? = null) {
         if (role != null) currentRole = role
         _isLoading.value = true
@@ -78,5 +81,28 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     
     fun loadOriginalTables() {
         _tables.value = allTablesOriginal
+    }
+
+    fun clearSeedResult() {
+        _seedResult.value = null
+    }
+
+    fun insertSeedData() {
+        _seedResult.value = null
+        viewModelScope.launch {
+            try {
+                val error = withContext(Dispatchers.IO) {
+                    repository.insertSeedData()
+                }
+                if (error == null) {
+                    _seedResult.postValue(Resource.Success("Datos insertados correctamente"))
+                    refreshCounts()
+                } else {
+                    _seedResult.postValue(Resource.Error(error, error))
+                }
+            } catch (e: Exception) {
+                _seedResult.postValue(Resource.Error(e.message ?: "Error desconocido", "Error al insertar datos"))
+            }
+        }
     }
 }
