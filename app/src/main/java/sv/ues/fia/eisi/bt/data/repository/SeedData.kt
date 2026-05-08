@@ -94,8 +94,8 @@ object SeedData {
         listOf(6, 1, 1, "Aguilares"), listOf(6, 1, 2, "El Paisnal"), listOf(6, 1, 3, "Guazapa"),
         listOf(6, 2, 1, "Apopa"), listOf(6, 2, 2, "Nejapa"),
         listOf(6, 3, 1, "Ilopango"), listOf(6, 3, 2, "San Martín"), listOf(6, 3, 3, "Soyapango"), listOf(6, 3, 4, "Tonacatepeque"),
-        listOf(6, 4, 1, "Ayutuxtepeque"), listOf(6, 4, 2, "Mejicanos"), listOf(6, 4, 3, "San Salvador"), listOf(6, 4, 4, "San Marcos"), listOf(6, 4, 5, "Santo Tomás"), listOf(6, 4, 6, "Santiago Texacuangos"), listOf(6, 4, 7, "Cuscatancingo"), listOf(6, 4, 8, "Delgado"),
-        listOf(6, 5, 1, "Panchimalco"), listOf(6, 5, 2, "Rosario de Mora"),
+        listOf(6, 4, 1, "Ayutuxtepeque"), listOf(6, 4, 2, "Mejicanos"), listOf(6, 4, 3, "Cuscatancingo"), listOf(6, 4, 4, "Delgado"), listOf(6, 4, 5, "San Salvador"),
+        listOf(6, 5, 1, "San Marcos"), listOf(6, 5, 2, "Santo Tomás"), listOf(6, 5, 3, "Santiago Texacuangos"), listOf(6, 5, 4, "Panchimalco"), listOf(6, 5, 5, "Rosario de Mora"),
 
         listOf(7, 1, 1, "Quezaltepeque"), listOf(7, 1, 2, "San Matías"), listOf(7, 1, 3, "San Pablo Tacachico"),
         listOf(7, 2, 1, "San Juan Opico"), listOf(7, 2, 2, "Ciudad Arce"),
@@ -112,10 +112,10 @@ object SeedData {
         listOf(9, 2, 1, "Ilobasco"), listOf(9, 2, 2, "Tejutepeque"), listOf(9, 2, 3, "Jutiapa"), listOf(9, 2, 4, "Cinquera"),
 
         listOf(10, 1, 1, "Apastepeque"), listOf(10, 1, 2, "Santa Clara"), listOf(10, 1, 3, "San Ildefonso"), listOf(10, 1, 4, "San Esteban Catarina"), listOf(10, 1, 5, "San Sebastián"), listOf(10, 1, 6, "San Lorenzo"), listOf(10, 1, 7, "Santo Domingo"),
-        listOf(10, 2, 1, "San Vicente"), listOf(10, 2, 2, "Guadalupe"), listOf(10, 2, 3, "Verapaz"), listOf(10, 2, 4, "Nuevo Tepetitán"), listOf(10, 2, 5, "Tecoluca"), listOf(10, 2, 6, "San Cayetano Istepeque"),
+        listOf(10, 2, 1, "San Vicente"), listOf(10, 2, 2, "Guadalupe"), listOf(10, 2, 3, "Verapaz"), listOf(10, 2, 4, "Tepetitán"), listOf(10, 2, 5, "Tecoluca"), listOf(10, 2, 6, "San Cayetano Istepeque"),
 
         listOf(11, 1, 1, "Santiago de María"), listOf(11, 1, 2, "Alegría"), listOf(11, 1, 3, "Berlín"), listOf(11, 1, 4, "Mercedes Umaña"), listOf(11, 1, 5, "Jucuapa"), listOf(11, 1, 6, "El Triunfo"), listOf(11, 1, 7, "Estanzuelas"), listOf(11, 1, 8, "San Buenaventura"), listOf(11, 1, 9, "Nueva Granada"),
-        listOf(11, 2, 1, "Usulután"), listOf(11, 2, 2, "Jucuarán"), listOf(11, 2, 3, "San Dionisio"), listOf(11, 2, 4, "Concepción Batres"), listOf(11, 2, 5, "Santa María"), listOf(11, 2, 6, "Ozatlán"), listOf(11, 2, 7, "Tecapán"), listOf(11, 2, 8, "Santa Elena"), listOf(11, 2, 9, "San California"), listOf(11, 2, 10, "Ereguayquín"),
+        listOf(11, 2, 1, "Usulután"), listOf(11, 2, 2, "Jucuarán"), listOf(11, 2, 3, "San Dionisio"), listOf(11, 2, 4, "Concepción Batres"), listOf(11, 2, 5, "Santa María"), listOf(11, 2, 6, "Ozatlán"), listOf(11, 2, 7, "Tecapán"), listOf(11, 2, 8, "Santa Elena"), listOf(11, 2, 9, "California"), listOf(11, 2, 10, "Ereguayquín"),
         listOf(11, 3, 1, "Jiquilisco"), listOf(11, 3, 2, "Puerto El Triunfo"), listOf(11, 3, 3, "San Agustín"), listOf(11, 3, 4, "San Francisco Javier"),
 
         listOf(12, 1, 1, "Ciudad Barrios"), listOf(12, 1, 2, "Sesori"), listOf(12, 1, 3, "Nuevo Edén de San Juan"), listOf(12, 1, 4, "San Gerardo"), listOf(12, 1, 5, "San Luis de la Reina"), listOf(12, 1, 6, "Carolina"), listOf(12, 1, 7, "San Antonio"), listOf(12, 1, 8, "Chapeltique"),
