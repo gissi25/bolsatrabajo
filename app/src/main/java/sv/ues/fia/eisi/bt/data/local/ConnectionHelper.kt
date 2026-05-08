@@ -15,8 +15,6 @@ class ConnectionHelper(context: Context) :
     }
 
     override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL("PRAGMA foreign_keys = ON;")
-
         // ================================================================
         // CREATE TABLES (22 tablas con PKs naturales/compuestas/manuales)
         // ================================================================
@@ -338,7 +336,7 @@ class ConnectionHelper(context: Context) :
             FOR EACH ROW BEGIN
                 SELECT CASE WHEN (
                     SELECT LOWER(NOMBRE_GRADO) FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO
-                ) IN ('bachiller', 'tecnico superior', 'profesorado')
+                ) IN ('bachiller')
                 THEN RAISE(ABORT, 'El postulante debe tener un grado academico superior a Bachiller') END;
             END
         """)
@@ -347,7 +345,7 @@ class ConnectionHelper(context: Context) :
             FOR EACH ROW BEGIN
                 SELECT CASE WHEN (
                     SELECT LOWER(NOMBRE_GRADO) FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO
-                ) IN ('bachiller', 'tecnico superior', 'profesorado')
+                ) IN ('bachiller')
                 THEN RAISE(ABORT, 'El postulante debe tener un grado academico superior a Bachiller') END;
             END
         """)
@@ -450,14 +448,36 @@ class ConnectionHelper(context: Context) :
         """)
 
         // ================================================================
-        // TRIGGERS DE CASCADA (3)
+        // TRIGGERS BLOQUEANTES DE BORRADO (16)
+        // Bloquean DELETE si existen registros hijos
         // ================================================================
 
         db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_DEPARTAMENTO")
         db.execSQL("""
             CREATE TRIGGER TR_DEL_DEPARTAMENTO BEFORE DELETE ON DEPARTAMENTO
             FOR EACH ROW BEGIN
-                DELETE FROM MUNICIPIO WHERE ID_DEPARTAMENTO = OLD.ID_DEPARTAMENTO;
+                SELECT CASE WHEN (SELECT COUNT(*) FROM MUNICIPIO WHERE ID_DEPARTAMENTO = OLD.ID_DEPARTAMENTO) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: el departamento tiene municipios asociados') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_MUNICIPIO")
+        db.execSQL("""
+            CREATE TRIGGER TR_DEL_MUNICIPIO BEFORE DELETE ON MUNICIPIO
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT COUNT(*) FROM DISTRITO WHERE ID_DEPARTAMENTO = OLD.ID_DEPARTAMENTO AND ID_MUNICIPIO = OLD.ID_MUNICIPIO) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: el municipio tiene distritos asociados') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_DISTRITO")
+        db.execSQL("""
+            CREATE TRIGGER TR_DEL_DISTRITO BEFORE DELETE ON DISTRITO
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT COUNT(*) FROM POSTULANTE WHERE ID_DISTRITO_DEPTO = OLD.ID_DEPARTAMENTO AND ID_DISTRITO_MUNICIPIO = OLD.ID_MUNICIPIO AND ID_DISTRITO_ID = OLD.ID_DISTRITO) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: el distrito tiene postulantes asociados') END;
+                SELECT CASE WHEN (SELECT COUNT(*) FROM EMPRESA WHERE ID_DISTRITO_DEPTO = OLD.ID_DEPARTAMENTO AND ID_DISTRITO_MUNICIPIO = OLD.ID_MUNICIPIO AND ID_DISTRITO_ID = OLD.ID_DISTRITO) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: el distrito tiene empresas asociadas') END;
             END
         """)
 
@@ -465,22 +485,127 @@ class ConnectionHelper(context: Context) :
         db.execSQL("""
             CREATE TRIGGER TR_DEL_CATEGORIA BEFORE DELETE ON CATEGORIA_HABILIDAD
             FOR EACH ROW BEGIN
-                DELETE FROM HABILIDAD_POSTULANTE WHERE ID_CATEGORIA_HABILIDAD = OLD.ID_CATEGORIA_HABILIDAD;
-                DELETE FROM HABILIDAD WHERE ID_CATEGORIA_HABILIDAD = OLD.ID_CATEGORIA_HABILIDAD;
+                SELECT CASE WHEN (SELECT COUNT(*) FROM HABILIDAD WHERE ID_CATEGORIA_HABILIDAD = OLD.ID_CATEGORIA_HABILIDAD) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: la categoria tiene habilidades asociadas') END;
             END
         """)
 
+        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_HABILIDAD")
+        db.execSQL("""
+            CREATE TRIGGER TR_DEL_HABILIDAD BEFORE DELETE ON HABILIDAD
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT COUNT(*) FROM HABILIDAD_POSTULANTE WHERE ID_CATEGORIA_HABILIDAD = OLD.ID_CATEGORIA_HABILIDAD AND ID_HABILIDAD = OLD.ID_HABILIDAD) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: la habilidad esta asignada a postulantes') END;
+            END
+        """)
 
         db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_POSTULANTE")
         db.execSQL("""
             CREATE TRIGGER TR_DEL_POSTULANTE BEFORE DELETE ON POSTULANTE
             FOR EACH ROW BEGIN
-                DELETE FROM POSTULACION WHERE ID_POSTULANTE = OLD.ID_POSTULANTE;
-                DELETE FROM EXPERIENCIA_LABORAL WHERE ID_POSTULANTE = OLD.ID_POSTULANTE;
-                DELETE FROM FORMACION_ACADEMICA WHERE ID_POSTULANTE = OLD.ID_POSTULANTE;
-                DELETE FROM CERTIFICACION WHERE ID_POSTULANTE = OLD.ID_POSTULANTE;
-                DELETE FROM HABILIDAD_POSTULANTE WHERE ID_POSTULANTE = OLD.ID_POSTULANTE;
-                DELETE FROM RED_SOCIAL_POSTULANTE WHERE ID_POSTULANTE = OLD.ID_POSTULANTE;
+                SELECT CASE WHEN (SELECT COUNT(*) FROM POSTULACION WHERE ID_POSTULANTE = OLD.ID_POSTULANTE) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: el postulante tiene postulaciones') END;
+                SELECT CASE WHEN (SELECT COUNT(*) FROM EXPERIENCIA_LABORAL WHERE ID_POSTULANTE = OLD.ID_POSTULANTE) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: el postulante tiene experiencias laborales') END;
+                SELECT CASE WHEN (SELECT COUNT(*) FROM FORMACION_ACADEMICA WHERE ID_POSTULANTE = OLD.ID_POSTULANTE) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: el postulante tiene formaciones academicas') END;
+                SELECT CASE WHEN (SELECT COUNT(*) FROM CERTIFICACION WHERE ID_POSTULANTE = OLD.ID_POSTULANTE) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: el postulante tiene certificaciones') END;
+                SELECT CASE WHEN (SELECT COUNT(*) FROM HABILIDAD_POSTULANTE WHERE ID_POSTULANTE = OLD.ID_POSTULANTE) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: el postulante tiene habilidades asignadas') END;
+                SELECT CASE WHEN (SELECT COUNT(*) FROM RED_SOCIAL_POSTULANTE WHERE ID_POSTULANTE = OLD.ID_POSTULANTE) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: el postulante tiene redes sociales') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_TIPO_DOCUMENTO")
+        db.execSQL("""
+            CREATE TRIGGER TR_DEL_TIPO_DOCUMENTO BEFORE DELETE ON TIPO_DOCUMENTO
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT COUNT(*) FROM POSTULANTE WHERE ID_TIPO_DOCUMENTO = OLD.ID_TIPO_DOCUMENTO) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: el tipo de documento tiene postulantes asociados') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_GENERO")
+        db.execSQL("""
+            CREATE TRIGGER TR_DEL_GENERO BEFORE DELETE ON GENERO
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT COUNT(*) FROM POSTULANTE WHERE ID_GENERO = OLD.ID_GENERO) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: el genero tiene postulantes asociados') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_RED_SOCIAL")
+        db.execSQL("""
+            CREATE TRIGGER TR_DEL_RED_SOCIAL BEFORE DELETE ON RED_SOCIAL
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT COUNT(*) FROM RED_SOCIAL_POSTULANTE WHERE ID_RED_SOCIAL = OLD.ID_RED_SOCIAL) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: la red social tiene postulantes vinculados') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_INSTITUCION")
+        db.execSQL("""
+            CREATE TRIGGER TR_DEL_INSTITUCION BEFORE DELETE ON INSTITUCION
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT COUNT(*) FROM CERTIFICACION WHERE ID_INSTITUCION = OLD.ID_INSTITUCION) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: la institucion tiene certificaciones asociadas') END;
+                SELECT CASE WHEN (SELECT COUNT(*) FROM OFERTA_ACADEMICA WHERE ID_INSTITUCION = OLD.ID_INSTITUCION) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: la institucion tiene ofertas academicas') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_GRADO")
+        db.execSQL("""
+            CREATE TRIGGER TR_DEL_GRADO BEFORE DELETE ON GRADO_ACADEMICO
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT COUNT(*) FROM OFERTA_TRABAJO WHERE ID_GRADO_ACADEMICO = OLD.ID_GRADO_ACADEMICO) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: el grado academico tiene ofertas de trabajo') END;
+                SELECT CASE WHEN (SELECT COUNT(*) FROM OFERTA_ACADEMICA WHERE ID_GRADO_ACADEMICO = OLD.ID_GRADO_ACADEMICO) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: el grado academico tiene ofertas academicas') END;
+                SELECT CASE WHEN (SELECT COUNT(*) FROM POSTULANTE WHERE ID_GRADO_ACADEMICO = OLD.ID_GRADO_ACADEMICO) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: el grado academico tiene postulantes asociados') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_EMPRESA")
+        db.execSQL("""
+            CREATE TRIGGER TR_DEL_EMPRESA BEFORE DELETE ON EMPRESA
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT COUNT(*) FROM OFERTA_TRABAJO WHERE NIT = OLD.NIT) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: la empresa tiene ofertas de trabajo') END;
+                SELECT CASE WHEN (SELECT COUNT(*) FROM EXPERIENCIA_LABORAL WHERE NIT = OLD.NIT) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: la empresa tiene experiencias laborales') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_OFERTA_TRABAJO")
+        db.execSQL("""
+            CREATE TRIGGER TR_DEL_OFERTA_TRABAJO BEFORE DELETE ON OFERTA_TRABAJO
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT COUNT(*) FROM DETALLE_REQUISITO WHERE NIT = OLD.NIT AND ID_OFERTA = OLD.ID_OFERTA) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: la oferta tiene requisitos asociados') END;
+                SELECT CASE WHEN (SELECT COUNT(*) FROM POSTULACION WHERE NIT = OLD.NIT AND ID_OFERTA = OLD.ID_OFERTA) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: la oferta tiene postulaciones') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_OFERTA_ACADEMICA")
+        db.execSQL("""
+            CREATE TRIGGER TR_DEL_OFERTA_ACADEMICA BEFORE DELETE ON OFERTA_ACADEMICA
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT COUNT(*) FROM FORMACION_ACADEMICA WHERE ID_OFERTA_ACADEMICA = OLD.ID_OFERTA_ACADEMICA) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: la oferta academica tiene formaciones asociadas') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_TIPO_CERTIFICACION")
+        db.execSQL("""
+            CREATE TRIGGER TR_DEL_TIPO_CERTIFICACION BEFORE DELETE ON TIPO_CERTIFICACION
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT COUNT(*) FROM CERTIFICACION WHERE ID_TIPO_CERTIFICACION = OLD.ID_TIPO_CERTIFICACION) > 0
+                THEN RAISE(ABORT, 'No se puede eliminar: el tipo de certificacion tiene certificaciones asociadas') END;
             END
         """)
 
@@ -576,12 +701,16 @@ class ConnectionHelper(context: Context) :
             END
         """)
 
-        Log.d(TAG, "Base de datos creada: 23 tablas, 22 indices, 17 triggers")
+        Log.d(TAG, "Base de datos creada: 23 tablas, 22 indices, 27 triggers")
+    }
+
+    override fun onConfigure(db: SQLiteDatabase) {
+        super.onConfigure(db)
+        db.setForeignKeyConstraintsEnabled(true)
     }
 
     override fun onOpen(db: SQLiteDatabase) {
         super.onOpen(db)
-        db.execSQL("PRAGMA foreign_keys = ON;")
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {

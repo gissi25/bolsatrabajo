@@ -1216,6 +1216,14 @@ class EditorDialogFragment : DialogFragment() {
             try { dateFormat.parse(currentText)?.time ?: System.currentTimeMillis() } catch (e: Exception) { System.currentTimeMillis() }
         } else { System.currentTimeMillis() }
 
+        var til: TextInputLayout? = null
+        var parent = editText.parent
+        while (parent != null) {
+            if (parent is TextInputLayout) { til = parent; break }
+            parent = parent.parent
+        }
+        val titulo = til?.hint?.toString() ?: "Seleccionar fecha"
+
         val calendar = Calendar.getInstance(utc)
         val currentYear = calendar.get(Calendar.YEAR)
         val startMillis = Calendar.getInstance(utc).apply { set(1926, Calendar.JANUARY, 1) }.timeInMillis
@@ -1227,7 +1235,7 @@ class EditorDialogFragment : DialogFragment() {
             .build()
 
         val picker = MaterialDatePicker.Builder.datePicker()
-            .setTitleText("Seleccionar fecha de nacimiento")
+            .setTitleText(titulo)
             .setSelection(initialMillis)
             .setCalendarConstraints(constraints)
             .build()
