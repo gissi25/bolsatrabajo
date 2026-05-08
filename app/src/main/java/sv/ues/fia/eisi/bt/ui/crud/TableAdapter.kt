@@ -67,8 +67,8 @@ class TableAdapter(
             chipEstado.visibility = View.GONE
 
             if (tableName == "POSTULANTE") {
-                val nombre = getStringSafely(item, 7)
-                val apellido = getStringSafely(item, 8)
+                val nombre = getStringSafely(item, 8)
+                val apellido = getStringSafely(item, 9)
                 tvId.text = field0
                 tvPrimary.text = nombre.ifBlank { "(sin nombre)" }
                 tvSecondary.text = apellido.ifBlank { "(sin apellido)" }

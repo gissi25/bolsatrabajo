@@ -99,6 +99,8 @@ class MainRepository(context: Context) {
         }
     }
 
+
+
     data class DependencyInfo(val tableName: String, val displayName: String, val count: Int, val depth: Int = 1)
 
     fun getDeleteDependencies(tableName: String, id: String): List<DependencyInfo> {
@@ -1062,11 +1064,11 @@ class MainRepository(context: Context) {
         }
     }
 
-    fun getDepartamentoByMunicipio(idMunicipio: String): String? {
+    fun getDepartamentoByMunicipio(deptoId: String, munId: String): String? {
         return try {
             val cursor = getDb().rawQuery(
-                "SELECT ID_DEPARTAMENTO FROM MUNICIPIO WHERE ID_MUNICIPIO = ?",
-                arrayOf(idMunicipio)
+                "SELECT ID_DEPARTAMENTO FROM MUNICIPIO WHERE ID_DEPARTAMENTO = ? AND ID_MUNICIPIO = ?",
+                arrayOf(deptoId, munId)
             )
             val result = if (cursor.moveToFirst()) cursor.getString(0) else null
             cursor.close()
@@ -1076,11 +1078,11 @@ class MainRepository(context: Context) {
         }
     }
 
-    fun getMunicipioByDistrito(idDistrito: String): String? {
+    fun getMunicipioByDistrito(deptoId: String, munId: String, distritoId: String): String? {
         return try {
             val cursor = getDb().rawQuery(
-                "SELECT ID_MUNICIPIO FROM DISTRITO WHERE ID_DISTRITO = ?",
-                arrayOf(idDistrito)
+                "SELECT ID_MUNICIPIO FROM DISTRITO WHERE ID_DEPARTAMENTO = ? AND ID_MUNICIPIO = ? AND ID_DISTRITO = ?",
+                arrayOf(deptoId, munId, distritoId)
             )
             val result = if (cursor.moveToFirst()) cursor.getString(0) else null
             cursor.close()
