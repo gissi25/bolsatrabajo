@@ -24,8 +24,6 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
-    private val _error = MutableLiveData<String?>()
-    val error: LiveData<String?> = _error
 
     private val _seedResult = MutableLiveData<Resource?>()
     val seedResult: LiveData<Resource?> get() = _seedResult
@@ -33,7 +31,6 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     fun loadTables(role: String? = null) {
         if (role != null) currentRole = role
         _isLoading.value = true
-        _error.value = null
         viewModelScope.launch {
             try {
                 val all = withContext(Dispatchers.IO) {
@@ -44,7 +41,6 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 allTablesOriginal = filtered
                 _tables.postValue(filtered)
             } catch (e: Exception) {
-                _error.postValue(e.message ?: "Error al cargar las tablas")
             } finally {
                 _isLoading.postValue(false)
             }
@@ -62,7 +58,6 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 allTablesOriginal = filtered
                 _tables.postValue(filtered)
             } catch (e: Exception) {
-                _error.postValue(e.message ?: "Error al actualizar contadores")
             }
         }
     }

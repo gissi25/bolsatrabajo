@@ -41,4 +41,53 @@
     <!-- Seed -->
     <string name="seed_confirm_title">Insertar datos de prueba</string>
     <string name="seed_confirm_message">¿Estás seguro que deseas insertar los datos de prueba en la base de datos? Esta acción no se puede deshacer.</string>
+
+    <!-- CRUD ViewModel -->
+    <string name="eliminado_correctamente">Eliminado correctamente</string>
+    <string name="guardado_correctamente">Guardado correctamente</string>
+    <string name="actualizado_correctamente">Actualizado correctamente</string>
+    <string name="error_al_eliminar">Error al eliminar</string>
+    <string name="error_al_guardar">Error al guardar</string>
+    <string name="error_al_actualizar">Error al actualizar</string>
+
+    <!-- DeleteConfirmDialog -->
+    <string name="consultando_dependencias">Consultando dependencias...</string>
+    <string name="eliminar_registro">¿Eliminar este registro?</string>
+    <string name="sin_dependencias">Este registro no tiene dependencias.</string>
+    <string name="no_se_puede_eliminar">No se puede eliminar</string>
+    <string name="total_registros_vinculados">Total: %d registros vinculados</string>
+    <string name="dependencias_en_cadena">Este registro tiene dependencias en cadena. No se puede eliminar porque afectaria datos en varios niveles:</string>
+    <string name="sin_permiso_eliminar">No tienes permiso para eliminar registros de esta tabla</string>
+    <string name="no_eliminar_propio_usuario">No puedes eliminar tu propio usuario mientras está activo</string>
+
+    <!-- EditorDialogFragment -->
+    <string name="solo_empresa_modificar_postulacion">Solo la empresa puede modificar esta postulación</string>
+    <string name="solo_empresa_cambiar_estado">Solo la empresa puede cambiar este estado</string>
+    <string name="sin_permiso_modificar_tabla">No tienes permiso para modificar esta tabla</string>
+    <string name="sin_permiso_editar_postulacion">No tienes permiso para editar esta postulación</string>
+    <string name="debe_seleccionar_nivel">Debe seleccionar un nivel de destreza</string>
+    <string name="debe_seleccionar_estado">Debe seleccionar un estado</string>
+    <string name="no_hay_datos_en">No hay datos en %s. Créelos primero.</string>
+    <string name="debe_seleccionar">Debe seleccionar %s</string>
+    <string name="seleccione_opcion_valida" formatted="false">Seleccione una opción válida de %s: %s</string>
+    <string name="contrasena_bloqueada">Contraseña (bloqueada)</string>
+    <string name="ver_tabla">Ver %s</string>
+    <string name="editar_tabla">Editar %s</string>
+    <string name="nuevo_tabla">Nuevo %s</string>
+    <string name="seleccionar_fecha">Seleccionar fecha</string>
+
+    <!-- Login / Register -->
+    <string name="usuario_o_contrasena_incorrectos">Usuario o contraseña incorrectos</string>
+    <string name="registro_exitoso">Registro exitoso. Ahora puedes iniciar sesión.</string>
+    <string name="contrasena_minimo">La contraseña debe tener al menos 8 caracteres</string>
+
+    <!-- Validacion campos -->
+    <string name="obligatorio">%s es obligatorio</string>
+    <string name="minimo_caracteres" formatted="false">%s debe tener al menos %d caracteres</string>
+    <string name="maximo_caracteres" formatted="false">%s no debe exceder %d caracteres</string>
+    <string name="formato_invalido">%s no tiene un formato valido</string>
+    <string name="fecha_futura">%s no puede ser una fecha futura</string>
+    <string name="debe_ser_numero">%s debe ser un numero</string>
+    <string name="debe_ser_mayor_igual" formatted="false">%s debe ser mayor o igual a %d</string>
+    <string name="debe_ser_menor_igual" formatted="false">%s debe ser menor o igual a %d</string>
 </resources>

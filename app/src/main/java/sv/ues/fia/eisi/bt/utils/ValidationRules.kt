@@ -187,15 +187,4 @@ object ValidationRules {
         return null
     }
 
-    fun getAutoIncrementColumns(): Set<String> {
-        return setOf(
-            "ID_USUARIO", "ID_GENERO", "ID_TIPO_DOCUMENTO",
-            "ID_DEPARTAMENTO", "ID_GRADO_ACADEMICO", "ID_RED_SOCIAL",
-            "ID_CATEGORIA_HABILIDAD", "ID_TIPO_CERTIFICACION"
-        )
-    }
-
-    fun isAutoIncrement(column: String): Boolean {
-        return column.uppercase() in getAutoIncrementColumns()
-    }
 }

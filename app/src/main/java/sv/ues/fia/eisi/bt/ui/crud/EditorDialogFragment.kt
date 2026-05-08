@@ -26,7 +26,7 @@ import sv.ues.fia.eisi.bt.data.repository.MainRepository
 import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.InputMaskUtils
 import sv.ues.fia.eisi.bt.utils.StyledToast
-import sv.ues.fia.eisi.bt.utils.TriggerErrorTranslator
+
 import sv.ues.fia.eisi.bt.utils.ValidationRules
 import sv.ues.fia.eisi.bt.viewmodel.CrudViewModel
 import sv.ues.fia.eisi.bt.viewmodel.Resource
@@ -116,7 +116,7 @@ class EditorDialogFragment : DialogFragment() {
             when (userRole) {
                 Constants.ROLE_POSTULANTE -> {
                     disableAllFields()
-                    StyledToast.show(requireContext(), "Solo la empresa puede modificar esta postulación")
+                    StyledToast.show(requireContext(), getString(R.string.solo_empresa_modificar_postulacion))
                 }
                 Constants.ROLE_EMPRESA -> {
                     disableNonEstadoFields()
@@ -158,9 +158,9 @@ class EditorDialogFragment : DialogFragment() {
 
     private fun setupTitle() {
         tvTitle.text = when {
-            isViewMode -> "Ver $tableName"
-            isEditMode -> "Editar $tableName"
-            else -> "Nuevo $tableName"
+            isViewMode -> getString(R.string.ver_tabla, tableName)
+            isEditMode -> getString(R.string.editar_tabla, tableName)
+            else -> getString(R.string.nuevo_tabla, tableName)
         }
     }
 
@@ -487,7 +487,7 @@ class EditorDialogFragment : DialogFragment() {
             } else {
                 autoComplete.setText("Activo", false)
             }
-            til.helperText = "Solo la empresa puede cambiar este estado"
+            til.helperText = getString(R.string.solo_empresa_cambiar_estado)
         } else {
             autoComplete.setOnTouchListener { v, event ->
                 if (event.action == android.view.MotionEvent.ACTION_UP) {
@@ -1226,7 +1226,7 @@ class EditorDialogFragment : DialogFragment() {
         if (column == "PASSWORD" && tableName == "USUARIO" && isEditMode) {
             et.isEnabled = false
             et.isFocusable = false
-            til.hint = "Contraseña (bloqueada)"
+            til.hint = getString(R.string.contrasena_bloqueada)
         }
 
         if (column.contains("FECHA")) {
@@ -1277,7 +1277,7 @@ class EditorDialogFragment : DialogFragment() {
             if (parent is TextInputLayout) { til = parent; break }
             parent = parent.parent
         }
-        val titulo = til?.hint?.toString() ?: "Seleccionar fecha"
+        val titulo = til?.hint?.toString() ?: getString(R.string.seleccionar_fecha)
 
         val calendar = Calendar.getInstance(utc)
         val currentYear = calendar.get(Calendar.YEAR)
@@ -1581,12 +1581,12 @@ class EditorDialogFragment : DialogFragment() {
             .getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
         val access = Constants.getRoleTables(role)[tableName] ?: Constants.AccessLevel.NONE
         if (access != Constants.AccessLevel.FULL) {
-            StyledToast.show(requireContext(), "No tienes permiso para modificar esta tabla")
+            StyledToast.show(requireContext(), getString(R.string.sin_permiso_modificar_tabla))
             return
         }
 
         if (role == Constants.ROLE_POSTULANTE && tableName == "POSTULACION" && isEditMode) {
-            StyledToast.show(requireContext(), "No tienes permiso para editar esta postulación")
+            StyledToast.show(requireContext(), getString(R.string.sin_permiso_editar_postulacion))
             return
         }
 
@@ -1601,7 +1601,7 @@ class EditorDialogFragment : DialogFragment() {
                     val autoComplete = dropDownFields.values.find { it.first == col }?.second
                     val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
                     if (selectedText.isBlank()) {
-                        StyledToast.show(requireContext(), "Debe seleccionar un nivel de destreza")
+                        StyledToast.show(requireContext(), getString(R.string.debe_seleccionar_nivel))
                         return
                     }
                     values.add(selectedText)
@@ -1613,7 +1613,7 @@ class EditorDialogFragment : DialogFragment() {
                         val autoComplete = dropDownFields.values.find { it.first == col }?.second
                         val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
                         if (selectedText.isBlank()) {
-                            StyledToast.show(requireContext(), "Debe seleccionar un estado")
+                            StyledToast.show(requireContext(), getString(R.string.debe_seleccionar_estado))
                             return
                         }
                         val estadoValue = when (selectedText) {
@@ -1645,20 +1645,20 @@ class EditorDialogFragment : DialogFragment() {
                     }
 
                     if (options.isEmpty()) {
-                        StyledToast.show(requireContext(), "No hay datos en ${fkRef.refTable}. Créelos primero.")
+                        StyledToast.show(requireContext(), getString(R.string.no_hay_datos_en, fkRef.refTable))
                         return
                     }
 
                     val autoComplete = dropDownFields.values.find { it.first == col }?.second
                     val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
                     if (selectedText.isBlank()) {
-                        StyledToast.show(requireContext(), "Debe seleccionar ${fkRef.refTable}")
+                        StyledToast.show(requireContext(), getString(R.string.debe_seleccionar, fkRef.refTable))
                         return
                     }
 
                     val selectedOption = options.find { it.second == selectedText }
                     if (selectedOption == null) {
-                        StyledToast.show(requireContext(), "Seleccione una opción válida de ${fkRef.refTable}: $selectedText")
+                        StyledToast.show(requireContext(), getString(R.string.seleccione_opcion_valida, fkRef.refTable, selectedText))
                         return
                     }
                     values.add(selectedOption.first)
