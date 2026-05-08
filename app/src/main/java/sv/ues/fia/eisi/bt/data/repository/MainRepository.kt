@@ -487,7 +487,7 @@ class MainRepository(context: Context) {
         val tablesToCheck = listOf(
             "CATEGORIA_HABILIDAD", "GENERO", "DEPARTAMENTO", "MUNICIPIO",
             "DISTRITO", "INSTITUCION", "GRADO_ACADEMICO", "RED_SOCIAL",
-            "HABILIDAD", "EMPRESA"
+            "HABILIDAD", "EMPRESA", "TIPO_DOCUMENTO", "OFERTA_ACADEMICA"
         )
 
         try {
@@ -532,6 +532,12 @@ class MainRepository(context: Context) {
                 }
                 for (row in SeedData.EMPRESAS) {
                     insertRecord("EMPRESA", row)
+                }
+                for (nombre in SeedData.TIPOS_DOCUMENTO) {
+                    insertRecord("TIPO_DOCUMENTO", listOf(nombre))
+                }
+                for (row in SeedData.OFERTAS_ACADEMICAS) {
+                    insertRecord("OFERTA_ACADEMICA", row)
                 }
                 getDb().setTransactionSuccessful()
             } finally {
@@ -943,7 +949,7 @@ class MainRepository(context: Context) {
                 val cursor = getDb().rawQuery(
                     "SELECT o.ID_OFERTA, o.TITULO_PUESTO, e.NOMBRE_EMPRESA FROM OFERTA_TRABAJO o " +
                     "LEFT JOIN EMPRESA e ON o.NIT = e.NIT " +
-                    "WHERE o.NIT = ? " +
+                    "WHERE o.NIT = ? AND o.FECHA_CADUCIDAD >= date('now') " +
                     "ORDER BY o.FECHA_PUBLICACION DESC",
                     arrayOf(parentId)
                 )

@@ -1,5 +1,7 @@
 package sv.ues.fia.eisi.bt.ui.crud
 
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,6 +11,10 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import sv.ues.fia.eisi.bt.R
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 class TableAdapter(
     private val tableName: String,
@@ -33,6 +39,7 @@ class TableAdapter(
         private val tvId: TextView = itemView.findViewById(R.id.tvId)
         private val tvPrimary: TextView = itemView.findViewById(R.id.tvPrimary)
         private val tvSecondary: TextView = itemView.findViewById(R.id.tvSecondary)
+        private val chipEstado: TextView = itemView.findViewById(R.id.chipEstado)
         private val fabEdit: FloatingActionButton = itemView.findViewById(R.id.fabEdit)
         private val fabDelete: FloatingActionButton = itemView.findViewById(R.id.fabDelete)
 
@@ -57,6 +64,7 @@ class TableAdapter(
 
         fun bind(item: List<Any>, position: Int) {
             val field0 = getStringSafely(item, 0)
+            chipEstado.visibility = View.GONE
 
             if (tableName == "POSTULANTE") {
                 val nombre = getStringSafely(item, 7)
@@ -115,9 +123,22 @@ class TableAdapter(
             } else if (tableName == "OFERTA_TRABAJO") {
                 val titulo = getStringSafely(item, 3)
                 val empresa = getStringSafely(item, 10)
+                val fechaCad = getStringSafely(item, 5)
                 tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)})"
                 tvPrimary.text = titulo.ifBlank { "(sin titulo)" }
                 tvSecondary.text = empresa.ifBlank { "(sin empresa)" }
+
+                val utc = TimeZone.getTimeZone("UTC")
+                val df = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { timeZone = utc }
+                val hoy = df.format(Date())
+                val vencida = fechaCad.isNotBlank() && fechaCad < hoy
+                chipEstado.visibility = View.VISIBLE
+                chipEstado.text = if (vencida) "VENCIDA" else "VIGENTE"
+                chipEstado.background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = 48f
+                    setColor(if (vencida) 0xFFE53935.toInt() else 0xFF43A047.toInt())
+                }
             } else if (tableName == "DETALLE_REQUISITO") {
                 val descripcion = getStringSafely(item, 3)
                 val titulo = getStringSafely(item, 4)

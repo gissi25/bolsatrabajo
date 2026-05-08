@@ -33,6 +33,7 @@ import sv.ues.fia.eisi.bt.viewmodel.Resource
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import java.util.TimeZone
 
 class EditorDialogFragment : DialogFragment() {
 
@@ -1167,16 +1168,17 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun showDatePicker(editText: TextInputEditText) {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val utc = TimeZone.getTimeZone("UTC")
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply { timeZone = utc }
         val currentText = editText.text?.toString() ?: ""
         val initialMillis = if (currentText.isNotEmpty()) {
             try { dateFormat.parse(currentText)?.time ?: System.currentTimeMillis() } catch (e: Exception) { System.currentTimeMillis() }
         } else { System.currentTimeMillis() }
 
-        val calendar = Calendar.getInstance()
+        val calendar = Calendar.getInstance(utc)
         val currentYear = calendar.get(Calendar.YEAR)
-        val startMillis = Calendar.getInstance().apply { set(1926, Calendar.JANUARY, 1) }.timeInMillis
-        val endMillis = Calendar.getInstance().apply { set(currentYear, Calendar.DECEMBER, 31) }.timeInMillis
+        val startMillis = Calendar.getInstance(utc).apply { set(1926, Calendar.JANUARY, 1) }.timeInMillis
+        val endMillis = Calendar.getInstance(utc).apply { set(currentYear, Calendar.DECEMBER, 31) }.timeInMillis
 
         val constraints = com.google.android.material.datepicker.CalendarConstraints.Builder()
             .setStart(startMillis)
@@ -1189,7 +1191,7 @@ class EditorDialogFragment : DialogFragment() {
             .setCalendarConstraints(constraints)
             .build()
         picker.addOnPositiveButtonClickListener { selection ->
-            val cal = Calendar.getInstance()
+            val cal = Calendar.getInstance(utc)
             cal.timeInMillis = selection
             editText.setText(dateFormat.format(cal.time))
         }

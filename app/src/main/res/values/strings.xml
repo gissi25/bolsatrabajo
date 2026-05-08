@@ -37,4 +37,8 @@
 
     <!-- Navegacion -->
     <string name="logout">Cerrar Sesión</string>
+
+    <!-- Seed -->
+    <string name="seed_confirm_title">Insertar datos de prueba</string>
+    <string name="seed_confirm_message">¿Estás seguro que deseas insertar los datos de prueba en la base de datos? Esta acción no se puede deshacer.</string>
 </resources>

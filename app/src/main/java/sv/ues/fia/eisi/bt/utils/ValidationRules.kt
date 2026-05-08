@@ -3,6 +3,7 @@ package sv.ues.fia.eisi.bt.utils
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 object ValidationRules {
 
@@ -150,11 +151,20 @@ object ValidationRules {
             return "${rules.friendlyName} no tiene un formato valido"
         }
 
-        if (tableName == "CERTIFICACION" && column == "FECHA_CERTIFICACION") {
-            val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            if (trimmed > today) {
-                return "${rules.friendlyName} no puede ser una fecha futura"
-            }
+        val utcFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
+        val today = utcFormat.format(Date())
+
+        val futureDateTables = mapOf(
+            "CERTIFICACION" to "FECHA_CERTIFICACION",
+            "EXPERIENCIA_LABORAL" to "FECHA_FIN",
+            "POSTULACION" to "FECHA_APLICACION",
+            "OFERTA_TRABAJO" to "FECHA_PUBLICACION",
+            "FORMACION_ACADEMICA" to "FECHA_OBTENCION"
+        )
+        if (futureDateTables[tableName] == column && trimmed > today) {
+            return "${rules.friendlyName} no puede ser una fecha futura"
         }
 
         if (rules.min != null) {

@@ -18,6 +18,10 @@ import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.ThemeToggleHelper
 import sv.ues.fia.eisi.bt.viewmodel.CrudViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 class TableDetailFragment : Fragment() {
 
@@ -153,9 +157,29 @@ class TableDetailFragment : Fragment() {
             return
         }
 
+        val df = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
+        val hoy = df.format(Date())
+
         val filtered = allItems.filter { item ->
-            item.any { value ->
+            val matchesNormal = item.any { value ->
                 value.toString().contains(query, ignoreCase = true)
+            }
+
+            if (matchesNormal) {
+                true
+            } else if (tableName == "OFERTA_TRABAJO") {
+                val fechaCad = item.getOrNull(5)?.toString() ?: ""
+                when {
+                    query.contains("vigente", ignoreCase = true) ->
+                        fechaCad.isNotBlank() && fechaCad >= hoy
+                    query.contains("vencida", ignoreCase = true) ->
+                        fechaCad.isNotBlank() && fechaCad < hoy
+                    else -> false
+                }
+            } else {
+                false
             }
         }
         adapter.submitList(filtered)
