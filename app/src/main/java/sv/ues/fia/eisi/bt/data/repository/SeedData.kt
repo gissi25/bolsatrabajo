@@ -7,11 +7,11 @@ object SeedData {
     )
 
     val OFERTAS_ACADEMICAS = listOf(
-        listOf("OFA01", 1, "INS002"),
-        listOf("OFA02", 4, "INS001"),
-        listOf("OFA03", 3, "INS001"),
-        listOf("OFA04", 5, "INS002"),
-        listOf("OFA05", 6, "INS001")
+        listOf("OFA01", 2, "INS002"),
+        listOf("OFA02", 5, "INS001"),
+        listOf("OFA03", 4, "INS001"),
+        listOf("OFA04", 6, "INS002"),
+        listOf("OFA05", 7, "INS001")
     )
 
     val DEPARTAMENTOS = listOf(
@@ -35,8 +35,12 @@ object SeedData {
     )
 
     val GRADOS_ACADEMICOS = listOf(
-        "Técnico Superior", "Profesorado", "Licenciatura",
+        "Bachiller", "Técnico Superior", "Profesorado", "Licenciatura",
         "Ingeniería", "Maestría", "Doctorado"
+    )
+
+    val TIPOS_CERTIFICACION = listOf(
+        "Certificacion Profesional", "Diplomado", "Curso", "Idioma", "Seminario"
     )
 
     val REDES_SOCIALES = listOf(
@@ -45,7 +49,7 @@ object SeedData {
 
     val INSTITUCIONES = listOf(
         listOf("INS001", "Universidad de El Salvador (UES)"),
-        listOf("INS002", "Escuela Superior de Innovación y Tecnología (ESIT)"),
+        listOf("INS002", "Escuela Nacional de Agricultura(ENA)"),
         listOf("INS003", "Fundación Gloria de Kriete"),
         listOf("INS004", "Cuerpo de Bomberos de El Salvador"),
         listOf("INS005", "Banco Central de Reserva de El Salvador (BCR)"),

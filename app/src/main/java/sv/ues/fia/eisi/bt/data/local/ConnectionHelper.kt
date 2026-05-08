@@ -10,7 +10,7 @@ class ConnectionHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "bolsadetabajo.db"
-        private const val DATABASE_VERSION = 11
+        private const val DATABASE_VERSION = 14
         private const val TAG = "ConnectionHelper"
     }
 
@@ -62,6 +62,13 @@ class ConnectionHelper(context: Context) :
             CREATE TABLE RED_SOCIAL (
                 ID_RED_SOCIAL INTEGER PRIMARY KEY AUTOINCREMENT,
                 NOMBRE_RED VARCHAR(50)
+            )
+        """)
+
+        db.execSQL("""
+            CREATE TABLE TIPO_CERTIFICACION (
+                ID_TIPO_CERTIFICACION INTEGER PRIMARY KEY AUTOINCREMENT,
+                NOMBRE_TIPO VARCHAR(100)
             )
         """)
 
@@ -147,11 +154,14 @@ class ConnectionHelper(context: Context) :
                 ID_CERTIFICACION VARCHAR(10) NOT NULL,
                 ID_INSTITUCION VARCHAR(20) NOT NULL,
                 ID_POSTULANTE VARCHAR(20) NOT NULL,
+                ID_TIPO_CERTIFICACION INTEGER,
                 NOMBRE_CERTIFICACION VARCHAR(150),
                 FECHA_CERTIFICACION DATE,
+                PERIODO VARCHAR(50),
                 PRIMARY KEY (ID_CERTIFICACION, ID_INSTITUCION, ID_POSTULANTE),
                 FOREIGN KEY (ID_INSTITUCION) REFERENCES INSTITUCION (ID_INSTITUCION),
-                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE)
+                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
+                FOREIGN KEY (ID_TIPO_CERTIFICACION) REFERENCES TIPO_CERTIFICACION (ID_TIPO_CERTIFICACION)
             )
         """)
 
@@ -161,6 +171,7 @@ class ConnectionHelper(context: Context) :
                 ID_POSTULANTE VARCHAR(20) NOT NULL,
                 ID_OFERTA_ACADEMICA VARCHAR(10),
                 TITULO_OBTENIDO VARCHAR(150),
+                PERIODO VARCHAR(50),
                 FECHA_OBTENCION DATE,
                 PRIMARY KEY (ID_FORMACION, ID_POSTULANTE),
                 FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
@@ -241,13 +252,14 @@ class ConnectionHelper(context: Context) :
                 ID_POSTULANTE VARCHAR(20) PRIMARY KEY,
                 ID_GENERO INTEGER NOT NULL,
                 ID_TIPO_DOCUMENTO INTEGER NOT NULL,
+                NUM_DOCUMENTO VARCHAR(20),
+                ID_GRADO_ACADEMICO INTEGER NOT NULL,
                 ID_DISTRITO_DEPTO INTEGER,
                 ID_DISTRITO_MUNICIPIO INTEGER,
                 ID_DISTRITO_ID INTEGER,
                 NOMBRE VARCHAR(100),
                 APELLIDO VARCHAR(100),
                 FECHA_NACIMIENTO DATE,
-                NUM_DOCUMENTO VARCHAR(20),
                 NUP VARCHAR(20),
                 DIRECCION_DETALLE VARCHAR(250),
                 TELEFONO_CASA VARCHAR(15),
@@ -255,6 +267,7 @@ class ConnectionHelper(context: Context) :
                 EMAIL VARCHAR(100),
                 FOREIGN KEY (ID_GENERO) REFERENCES GENERO (ID_GENERO),
                 FOREIGN KEY (ID_TIPO_DOCUMENTO) REFERENCES TIPO_DOCUMENTO (ID_TIPO_DOCUMENTO),
+                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO),
                 FOREIGN KEY (ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID) REFERENCES DISTRITO (ID_DEPARTAMENTO, ID_MUNICIPIO, ID_DISTRITO)
             )
         """)
@@ -316,6 +329,26 @@ class ConnectionHelper(context: Context) :
                 THEN RAISE(ABORT, 'La fecha de nacimiento no puede ser futura') END;
                 SELECT CASE WHEN (strftime('%Y', 'now') - strftime('%Y', NEW.FECHA_NACIMIENTO)) < 18
                 THEN RAISE(ABORT, 'El postulante debe ser mayor de edad') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_POSTULANTE_GRADO")
+        db.execSQL("""
+            CREATE TRIGGER TR_POSTULANTE_GRADO BEFORE INSERT ON POSTULANTE
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (
+                    SELECT LOWER(NOMBRE_GRADO) FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO
+                ) IN ('bachiller', 'tecnico superior', 'profesorado')
+                THEN RAISE(ABORT, 'El postulante debe tener un grado academico superior a Bachiller') END;
+            END
+        """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_POSTULANTE_GRADO_UPD BEFORE UPDATE ON POSTULANTE
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (
+                    SELECT LOWER(NOMBRE_GRADO) FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO
+                ) IN ('bachiller', 'tecnico superior', 'profesorado')
+                THEN RAISE(ABORT, 'El postulante debe tener un grado academico superior a Bachiller') END;
             END
         """)
 
@@ -527,6 +560,8 @@ class ConnectionHelper(context: Context) :
                 THEN RAISE(ABORT, 'El genero asociado no existe') END;
                 SELECT CASE WHEN (SELECT 1 FROM TIPO_DOCUMENTO WHERE ID_TIPO_DOCUMENTO = NEW.ID_TIPO_DOCUMENTO) IS NULL
                 THEN RAISE(ABORT, 'El tipo de documento asociado no existe') END;
+                SELECT CASE WHEN NEW.ID_GRADO_ACADEMICO IS NOT NULL AND (SELECT 1 FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO) IS NULL
+                THEN RAISE(ABORT, 'El grado academico asociado no existe') END;
             END
         """)
         db.execSQL("""
@@ -536,10 +571,12 @@ class ConnectionHelper(context: Context) :
                 THEN RAISE(ABORT, 'El genero asociado no existe') END;
                 SELECT CASE WHEN (SELECT 1 FROM TIPO_DOCUMENTO WHERE ID_TIPO_DOCUMENTO = NEW.ID_TIPO_DOCUMENTO) IS NULL
                 THEN RAISE(ABORT, 'El tipo de documento asociado no existe') END;
+                SELECT CASE WHEN NEW.ID_GRADO_ACADEMICO IS NOT NULL AND (SELECT 1 FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO) IS NULL
+                THEN RAISE(ABORT, 'El grado academico asociado no existe') END;
             END
         """)
 
-        Log.d(TAG, "Base de datos creada: 22 tablas, 22 indices, 14 triggers")
+        Log.d(TAG, "Base de datos creada: 23 tablas, 22 indices, 17 triggers")
     }
 
     override fun onOpen(db: SQLiteDatabase) {
@@ -561,7 +598,7 @@ class ConnectionHelper(context: Context) :
             "FORMACION_ACADEMICA", "EXPERIENCIA_LABORAL", "CERTIFICACION",
             "OFERTA_ACADEMICA", "DETALLE_REQUISITO", "OFERTA_TRABAJO",
             "HABILIDAD", "USUARIO", "POSTULANTE", "EMPRESA",
-            "RED_SOCIAL", "GRADO_ACADEMICO", "INSTITUCION",
+            "RED_SOCIAL", "TIPO_CERTIFICACION", "GRADO_ACADEMICO", "INSTITUCION",
             "DISTRITO", "MUNICIPIO", "DEPARTAMENTO",
             "TIPO_DOCUMENTO", "GENERO", "CATEGORIA_HABILIDAD"
         )

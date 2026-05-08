@@ -77,4 +77,19 @@ object InputMaskUtils {
         return if (!value.matches(Regex("""\d{4}-\d{2}-\d{2}""")))
             "Formato: AAAA-MM-DD" else null
     }
+
+    fun formatPeriodo(text: String): String {
+        val clean = text.filter { it.isDigit() }
+        val d = if (clean.length > 12) clean.substring(0, 12) else clean
+
+        return when {
+            d.length <= 2 -> d
+            d.length <= 4 -> "${d.substring(0, 2)}/${d.substring(2)}"
+            d.length <= 6 -> "${d.substring(0, 2)}/${d.substring(2, 4)}/${d.substring(4)}"
+            d.length <= 8 -> "${d.substring(0, 2)}/${d.substring(2, 4)}/${d.substring(4, 6)}--${d.substring(6)}"
+            d.length <= 10 -> "${d.substring(0, 2)}/${d.substring(2, 4)}/${d.substring(4, 6)}--${d.substring(6, 8)}/${d.substring(8)}"
+            d.length <= 12 -> "${d.substring(0, 2)}/${d.substring(2, 4)}/${d.substring(4, 6)}--${d.substring(6, 8)}/${d.substring(8, 10)}/${d.substring(10)}"
+            else -> d
+        }
+    }
 }

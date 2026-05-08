@@ -42,6 +42,7 @@ class EditorDialogFragment : DialogFragment() {
     private var isEditMode: Boolean = false
     private var isViewMode: Boolean = false
     private var itemData: List<String> = emptyList()
+    private var userRole: String = ""
 
     private lateinit var tilFieldsContainer: LinearLayout
     private lateinit var btnSave: MaterialButton
@@ -104,8 +105,25 @@ class EditorDialogFragment : DialogFragment() {
         btnSave = view.findViewById(R.id.btnSave)
         btnCancel = view.findViewById(R.id.btnCancel)
 
+        userRole = requireContext().getSharedPreferences(
+            Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE
+        ).getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
+
         setupTitle()
         setupFields()
+
+        if (isEditMode && tableName == "POSTULACION") {
+            when (userRole) {
+                Constants.ROLE_POSTULANTE -> {
+                    disableAllFields()
+                    StyledToast.show(requireContext(), "Solo la empresa puede modificar esta postulación")
+                }
+                Constants.ROLE_EMPRESA -> {
+                    disableNonEstadoFields()
+                }
+            }
+        }
+
         if (isViewMode) setupViewMode()
         setupButtons()
 
@@ -235,8 +253,9 @@ class EditorDialogFragment : DialogFragment() {
             filterColumn = "NIT"
         }
 
+        val includeExpired = fkRef.refTable == "OFERTA_TRABAJO" && tableName == "DETALLE_REQUISITO"
         val options = if (parentId != null && parentId.isNotBlank() && filterColumn != null) {
-            viewModel.getFilteredOptions(fkRef.refTable, filterColumn, parentId, fkRef.refDisplayColumn)
+            viewModel.getFilteredOptions(fkRef.refTable, filterColumn, parentId, fkRef.refDisplayColumn, includeExpired)
         } else {
             viewModel.getDropdownOptions(fkRef.refTable, fkRef.refDisplayColumn)
         }
@@ -405,24 +424,44 @@ class EditorDialogFragment : DialogFragment() {
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
         autoComplete.setAdapter(adapter)
 
-        autoComplete.setOnTouchListener { v, event ->
-            if (event.action == android.view.MotionEvent.ACTION_UP) {
-                autoComplete.showDropDown()
-            }
-            true
-        }
+        val isPostulanteBloqueado = userRole == Constants.ROLE_POSTULANTE && tableName == "POSTULACION"
 
-        if ((isEditMode || isViewMode) && colIndex < itemData.size) {
-            val currentValue = itemData[colIndex].trim()
-            val optionIndex = estadoOptions.indexOfFirst { it.first == currentValue }
-            if (optionIndex >= 0) {
-                autoComplete.setText(displayOptions[optionIndex], false)
+        if (isPostulanteBloqueado) {
+            autoComplete.isEnabled = false
+            autoComplete.isFocusable = false
+            autoComplete.isClickable = false
+            if ((isEditMode || isViewMode) && colIndex < itemData.size) {
+                val currentValue = itemData[colIndex].trim()
+                val optionIndex = estadoOptions.indexOfFirst { it.first == currentValue }
+                if (optionIndex >= 0) {
+                    autoComplete.setText(displayOptions[optionIndex], false)
+                } else {
+                    autoComplete.setText("Activo", false)
+                }
+            } else {
+                autoComplete.setText("Activo", false)
             }
-        }
+            til.helperText = "Solo la empresa puede cambiar este estado"
+        } else {
+            autoComplete.setOnTouchListener { v, event ->
+                if (event.action == android.view.MotionEvent.ACTION_UP) {
+                    autoComplete.showDropDown()
+                }
+                true
+            }
 
-        autoComplete.setOnItemClickListener { _, _, position, _ ->
-            if (position < estadoOptions.size) {
-                estadoProcesoFields[colIndex] = estadoOptions[position].first
+            if ((isEditMode || isViewMode) && colIndex < itemData.size) {
+                val currentValue = itemData[colIndex].trim()
+                val optionIndex = estadoOptions.indexOfFirst { it.first == currentValue }
+                if (optionIndex >= 0) {
+                    autoComplete.setText(displayOptions[optionIndex], false)
+                }
+            }
+
+            autoComplete.setOnItemClickListener { _, _, position, _ ->
+                if (position < estadoOptions.size) {
+                    estadoProcesoFields[colIndex] = estadoOptions[position].first
+                }
             }
         }
 
@@ -1071,11 +1110,13 @@ class EditorDialogFragment : DialogFragment() {
             }
         }
 
+        val includeExpired = childFkRef.refTable == "OFERTA_TRABAJO" && tableName == "DETALLE_REQUISITO"
         val newOptions = viewModel.getFilteredOptions(
             childFkRef.refTable,
             actualFilterColumn,
             parentId,
-            childFkRef.refDisplayColumn
+            childFkRef.refDisplayColumn,
+            includeExpired
         )
 
         val displayOptions = newOptions.map { it.second }
@@ -1211,6 +1252,7 @@ class EditorDialogFragment : DialogFragment() {
             }
             column.contains("TELEFONO") || column.contains("TEL") || column == "CONTACTO_REFERENCIA" || column == "CONTACTO_DIRECTO" -> InputMaskUtils.formatTelefono(text)
             column == "NIT" && tableName == "EMPRESA" -> InputMaskUtils.formatNitSimple(text)
+            column == "PERIODO" -> InputMaskUtils.formatPeriodo(text)
             else -> text
         }
     }
@@ -1225,6 +1267,7 @@ class EditorDialogFragment : DialogFragment() {
             column.contains("NUM_DOCUMENTO") -> 17
             column.contains("CODIGO") || column.contains("CERTIFICACION") -> 30
             column.contains("NIVEL_DESTREZA") -> 12
+            column == "PERIODO" -> 18
             column.contains("EXPERIENCIA_ANIOS") -> 2
             column.contains("EDAD_MINIMA") || column.contains("EDAD_MAXIMA") -> 2
             else -> 0
@@ -1242,6 +1285,13 @@ class EditorDialogFragment : DialogFragment() {
                 for (i in start until end) { if (!source[i].isDigit() && source[i] != '-') return@InputFilter "" }
                 null
             })
+        }
+        if (column == "PERIODO") {
+            filters.add(InputFilter { source, start, end, _, _, _ ->
+                for (i in start until end) { if (!source[i].isDigit() && source[i] != '/' && source[i] != '-') return@InputFilter "" }
+                null
+            })
+            filters.add(InputFilter.LengthFilter(18))
         }
         if (column == "NIT" && tableName == "EMPRESA") {
             filters.add(InputFilter { source, start, end, _, _, _ ->
@@ -1270,6 +1320,7 @@ class EditorDialogFragment : DialogFragment() {
             col in stringIdCols -> android.text.InputType.TYPE_CLASS_TEXT
             col in numericIdCols || col.contains("NUP") -> android.text.InputType.TYPE_CLASS_NUMBER
             col.contains("NUM_") || col.contains("DOCUMENTO") -> android.text.InputType.TYPE_CLASS_TEXT
+            col == "PERIODO" -> android.text.InputType.TYPE_CLASS_PHONE
             col.contains("FECHA") || col.contains("DATE") -> android.text.InputType.TYPE_CLASS_TEXT
             col.contains("EMAIL") -> android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
             col.contains("TELEFONO") || col.contains("TEL") || col == "CONTACTO_REFERENCIA" || col == "CONTACTO_DIRECTO" -> android.text.InputType.TYPE_CLASS_PHONE
@@ -1306,6 +1357,18 @@ class EditorDialogFragment : DialogFragment() {
             when (column) {
                 "ID_OFERTA" -> return "Oferta de trabajo"
             }
+        }
+        if (tableName == "POSTULANTE" && column == "ID_GRADO_ACADEMICO") {
+            return "Grado academico"
+        }
+        if (tableName == "CERTIFICACION") {
+            when (column) {
+                "ID_TIPO_CERTIFICACION" -> return "Tipo de certificacion"
+                "PERIODO" -> return "Periodo (ej. 2024-2026)"
+            }
+        }
+        if (tableName == "FORMACION_ACADEMICA" && column == "PERIODO") {
+            return "Periodo (ej. 2024-2026)"
         }
         val col = column.uppercase()
         return when (col) {
@@ -1415,6 +1478,39 @@ class EditorDialogFragment : DialogFragment() {
         }
     }
 
+    private fun disableNonEstadoFields() {
+        for (i in 0 until tilFieldsContainer.childCount) {
+            val child = tilFieldsContainer.getChildAt(i)
+            if (child is com.google.android.material.textfield.TextInputLayout) {
+                val hint = child.hint?.toString()?.lowercase() ?: ""
+                val col = dropDownFields.values.find { it.second == child.editText }?.first?.lowercase() ?: ""
+                val isEstadoColumn = col.contains("estado_proceso") || hint.contains("estado del proceso")
+                if (!isEstadoColumn) {
+                    val editText = child.editText
+                    if (editText != null) {
+                        editText.isEnabled = false
+                        editText.isFocusable = false
+                        editText.isClickable = false
+                    }
+                }
+            }
+        }
+    }
+
+    private fun disableAllFields() {
+        for (i in 0 until tilFieldsContainer.childCount) {
+            val child = tilFieldsContainer.getChildAt(i)
+            if (child is com.google.android.material.textfield.TextInputLayout) {
+                val editText = child.editText
+                if (editText != null) {
+                    editText.isEnabled = false
+                    editText.isFocusable = false
+                    editText.isClickable = false
+                }
+            }
+        }
+    }
+
     private fun saveData() {
         if (isViewMode) return
 
@@ -1423,6 +1519,11 @@ class EditorDialogFragment : DialogFragment() {
         val access = Constants.getRoleTables(role)[tableName] ?: Constants.AccessLevel.NONE
         if (access != Constants.AccessLevel.FULL) {
             StyledToast.show(requireContext(), "No tienes permiso para modificar esta tabla")
+            return
+        }
+
+        if (role == Constants.ROLE_POSTULANTE && tableName == "POSTULACION" && isEditMode) {
+            StyledToast.show(requireContext(), "No tienes permiso para editar esta postulación")
             return
         }
 
@@ -1443,20 +1544,24 @@ class EditorDialogFragment : DialogFragment() {
                     values.add(selectedText)
                 }
                 col == "ESTADO_PROCESO" -> {
-                    val autoComplete = dropDownFields.values.find { it.first == col }?.second
-                    val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
-                    if (selectedText.isBlank()) {
-                        StyledToast.show(requireContext(), "Debe seleccionar un estado")
-                        return
+                    if (role == Constants.ROLE_POSTULANTE && tableName == "POSTULACION") {
+                        values.add("activo")
+                    } else {
+                        val autoComplete = dropDownFields.values.find { it.first == col }?.second
+                        val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
+                        if (selectedText.isBlank()) {
+                            StyledToast.show(requireContext(), "Debe seleccionar un estado")
+                            return
+                        }
+                        val estadoValue = when (selectedText) {
+                            "Activo" -> "activo"
+                            "En Proceso" -> "en proceso"
+                            "Contratado" -> "contratado"
+                            "Rechazado" -> "rechazado"
+                            else -> ""
+                        }
+                        values.add(estadoValue)
                     }
-                    val estadoValue = when (selectedText) {
-                        "Activo" -> "activo"
-                        "En Proceso" -> "en proceso"
-                        "Contratado" -> "contratado"
-                        "Rechazado" -> "rechazado"
-                        else -> ""
-                    }
-                    values.add(estadoValue)
                 }
                 col == "ROL" -> {
                     val autoComplete = dropDownFields.values.find { it.first == col }?.second

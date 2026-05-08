@@ -34,6 +34,7 @@ object ValidationRules {
                 "FECHA_NACIMIENTO" to FieldRule(field = "FECHA_NACIMIENTO", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha de nacimiento"),
                 "ID_GENERO" to FieldRule(field = "ID_GENERO", required = true, friendlyName = "Genero"),
                 "ID_TIPO_DOCUMENTO" to FieldRule(field = "ID_TIPO_DOCUMENTO", required = true, friendlyName = "Tipo de documento"),
+                "ID_GRADO_ACADEMICO" to FieldRule(field = "ID_GRADO_ACADEMICO", required = true, friendlyName = "Grado academico"),
                 "NUP" to FieldRule(field = "NUP", required = true, friendlyName = "NUP"),
                 "DIRECCION_DETALLE" to FieldRule(field = "DIRECCION_DETALLE", required = true, friendlyName = "Direccion"),
                 "TELEFONO_CASA" to FieldRule(field = "TELEFONO_CASA", required = true, friendlyName = "Telefono casa"),
@@ -95,7 +96,11 @@ object ValidationRules {
             "CERTIFICACION" -> mapOf(
                 "ID_CERTIFICACION" to FieldRule(field = "ID_CERTIFICACION", required = true, pattern = "^C\\d{3,}$", friendlyName = "Codigo certificacion", maxLength = 10),
                 "NOMBRE_CERTIFICACION" to FieldRule(field = "NOMBRE_CERTIFICACION", required = true, friendlyName = "Nombre de certificacion"),
-                "FECHA_CERTIFICACION" to FieldRule(field = "FECHA_CERTIFICACION", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha de certificacion")
+                "FECHA_CERTIFICACION" to FieldRule(field = "FECHA_CERTIFICACION", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha de certificacion"),
+                "PERIODO" to FieldRule(field = "PERIODO", required = true, pattern = "^\\d{2}/\\d{2}/\\d{2}--\\d{2}/\\d{2}/\\d{2}$", friendlyName = "Periodo")
+            )
+            "TIPO_CERTIFICACION" -> mapOf(
+                "NOMBRE_TIPO" to FieldRule(field = "NOMBRE_TIPO", required = true, friendlyName = "Nombre de tipo")
             )
             "EXPERIENCIA_LABORAL" -> mapOf(
                 "ID_EXPERIENCIA" to FieldRule(field = "ID_EXPERIENCIA", required = true, pattern = "^EL\\d{2,}$", friendlyName = "Codigo experiencia", maxLength = 10),
@@ -108,6 +113,7 @@ object ValidationRules {
             "FORMACION_ACADEMICA" -> mapOf(
                 "ID_FORMACION" to FieldRule(field = "ID_FORMACION", required = true, pattern = "^FOA\\d{3,}$", friendlyName = "Codigo formacion", maxLength = 10),
                 "TITULO_OBTENIDO" to FieldRule(field = "TITULO_OBTENIDO", required = true, friendlyName = "Titulo obtenido"),
+                "PERIODO" to FieldRule(field = "PERIODO", required = true, pattern = "^\\d{2}/\\d{2}/\\d{2}--\\d{2}/\\d{2}/\\d{2}$", friendlyName = "Periodo"),
                 "FECHA_OBTENCION" to FieldRule(field = "FECHA_OBTENCION", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha de obtencion")
             )
             "OFERTA_ACADEMICA" -> mapOf(
@@ -185,7 +191,7 @@ object ValidationRules {
         return setOf(
             "ID_USUARIO", "ID_GENERO", "ID_TIPO_DOCUMENTO",
             "ID_DEPARTAMENTO", "ID_GRADO_ACADEMICO", "ID_RED_SOCIAL",
-            "ID_CATEGORIA_HABILIDAD"
+            "ID_CATEGORIA_HABILIDAD", "ID_TIPO_CERTIFICACION"
         )
     }
 

@@ -92,6 +92,9 @@ class TableDetailFragment : Fragment() {
         setupFab()
 
         if (!canEdit) fabAdd.visibility = View.GONE
+        if (role == Constants.ROLE_EMPRESA && tableName == "POSTULACION") {
+            fabAdd.visibility = View.GONE
+        }
 
         viewModel.setTable(tableName)
 
@@ -175,7 +178,29 @@ class TableDetailFragment : Fragment() {
                     query.contains("vigente", ignoreCase = true) ->
                         fechaCad.isNotBlank() && fechaCad >= hoy
                     query.contains("vencida", ignoreCase = true) ->
-                        fechaCad.isNotBlank() && fechaCad < hoy
+                        fechaCad.isNotBlank() && fechaCad <= hoy
+                    else -> false
+                }
+            } else if (tableName == "DETALLE_REQUISITO") {
+                val fechaCad = item.getOrNull(6)?.toString() ?: ""
+                when {
+                    query.contains("vigente", ignoreCase = true) ->
+                        fechaCad.isNotBlank() && fechaCad >= hoy
+                    query.contains("vencido", ignoreCase = true) ->
+                        fechaCad.isNotBlank() && fechaCad <= hoy
+                    else -> false
+                }
+            } else if (tableName == "POSTULACION") {
+                val estado = item.getOrNull(5)?.toString() ?: ""
+                when {
+                    query.contains("activo", ignoreCase = true) ->
+                        estado.contains("activo", ignoreCase = true)
+                    query.contains("en proceso", ignoreCase = true) ->
+                        estado.contains("en proceso", ignoreCase = true)
+                    query.contains("contratado", ignoreCase = true) ->
+                        estado.contains("contratado", ignoreCase = true)
+                    query.contains("rechazado", ignoreCase = true) ->
+                        estado.contains("rechazado", ignoreCase = true)
                     else -> false
                 }
             } else {
