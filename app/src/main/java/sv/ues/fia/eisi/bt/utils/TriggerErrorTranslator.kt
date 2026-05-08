@@ -25,6 +25,8 @@ object TriggerErrorTranslator {
         "Ya existe una certificacion con ese codigo para el postulante" to "Ya existe una certificacion con ese codigo para el postulante",
         "El postulante ya aplico a esta oferta" to "El postulante ya aplico a esta oferta",
         "La oferta de trabajo ha vencido" to "La oferta de trabajo ha vencido",
+        "El postulante debe tener un grado academico superior a Bachiller" to "El postulante debe tener un grado academico superior a Bachiller",
+        "grado academico superior" to "El postulante debe tener un grado academico superior a Bachiller",
         "La red social ya esta vinculada al postulante" to "La red social ya esta vinculada al postulante",
         "La habilidad ya esta asignada al postulante" to "La habilidad ya esta asignada al postulante",
         "Ya existe una oferta academica para esa institucion y grado" to "Ya existe una oferta academica para esa institucion y grado",

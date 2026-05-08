@@ -131,7 +131,7 @@ class TableAdapter(
                 val utc = TimeZone.getTimeZone("UTC")
                 val df = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { timeZone = utc }
                 val hoy = df.format(Date())
-                val vencida = fechaCad.isNotBlank() && fechaCad < hoy
+                val vencida = fechaCad.isNotBlank() && fechaCad <= hoy
                 chipEstado.visibility = View.VISIBLE
                 chipEstado.text = if (vencida) "VENCIDA" else "VIGENTE"
                 chipEstado.background = GradientDrawable().apply {
@@ -142,9 +142,22 @@ class TableAdapter(
             } else if (tableName == "DETALLE_REQUISITO") {
                 val descripcion = getStringSafely(item, 3)
                 val titulo = getStringSafely(item, 4)
+                val fechaCad = getStringSafely(item, 6)
                 tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)}, ${getStringSafely(item, 2)})"
                 tvPrimary.text = descripcion.ifBlank { "(sin descripcion)" }
                 tvSecondary.text = titulo.ifBlank { "(sin puesto)" }
+
+                val utc = TimeZone.getTimeZone("UTC")
+                val df = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { timeZone = utc }
+                val hoy = df.format(Date())
+                val vencido = fechaCad.isNotBlank() && fechaCad <= hoy
+                chipEstado.visibility = View.VISIBLE
+                chipEstado.text = if (vencido) "VENCIDO" else "VIGENTE"
+                chipEstado.background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = 48f
+                    setColor(if (vencido) 0xFFE53935.toInt() else 0xFF43A047.toInt())
+                }
             } else if (tableName == "OFERTA_ACADEMICA") {
                 val grado = getStringSafely(item, 4)
                 val institucion = getStringSafely(item, 3)
@@ -152,9 +165,9 @@ class TableAdapter(
                 tvPrimary.text = grado.ifBlank { "(sin grado)" }
                 tvSecondary.text = institucion.ifBlank { "(sin institucion)" }
             } else if (tableName == "CERTIFICACION") {
-                val nombre = getStringSafely(item, 3)
-                val postNombre = getStringSafely(item, 5)
-                val postApellido = getStringSafely(item, 6)
+                val nombre = getStringSafely(item, 4)
+                val postNombre = getStringSafely(item, 7)
+                val postApellido = getStringSafely(item, 8)
                 tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)}, ${getStringSafely(item, 2)})"
                 tvPrimary.text = nombre.ifBlank { "(sin certificacion)" }
                 tvSecondary.text = "$postNombre $postApellido".trim().ifBlank { "(sin postulante)" }
