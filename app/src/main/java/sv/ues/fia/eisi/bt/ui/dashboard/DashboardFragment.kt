@@ -68,13 +68,19 @@ class DashboardFragment : Fragment() {
             btnInsertScript.visibility = View.GONE
         }
         btnInsertScript.setOnClickListener {
-            viewModel.insertSeedData()
+            showSeedConfirm()
         }
 
         viewModel.seedResult.observe(viewLifecycleOwner) { result ->
             when (result) {
-                is Resource.Success -> StyledToast.show(requireContext(), result.message)
-                is Resource.Error -> StyledToast.show(requireContext(), result.translatedMessage)
+                is Resource.Success -> {
+                    StyledToast.show(requireContext(), result.message)
+                    viewModel.clearSeedResult()
+                }
+                is Resource.Error -> {
+                    StyledToast.show(requireContext(), result.translatedMessage)
+                    viewModel.clearSeedResult()
+                }
                 null -> {}
             }
         }
@@ -139,6 +145,17 @@ class DashboardFragment : Fragment() {
                 findNavController().navigate(R.id.action_dashboard_to_login)
             }
             .setNegativeButton(R.string.no, null)
+            .show()
+    }
+
+    private fun showSeedConfirm() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.seed_confirm_title)
+            .setMessage(R.string.seed_confirm_message)
+            .setPositiveButton(R.string.yes) { _, _ ->
+                viewModel.insertSeedData()
+            }
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 }

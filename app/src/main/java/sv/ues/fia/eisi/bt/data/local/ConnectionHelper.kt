@@ -10,7 +10,7 @@ class ConnectionHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "bolsadetabajo.db"
-        private const val DATABASE_VERSION = 10
+        private const val DATABASE_VERSION = 11
         private const val TAG = "ConnectionHelper"
     }
 
@@ -323,13 +323,18 @@ class ConnectionHelper(context: Context) :
         db.execSQL("""
             CREATE TRIGGER TR_OFERTA_RANGO_EDAD BEFORE INSERT ON OFERTA_TRABAJO
             FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.EDAD_MINIMA < 18
+                THEN RAISE(ABORT, 'Edad minima debe ser mayor o igual a 18') END;
                 SELECT CASE WHEN NEW.EDAD_MINIMA > NEW.EDAD_MAXIMA
                 THEN RAISE(ABORT, 'Edad minima no puede ser mayor a la maxima') END;
             END
         """)
+        db.execSQL("DROP TRIGGER IF EXISTS TR_OFERTA_RANGO_EDAD_UPD")
         db.execSQL("""
             CREATE TRIGGER IF NOT EXISTS TR_OFERTA_RANGO_EDAD_UPD BEFORE UPDATE ON OFERTA_TRABAJO
             FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.EDAD_MINIMA < 18
+                THEN RAISE(ABORT, 'Edad minima debe ser mayor o igual a 18') END;
                 SELECT CASE WHEN NEW.EDAD_MINIMA > NEW.EDAD_MAXIMA
                 THEN RAISE(ABORT, 'Edad minima no puede ser mayor a la maxima') END;
             END
@@ -348,6 +353,18 @@ class ConnectionHelper(context: Context) :
             FOR EACH ROW BEGIN
                 SELECT CASE WHEN NEW.FECHA_CADUCIDAD <= NEW.FECHA_PUBLICACION
                 THEN RAISE(ABORT, 'La oferta ya caduco o fecha invalida') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_POSTULACION_VIGENCIA")
+        db.execSQL("""
+            CREATE TRIGGER TR_POSTULACION_VIGENCIA BEFORE INSERT ON POSTULACION
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (
+                    SELECT FECHA_CADUCIDAD FROM OFERTA_TRABAJO
+                    WHERE NIT = NEW.NIT AND ID_OFERTA = NEW.ID_OFERTA
+                ) < date('now')
+                THEN RAISE(ABORT, 'La oferta de trabajo ha vencido') END;
             END
         """)
 

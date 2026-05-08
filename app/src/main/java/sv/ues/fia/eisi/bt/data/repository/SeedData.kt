@@ -2,6 +2,18 @@ package sv.ues.fia.eisi.bt.data.repository
 
 object SeedData {
 
+    val TIPOS_DOCUMENTO = listOf(
+        "DUI", "NIT", "Pasaporte"
+    )
+
+    val OFERTAS_ACADEMICAS = listOf(
+        listOf("OFA01", 1, "INS002"),
+        listOf("OFA02", 4, "INS001"),
+        listOf("OFA03", 3, "INS001"),
+        listOf("OFA04", 5, "INS002"),
+        listOf("OFA05", 6, "INS001")
+    )
+
     val DEPARTAMENTOS = listOf(
         "Ahuachapán", "Santa Ana", "Sonsonate", "Chalatenango",
         "Cuscatlán", "San Salvador", "La Libertad", "La Paz",
@@ -82,7 +94,7 @@ object SeedData {
         listOf(6, 1, 1, "Aguilares"), listOf(6, 1, 2, "El Paisnal"), listOf(6, 1, 3, "Guazapa"),
         listOf(6, 2, 1, "Apopa"), listOf(6, 2, 2, "Nejapa"),
         listOf(6, 3, 1, "Ilopango"), listOf(6, 3, 2, "San Martín"), listOf(6, 3, 3, "Soyapango"), listOf(6, 3, 4, "Tonacatepeque"),
-        listOf(6, 4, 1, "Ayutuxtepeque"), listOf(6, 4, 2, "Mejicanos"), listOf(6, 4, 3, "San Salvador"), listOf(6, 4, 4, "San Marcos"), listOf(6, 4, 5, "Santo Tomás"), listOf(6, 4, 6, "Santiago Texacuangos"),
+        listOf(6, 4, 1, "Ayutuxtepeque"), listOf(6, 4, 2, "Mejicanos"), listOf(6, 4, 3, "San Salvador"), listOf(6, 4, 4, "San Marcos"), listOf(6, 4, 5, "Santo Tomás"), listOf(6, 4, 6, "Santiago Texacuangos"), listOf(6, 4, 7, "Cuscatancingo"), listOf(6, 4, 8, "Delgado"),
         listOf(6, 5, 1, "Panchimalco"), listOf(6, 5, 2, "Rosario de Mora"),
 
         listOf(7, 1, 1, "Quezaltepeque"), listOf(7, 1, 2, "San Matías"), listOf(7, 1, 3, "San Pablo Tacachico"),
