@@ -112,13 +112,10 @@ class DeleteConfirmDialog : DialogFragment() {
             progressBar.visibility = View.GONE
             loadingText.visibility = View.GONE
 
-            val hasGrandchildren = deps.any { it.depth >= 2 }
-            if (hasGrandchildren) {
-                showCannotDeleteDialog(deps, titleTv, depsLayout, buttonsLayout)
-            } else if (deps.isEmpty()) {
+            if (deps.isEmpty()) {
                 showSimpleConfirm(titleTv, depsLayout, buttonsLayout)
             } else {
-                showDependenciesConfirm(deps, titleTv, depsLayout, buttonsLayout)
+                showCannotDeleteDialog(deps, titleTv, depsLayout, buttonsLayout)
             }
         })
 
@@ -183,46 +180,6 @@ class DeleteConfirmDialog : DialogFragment() {
             gravity = android.view.Gravity.CENTER
         }
         depsLayout.addView(noDepsText)
-        depsLayout.visibility = View.VISIBLE
-        buttonsLayout.visibility = View.VISIBLE
-    }
-
-    private fun showDependenciesConfirm(
-        deps: List<MainRepository.DependencyInfo>,
-        titleTv: TextView,
-        depsLayout: LinearLayout,
-        buttonsLayout: LinearLayout
-    ) {
-        titleTv.text = "¡Atención!"
-        depsLayout.removeAllViews()
-        val warningText = TextView(requireContext()).apply {
-            text = "Este registro tiene datos asociados que también se eliminarán:"
-            setPadding(0, 0, 0, 16)
-            setTextColor(requireContext().getColor(R.color.text_primary))
-            setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Body1)
-        }
-        depsLayout.addView(warningText)
-
-        val totalRecords = deps.sumOf { it.count }
-        for (dep in deps) {
-            val depText = TextView(requireContext()).apply {
-                text = "• ${dep.count} ${dep.displayName}"
-                setPadding(16, 0, 0, 8)
-                setTextColor(requireContext().getColor(R.color.text_secondary))
-                setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Body2)
-            }
-            depsLayout.addView(depText)
-        }
-
-        val totalText = TextView(requireContext()).apply {
-            text = "\nTotal: $totalRecords registros vinculados"
-            setPadding(0, 0, 0, 32)
-            gravity = android.view.Gravity.CENTER
-            setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Body1)
-            setTextColor(android.graphics.Color.parseColor("#D32F2F"))
-        }
-        depsLayout.addView(totalText)
-
         depsLayout.visibility = View.VISIBLE
         buttonsLayout.visibility = View.VISIBLE
     }
@@ -312,6 +269,7 @@ class DeleteConfirmDialog : DialogFragment() {
         }
 
         isLoading = true
+
         val needsComposite = tableName in listOf(
             "MUNICIPIO", "DISTRITO",
             "OFERTA_TRABAJO", "DETALLE_REQUISITO",

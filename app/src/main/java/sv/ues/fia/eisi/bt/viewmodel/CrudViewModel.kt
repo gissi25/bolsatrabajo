@@ -164,11 +164,11 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
         return repository.getFilteredOptions(childTable, childFkColumn, parentId, displayColumn, includeExpired)
     }
 
-    fun getDepartamentoByMunicipio(idMunicipio: String): String? {
-        return repository.getDepartamentoByMunicipio(idMunicipio)
+    fun getDepartamentoByMunicipio(deptoId: String, munId: String): String? {
+        return repository.getDepartamentoByMunicipio(deptoId, munId)
     }
 
-    fun getMunicipioByDistrito(idDistrito: String): String? {
-        return repository.getMunicipioByDistrito(idDistrito)
+    fun getMunicipioByDistrito(deptoId: String, munId: String, distritoId: String): String? {
+        return repository.getMunicipioByDistrito(deptoId, munId, distritoId)
     }
 }
