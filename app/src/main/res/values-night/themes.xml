@@ -45,36 +45,14 @@
         <item name="cornerRadius">24dp</item>
     </style>
 
-    <style name="AestheticButton.Secondary" parent="Widget.Material3.Button.TonalButton">
-        <item name="android:textColor">@color/on_primary_container_dark</item>
-        <item name="backgroundTint">@color/primary_container_dark</item>
-    </style>
-
     <style name="AestheticButton.Outlined" parent="Widget.Material3.Button.OutlinedButton">
         <item name="android:textColor">@color/primary_dark</item>
         <item name="strokeColor">@color/primary_dark</item>
         <item name="cornerRadius">24dp</item>
     </style>
 
-    <!-- Cards -->
-    <style name="AestheticCard" parent="Widget.Material3.CardView.Elevated">
-        <item name="cardBackgroundColor">@color/card_dark</item>
-        <item name="cardCornerRadius">24dp</item>
-        <item name="cardElevation">2dp</item>
-    </style>
-
-    <!-- TextInputLayout -->
-    <style name="AestheticTextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
-        <item name="boxStrokeColor">@color/primary_dark</item>
-        <item name="hintTextColor">@color/text_primary_dark</item>
-    </style>
-
     <!-- Text Appearances -->
     <style name="AestheticText.Title" parent="TextAppearance.BT.Title" />
-    <style name="AestheticText.Subtitle" parent="TextAppearance.Material3.TitleMedium">
-        <item name="android:textColor">@color/text_primary_dark</item>
-    </style>
-    <style name="AestheticText.Body" parent="TextAppearance.BT.Body" />
 
     <!-- Dialogs -->
     <style name="AestheticDialog" parent="ThemeOverlay.Material3.Dialog">
@@ -82,9 +60,4 @@
         <item name="android:windowNoTitle">true</item>
     </style>
 
-    <!-- Shapes -->
-    <style name="ShapeAppearance.BT.FAB" parent="ShapeAppearance.Material3.LargeComponent">
-        <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">16dp</item>
-    </style>
 </resources>

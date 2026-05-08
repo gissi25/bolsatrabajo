@@ -183,33 +183,6 @@ class MainRepository(context: Context) {
         }
     }
 
-    fun getDeleteChain(tableName: String, id: String): List<DependencyInfo> {
-        val result = mutableListOf<DependencyInfo>()
-        checkDependenciesRecursive(tableName, id, result, mutableSetOf())
-        return result
-    }
-
-    private fun checkDependenciesRecursive(tableName: String, id: String, result: MutableList<DependencyInfo>, visited: MutableSet<String>) {
-        if (tableName in visited) return
-        visited.add(tableName)
-        
-        val deps = getAllDependencies(tableName)
-        for ((childTable, fkCols) in deps) {
-            val whereClause = fkCols.map { col -> "$col = '$id'" }.joinToString(" AND ")
-            val cursor = getDb().rawQuery("SELECT COUNT(*) FROM $childTable WHERE $whereClause", null)
-            if (cursor.moveToFirst()) {
-                val count = cursor.getInt(0)
-                if (count > 0) {
-                    result.add(DependencyInfo(
-                        childTable,
-                        childTable.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() },
-                        count
-                    ))
-                }
-            }
-            cursor.close()
-        }
-    }
 
     private fun getPrimaryKeyColumns(tableName: String): List<String> = Constants.getPrimaryKeyColumns(tableName)
 

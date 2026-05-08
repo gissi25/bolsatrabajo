@@ -67,7 +67,7 @@ class LoginFragment : Fragment() {
                     saveSession(usuario.id_usuario, usuario.username, usuario.rol)
                     findNavController().navigate(R.id.action_login_to_dashboard)
                 } else {
-                    StyledToast.show(requireContext(), "Usuario o contraseña incorrectos")
+                    StyledToast.show(requireContext(), getString(R.string.usuario_o_contrasena_incorrectos))
                 }
             }
             result.onFailure { exception ->

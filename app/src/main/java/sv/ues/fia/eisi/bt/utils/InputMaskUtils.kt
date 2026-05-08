@@ -4,12 +4,7 @@ object InputMaskUtils {
 
     const val DUI_LENGTH = 9
     const val NUP_LENGTH = 12
-    const val PASAPORTE_LENGTH = 9
     const val MIN_PASSWORD = 8
-    const val EXPERIENCIA_MIN = 0
-    const val EXPERIENCIA_MAX = 50
-    const val EDAD_MIN = 16
-    const val EDAD_MAX = 100
     const val TELEFONO_LENGTH = 8
     const val NIT_LENGTH_SIMPLE = 14
 
@@ -50,15 +45,6 @@ object InputMaskUtils {
         return if (digits.length > 14) digits.substring(0, 14) else digits
     }
 
-    fun validateRango(value: String, min: Int, max: Int, nombre: String): String? {
-        val n = value.toIntOrNull()
-        return when {
-            n == null -> "$nombre debe ser un número"
-            n < min || n > max -> "$nombre debe estar entre $min y $max"
-            else -> null
-        }
-    }
-
     fun validatePassword(value: String): String? {
         return if (value.length < MIN_PASSWORD) "Mínimo $MIN_PASSWORD caracteres" else null
     }
@@ -66,11 +52,6 @@ object InputMaskUtils {
     fun validateEmail(value: String): String? {
         return if (!android.util.Patterns.EMAIL_ADDRESS.matcher(value).matches())
             "Correo electrónico inválido" else null
-    }
-
-    fun validateURL(value: String): String? {
-        return if (!value.startsWith("http://") && !value.startsWith("https://"))
-            "URL debe comenzar con http:// o https://" else null
     }
 
     fun validateFecha(value: String): String? {
