@@ -342,6 +342,7 @@ class MainRepository(context: Context) {
             )
             "POSTULANTE" -> listOf(
                 "NUM_DOCUMENTO = '{NUM_DOCUMENTO}'" to "Ya existe un postulante con ese documento",
+                "NUP = '{NUP}'" to "Ya existe un postulante con ese NUP",
                 "LOWER(EMAIL) = LOWER('{EMAIL}')" to "Ya existe un postulante con ese email"
             )
             "USUARIO" -> listOf("LOWER(USERNAME) = LOWER('{USERNAME}')" to "Ya existe un usuario con ese nombre")

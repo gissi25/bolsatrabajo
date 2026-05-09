@@ -10,7 +10,7 @@ class ConnectionHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "bolsadetabajo.db"
-        private const val DATABASE_VERSION = 14
+        private const val DATABASE_VERSION = 15
         private const val TAG = "ConnectionHelper"
     }
 
@@ -24,56 +24,56 @@ class ConnectionHelper(context: Context) :
         db.execSQL("""
             CREATE TABLE CATEGORIA_HABILIDAD (
                 ID_CATEGORIA_HABILIDAD INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_CATEGORIA VARCHAR(50)
+                NOMBRE_CATEGORIA VARCHAR(50) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE GENERO (
                 ID_GENERO INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_GENERO VARCHAR(20)
+                NOMBRE_GENERO VARCHAR(20) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE TIPO_DOCUMENTO (
                 ID_TIPO_DOCUMENTO INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_TIPO VARCHAR(25)
+                NOMBRE_TIPO VARCHAR(25) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE DEPARTAMENTO (
                 ID_DEPARTAMENTO INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_DEPARTAMENTO VARCHAR(50)
+                NOMBRE_DEPARTAMENTO VARCHAR(50) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE GRADO_ACADEMICO (
                 ID_GRADO_ACADEMICO INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_GRADO VARCHAR(50)
+                NOMBRE_GRADO VARCHAR(50) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE RED_SOCIAL (
                 ID_RED_SOCIAL INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_RED VARCHAR(50)
+                NOMBRE_RED VARCHAR(50) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE TIPO_CERTIFICACION (
                 ID_TIPO_CERTIFICACION INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_TIPO VARCHAR(100)
+                NOMBRE_TIPO VARCHAR(100) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE USUARIO (
                 ID_USUARIO INTEGER PRIMARY KEY AUTOINCREMENT,
-                USERNAME VARCHAR(30),
+                USERNAME VARCHAR(30) UNIQUE COLLATE NOCASE,
                 PASSWORD VARCHAR(128),
                 ROL VARCHAR(20)
             )
@@ -87,7 +87,8 @@ class ConnectionHelper(context: Context) :
                 ID_MUNICIPIO INTEGER NOT NULL,
                 NOMBRE_MUNICIPIO VARCHAR(50),
                 PRIMARY KEY (ID_DEPARTAMENTO, ID_MUNICIPIO),
-                FOREIGN KEY (ID_DEPARTAMENTO) REFERENCES DEPARTAMENTO (ID_DEPARTAMENTO)
+                FOREIGN KEY (ID_DEPARTAMENTO) REFERENCES DEPARTAMENTO (ID_DEPARTAMENTO),
+                UNIQUE (ID_DEPARTAMENTO, NOMBRE_MUNICIPIO)
             )
         """)
 
@@ -98,7 +99,8 @@ class ConnectionHelper(context: Context) :
                 ID_DISTRITO INTEGER NOT NULL,
                 NOMBRE_DISTRITO VARCHAR(50),
                 PRIMARY KEY (ID_DEPARTAMENTO, ID_MUNICIPIO, ID_DISTRITO),
-                FOREIGN KEY (ID_DEPARTAMENTO, ID_MUNICIPIO) REFERENCES MUNICIPIO (ID_DEPARTAMENTO, ID_MUNICIPIO)
+                FOREIGN KEY (ID_DEPARTAMENTO, ID_MUNICIPIO) REFERENCES MUNICIPIO (ID_DEPARTAMENTO, ID_MUNICIPIO),
+                UNIQUE (ID_DEPARTAMENTO, ID_MUNICIPIO, NOMBRE_DISTRITO)
             )
         """)
 
@@ -116,7 +118,8 @@ class ConnectionHelper(context: Context) :
                 DESCRIPCION_OFERTA_TRABAJO VARCHAR(5000),
                 PRIMARY KEY (NIT, ID_OFERTA),
                 FOREIGN KEY (NIT) REFERENCES EMPRESA (NIT),
-                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO)
+                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO),
+                UNIQUE (NIT, TITULO_PUESTO)
             )
         """)
 
@@ -127,7 +130,8 @@ class ConnectionHelper(context: Context) :
                 ID_DETALLE VARCHAR(10) NOT NULL,
                 DESCRIPCION_REQUISITO VARCHAR(100),
                 PRIMARY KEY (NIT, ID_OFERTA, ID_DETALLE),
-                FOREIGN KEY (NIT, ID_OFERTA) REFERENCES OFERTA_TRABAJO (NIT, ID_OFERTA)
+                FOREIGN KEY (NIT, ID_OFERTA) REFERENCES OFERTA_TRABAJO (NIT, ID_OFERTA),
+                UNIQUE (NIT, ID_OFERTA, DESCRIPCION_REQUISITO)
             )
         """)
 
@@ -143,7 +147,8 @@ class ConnectionHelper(context: Context) :
                 CONTACTO_REFERENCIA VARCHAR(100),
                 PRIMARY KEY (ID_POSTULANTE, NIT, ID_EXPERIENCIA),
                 FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
-                FOREIGN KEY (NIT) REFERENCES EMPRESA (NIT)
+                FOREIGN KEY (NIT) REFERENCES EMPRESA (NIT),
+                UNIQUE (ID_POSTULANTE, NIT, PUESTO_TRABAJO)
             )
         """)
 
@@ -159,7 +164,8 @@ class ConnectionHelper(context: Context) :
                 PRIMARY KEY (ID_CERTIFICACION, ID_INSTITUCION, ID_POSTULANTE),
                 FOREIGN KEY (ID_INSTITUCION) REFERENCES INSTITUCION (ID_INSTITUCION),
                 FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
-                FOREIGN KEY (ID_TIPO_CERTIFICACION) REFERENCES TIPO_CERTIFICACION (ID_TIPO_CERTIFICACION)
+                FOREIGN KEY (ID_TIPO_CERTIFICACION) REFERENCES TIPO_CERTIFICACION (ID_TIPO_CERTIFICACION),
+                UNIQUE (ID_POSTULANTE, NOMBRE_CERTIFICACION)
             )
         """)
 
@@ -199,7 +205,8 @@ class ConnectionHelper(context: Context) :
                 ESTADO_PROCESO VARCHAR(50),
                 PRIMARY KEY (ID_POSTULACION),
                 FOREIGN KEY (NIT, ID_OFERTA) REFERENCES OFERTA_TRABAJO (NIT, ID_OFERTA),
-                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE)
+                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
+                UNIQUE (ID_POSTULANTE, NIT, ID_OFERTA)
             )
         """)
 
@@ -219,7 +226,7 @@ class ConnectionHelper(context: Context) :
         db.execSQL("""
             CREATE TABLE INSTITUCION (
                 ID_INSTITUCION VARCHAR(20) PRIMARY KEY,
-                NOMBRE_INSTITUCION VARCHAR(150)
+                NOMBRE_INSTITUCION VARCHAR(150) UNIQUE
             )
         """)
 
@@ -227,7 +234,7 @@ class ConnectionHelper(context: Context) :
             CREATE TABLE HABILIDAD (
                 ID_CATEGORIA_HABILIDAD INTEGER NOT NULL,
                 ID_HABILIDAD VARCHAR(10) NOT NULL,
-                NOMBRE_HABILIDAD VARCHAR(100),
+                NOMBRE_HABILIDAD VARCHAR(100) UNIQUE,
                 PRIMARY KEY (ID_CATEGORIA_HABILIDAD, ID_HABILIDAD),
                 FOREIGN KEY (ID_CATEGORIA_HABILIDAD) REFERENCES CATEGORIA_HABILIDAD (ID_CATEGORIA_HABILIDAD)
             )
@@ -239,7 +246,7 @@ class ConnectionHelper(context: Context) :
                 ID_DISTRITO_DEPTO INTEGER NOT NULL,
                 ID_DISTRITO_MUNICIPIO INTEGER NOT NULL,
                 ID_DISTRITO_ID INTEGER NOT NULL,
-                NOMBRE_EMPRESA VARCHAR(150),
+                NOMBRE_EMPRESA VARCHAR(150) UNIQUE,
                 CONTACTO_DIRECTO VARCHAR(100),
                 FOREIGN KEY (ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID) REFERENCES DISTRITO (ID_DEPARTAMENTO, ID_MUNICIPIO, ID_DISTRITO)
             )
@@ -250,7 +257,7 @@ class ConnectionHelper(context: Context) :
                 ID_POSTULANTE VARCHAR(20) PRIMARY KEY,
                 ID_GENERO INTEGER NOT NULL,
                 ID_TIPO_DOCUMENTO INTEGER NOT NULL,
-                NUM_DOCUMENTO VARCHAR(20),
+                NUM_DOCUMENTO VARCHAR(20) UNIQUE,
                 ID_GRADO_ACADEMICO INTEGER NOT NULL,
                 ID_DISTRITO_DEPTO INTEGER,
                 ID_DISTRITO_MUNICIPIO INTEGER,
@@ -258,11 +265,11 @@ class ConnectionHelper(context: Context) :
                 NOMBRE VARCHAR(100),
                 APELLIDO VARCHAR(100),
                 FECHA_NACIMIENTO DATE,
-                NUP VARCHAR(20),
+                NUP VARCHAR(20) UNIQUE,
                 DIRECCION_DETALLE VARCHAR(250),
                 TELEFONO_CASA VARCHAR(15),
                 TELEFONO_CELULAR VARCHAR(15),
-                EMAIL VARCHAR(100),
+                EMAIL VARCHAR(100) UNIQUE COLLATE NOCASE,
                 FOREIGN KEY (ID_GENERO) REFERENCES GENERO (ID_GENERO),
                 FOREIGN KEY (ID_TIPO_DOCUMENTO) REFERENCES TIPO_DOCUMENTO (ID_TIPO_DOCUMENTO),
                 FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO),
@@ -276,7 +283,8 @@ class ConnectionHelper(context: Context) :
                 ID_GRADO_ACADEMICO INTEGER,
                 ID_INSTITUCION VARCHAR(20),
                 FOREIGN KEY (ID_INSTITUCION) REFERENCES INSTITUCION (ID_INSTITUCION),
-                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO)
+                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO),
+                UNIQUE (ID_INSTITUCION, ID_GRADO_ACADEMICO)
             )
         """)
 
