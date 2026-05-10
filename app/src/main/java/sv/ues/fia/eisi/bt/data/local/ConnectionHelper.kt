@@ -5,12 +5,18 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 
+//  Es la capa de base de datos local usando SQLite. Extiende SQLiteOpenHelper y se encarga de:
+//     - Crear las 22 tablas del esquema (CATEGORIA_HABILIDAD, GENERO, POSTULANTE, EMPRESA, etc.) con sus PKs, FKs, UNIQUEs.
+//     - Crear índices (22) para optimizar búsquedas.
+
+//  Básicamente es toda la lógica DDL de la BD en una sola clase.
+
 class ConnectionHelper(context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
         private const val DATABASE_NAME = "bolsadetabajo.db"
-        private const val DATABASE_VERSION = 14
+        private const val DATABASE_VERSION = 15
         private const val TAG = "ConnectionHelper"
     }
 
@@ -24,56 +30,56 @@ class ConnectionHelper(context: Context) :
         db.execSQL("""
             CREATE TABLE CATEGORIA_HABILIDAD (
                 ID_CATEGORIA_HABILIDAD INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_CATEGORIA VARCHAR(50)
+                NOMBRE_CATEGORIA VARCHAR(50) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE GENERO (
                 ID_GENERO INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_GENERO VARCHAR(20)
+                NOMBRE_GENERO VARCHAR(20) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE TIPO_DOCUMENTO (
                 ID_TIPO_DOCUMENTO INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_TIPO VARCHAR(25)
+                NOMBRE_TIPO VARCHAR(25) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE DEPARTAMENTO (
                 ID_DEPARTAMENTO INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_DEPARTAMENTO VARCHAR(50)
+                NOMBRE_DEPARTAMENTO VARCHAR(50) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE GRADO_ACADEMICO (
                 ID_GRADO_ACADEMICO INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_GRADO VARCHAR(50)
+                NOMBRE_GRADO VARCHAR(50) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE RED_SOCIAL (
                 ID_RED_SOCIAL INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_RED VARCHAR(50)
+                NOMBRE_RED VARCHAR(50) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE TIPO_CERTIFICACION (
                 ID_TIPO_CERTIFICACION INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_TIPO VARCHAR(100)
+                NOMBRE_TIPO VARCHAR(100) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE USUARIO (
                 ID_USUARIO INTEGER PRIMARY KEY AUTOINCREMENT,
-                USERNAME VARCHAR(30),
+                USERNAME VARCHAR(30) UNIQUE COLLATE NOCASE,
                 PASSWORD VARCHAR(128),
                 ROL VARCHAR(20)
             )
@@ -87,7 +93,8 @@ class ConnectionHelper(context: Context) :
                 ID_MUNICIPIO INTEGER NOT NULL,
                 NOMBRE_MUNICIPIO VARCHAR(50),
                 PRIMARY KEY (ID_DEPARTAMENTO, ID_MUNICIPIO),
-                FOREIGN KEY (ID_DEPARTAMENTO) REFERENCES DEPARTAMENTO (ID_DEPARTAMENTO)
+                FOREIGN KEY (ID_DEPARTAMENTO) REFERENCES DEPARTAMENTO (ID_DEPARTAMENTO),
+                UNIQUE (ID_DEPARTAMENTO, NOMBRE_MUNICIPIO)
             )
         """)
 
@@ -98,7 +105,8 @@ class ConnectionHelper(context: Context) :
                 ID_DISTRITO INTEGER NOT NULL,
                 NOMBRE_DISTRITO VARCHAR(50),
                 PRIMARY KEY (ID_DEPARTAMENTO, ID_MUNICIPIO, ID_DISTRITO),
-                FOREIGN KEY (ID_DEPARTAMENTO, ID_MUNICIPIO) REFERENCES MUNICIPIO (ID_DEPARTAMENTO, ID_MUNICIPIO)
+                FOREIGN KEY (ID_DEPARTAMENTO, ID_MUNICIPIO) REFERENCES MUNICIPIO (ID_DEPARTAMENTO, ID_MUNICIPIO),
+                UNIQUE (ID_DEPARTAMENTO, ID_MUNICIPIO, NOMBRE_DISTRITO)
             )
         """)
 
@@ -116,7 +124,8 @@ class ConnectionHelper(context: Context) :
                 DESCRIPCION_OFERTA_TRABAJO VARCHAR(5000),
                 PRIMARY KEY (NIT, ID_OFERTA),
                 FOREIGN KEY (NIT) REFERENCES EMPRESA (NIT),
-                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO)
+                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO),
+                UNIQUE (NIT, TITULO_PUESTO)
             )
         """)
 
@@ -127,7 +136,8 @@ class ConnectionHelper(context: Context) :
                 ID_DETALLE VARCHAR(10) NOT NULL,
                 DESCRIPCION_REQUISITO VARCHAR(100),
                 PRIMARY KEY (NIT, ID_OFERTA, ID_DETALLE),
-                FOREIGN KEY (NIT, ID_OFERTA) REFERENCES OFERTA_TRABAJO (NIT, ID_OFERTA)
+                FOREIGN KEY (NIT, ID_OFERTA) REFERENCES OFERTA_TRABAJO (NIT, ID_OFERTA),
+                UNIQUE (NIT, ID_OFERTA, DESCRIPCION_REQUISITO)
             )
         """)
 
@@ -143,7 +153,8 @@ class ConnectionHelper(context: Context) :
                 CONTACTO_REFERENCIA VARCHAR(100),
                 PRIMARY KEY (ID_POSTULANTE, NIT, ID_EXPERIENCIA),
                 FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
-                FOREIGN KEY (NIT) REFERENCES EMPRESA (NIT)
+                FOREIGN KEY (NIT) REFERENCES EMPRESA (NIT),
+                UNIQUE (ID_POSTULANTE, NIT, PUESTO_TRABAJO)
             )
         """)
 
@@ -159,7 +170,8 @@ class ConnectionHelper(context: Context) :
                 PRIMARY KEY (ID_CERTIFICACION, ID_INSTITUCION, ID_POSTULANTE),
                 FOREIGN KEY (ID_INSTITUCION) REFERENCES INSTITUCION (ID_INSTITUCION),
                 FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
-                FOREIGN KEY (ID_TIPO_CERTIFICACION) REFERENCES TIPO_CERTIFICACION (ID_TIPO_CERTIFICACION)
+                FOREIGN KEY (ID_TIPO_CERTIFICACION) REFERENCES TIPO_CERTIFICACION (ID_TIPO_CERTIFICACION),
+                UNIQUE (ID_POSTULANTE, NOMBRE_CERTIFICACION)
             )
         """)
 
@@ -199,7 +211,8 @@ class ConnectionHelper(context: Context) :
                 ESTADO_PROCESO VARCHAR(50),
                 PRIMARY KEY (ID_POSTULACION),
                 FOREIGN KEY (NIT, ID_OFERTA) REFERENCES OFERTA_TRABAJO (NIT, ID_OFERTA),
-                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE)
+                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
+                UNIQUE (ID_POSTULANTE, NIT, ID_OFERTA)
             )
         """)
 
@@ -219,7 +232,7 @@ class ConnectionHelper(context: Context) :
         db.execSQL("""
             CREATE TABLE INSTITUCION (
                 ID_INSTITUCION VARCHAR(20) PRIMARY KEY,
-                NOMBRE_INSTITUCION VARCHAR(150)
+                NOMBRE_INSTITUCION VARCHAR(150) UNIQUE
             )
         """)
 
@@ -227,7 +240,7 @@ class ConnectionHelper(context: Context) :
             CREATE TABLE HABILIDAD (
                 ID_CATEGORIA_HABILIDAD INTEGER NOT NULL,
                 ID_HABILIDAD VARCHAR(10) NOT NULL,
-                NOMBRE_HABILIDAD VARCHAR(100),
+                NOMBRE_HABILIDAD VARCHAR(100) UNIQUE,
                 PRIMARY KEY (ID_CATEGORIA_HABILIDAD, ID_HABILIDAD),
                 FOREIGN KEY (ID_CATEGORIA_HABILIDAD) REFERENCES CATEGORIA_HABILIDAD (ID_CATEGORIA_HABILIDAD)
             )
@@ -239,7 +252,7 @@ class ConnectionHelper(context: Context) :
                 ID_DISTRITO_DEPTO INTEGER NOT NULL,
                 ID_DISTRITO_MUNICIPIO INTEGER NOT NULL,
                 ID_DISTRITO_ID INTEGER NOT NULL,
-                NOMBRE_EMPRESA VARCHAR(150),
+                NOMBRE_EMPRESA VARCHAR(150) UNIQUE,
                 CONTACTO_DIRECTO VARCHAR(100),
                 FOREIGN KEY (ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID) REFERENCES DISTRITO (ID_DEPARTAMENTO, ID_MUNICIPIO, ID_DISTRITO)
             )
@@ -250,7 +263,7 @@ class ConnectionHelper(context: Context) :
                 ID_POSTULANTE VARCHAR(20) PRIMARY KEY,
                 ID_GENERO INTEGER NOT NULL,
                 ID_TIPO_DOCUMENTO INTEGER NOT NULL,
-                NUM_DOCUMENTO VARCHAR(20),
+                NUM_DOCUMENTO VARCHAR(20) UNIQUE,
                 ID_GRADO_ACADEMICO INTEGER NOT NULL,
                 ID_DISTRITO_DEPTO INTEGER,
                 ID_DISTRITO_MUNICIPIO INTEGER,
@@ -258,11 +271,11 @@ class ConnectionHelper(context: Context) :
                 NOMBRE VARCHAR(100),
                 APELLIDO VARCHAR(100),
                 FECHA_NACIMIENTO DATE,
-                NUP VARCHAR(20),
+                NUP VARCHAR(20) UNIQUE,
                 DIRECCION_DETALLE VARCHAR(250),
                 TELEFONO_CASA VARCHAR(15),
                 TELEFONO_CELULAR VARCHAR(15),
-                EMAIL VARCHAR(100),
+                EMAIL VARCHAR(100) UNIQUE COLLATE NOCASE,
                 FOREIGN KEY (ID_GENERO) REFERENCES GENERO (ID_GENERO),
                 FOREIGN KEY (ID_TIPO_DOCUMENTO) REFERENCES TIPO_DOCUMENTO (ID_TIPO_DOCUMENTO),
                 FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO),
@@ -276,7 +289,8 @@ class ConnectionHelper(context: Context) :
                 ID_GRADO_ACADEMICO INTEGER,
                 ID_INSTITUCION VARCHAR(20),
                 FOREIGN KEY (ID_INSTITUCION) REFERENCES INSTITUCION (ID_INSTITUCION),
-                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO)
+                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO),
+                UNIQUE (ID_INSTITUCION, ID_GRADO_ACADEMICO)
             )
         """)
 
@@ -431,183 +445,9 @@ class ConnectionHelper(context: Context) :
             END
         """)
 
-        db.execSQL("DROP TRIGGER IF EXISTS TR_USUARIO_FORMATO")
-        db.execSQL("""
-            CREATE TRIGGER TR_USUARIO_FORMATO BEFORE INSERT ON USUARIO
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN LENGTH(NEW.PASSWORD) < 8
-                THEN RAISE(ABORT, 'Password minimo 8 caracteres') END;
-            END
-        """)
-        db.execSQL("""
-            CREATE TRIGGER IF NOT EXISTS TR_USUARIO_FORMATO_UPD BEFORE UPDATE ON USUARIO
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN LENGTH(NEW.PASSWORD) < 8
-                THEN RAISE(ABORT, 'Password minimo 8 caracteres') END;
-            END
-        """)
 
-        // ================================================================
-        // TRIGGERS BLOQUEANTES DE BORRADO (16)
-        // Bloquean DELETE si existen registros hijos
-        // ================================================================
 
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_DEPARTAMENTO")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_DEPARTAMENTO BEFORE DELETE ON DEPARTAMENTO
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN (SELECT COUNT(*) FROM MUNICIPIO WHERE ID_DEPARTAMENTO = OLD.ID_DEPARTAMENTO) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: el departamento tiene municipios asociados') END;
-            END
-        """)
 
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_MUNICIPIO")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_MUNICIPIO BEFORE DELETE ON MUNICIPIO
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN (SELECT COUNT(*) FROM DISTRITO WHERE ID_DEPARTAMENTO = OLD.ID_DEPARTAMENTO AND ID_MUNICIPIO = OLD.ID_MUNICIPIO) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: el municipio tiene distritos asociados') END;
-            END
-        """)
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_DISTRITO")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_DISTRITO BEFORE DELETE ON DISTRITO
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN (SELECT COUNT(*) FROM POSTULANTE WHERE ID_DISTRITO_DEPTO = OLD.ID_DEPARTAMENTO AND ID_DISTRITO_MUNICIPIO = OLD.ID_MUNICIPIO AND ID_DISTRITO_ID = OLD.ID_DISTRITO) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: el distrito tiene postulantes asociados') END;
-                SELECT CASE WHEN (SELECT COUNT(*) FROM EMPRESA WHERE ID_DISTRITO_DEPTO = OLD.ID_DEPARTAMENTO AND ID_DISTRITO_MUNICIPIO = OLD.ID_MUNICIPIO AND ID_DISTRITO_ID = OLD.ID_DISTRITO) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: el distrito tiene empresas asociadas') END;
-            END
-        """)
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_CATEGORIA")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_CATEGORIA BEFORE DELETE ON CATEGORIA_HABILIDAD
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN (SELECT COUNT(*) FROM HABILIDAD WHERE ID_CATEGORIA_HABILIDAD = OLD.ID_CATEGORIA_HABILIDAD) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: la categoria tiene habilidades asociadas') END;
-            END
-        """)
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_HABILIDAD")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_HABILIDAD BEFORE DELETE ON HABILIDAD
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN (SELECT COUNT(*) FROM HABILIDAD_POSTULANTE WHERE ID_CATEGORIA_HABILIDAD = OLD.ID_CATEGORIA_HABILIDAD AND ID_HABILIDAD = OLD.ID_HABILIDAD) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: la habilidad esta asignada a postulantes') END;
-            END
-        """)
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_POSTULANTE")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_POSTULANTE BEFORE DELETE ON POSTULANTE
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN (SELECT COUNT(*) FROM POSTULACION WHERE ID_POSTULANTE = OLD.ID_POSTULANTE) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: el postulante tiene postulaciones') END;
-                SELECT CASE WHEN (SELECT COUNT(*) FROM EXPERIENCIA_LABORAL WHERE ID_POSTULANTE = OLD.ID_POSTULANTE) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: el postulante tiene experiencias laborales') END;
-                SELECT CASE WHEN (SELECT COUNT(*) FROM FORMACION_ACADEMICA WHERE ID_POSTULANTE = OLD.ID_POSTULANTE) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: el postulante tiene formaciones academicas') END;
-                SELECT CASE WHEN (SELECT COUNT(*) FROM CERTIFICACION WHERE ID_POSTULANTE = OLD.ID_POSTULANTE) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: el postulante tiene certificaciones') END;
-                SELECT CASE WHEN (SELECT COUNT(*) FROM HABILIDAD_POSTULANTE WHERE ID_POSTULANTE = OLD.ID_POSTULANTE) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: el postulante tiene habilidades asignadas') END;
-                SELECT CASE WHEN (SELECT COUNT(*) FROM RED_SOCIAL_POSTULANTE WHERE ID_POSTULANTE = OLD.ID_POSTULANTE) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: el postulante tiene redes sociales') END;
-            END
-        """)
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_TIPO_DOCUMENTO")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_TIPO_DOCUMENTO BEFORE DELETE ON TIPO_DOCUMENTO
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN (SELECT COUNT(*) FROM POSTULANTE WHERE ID_TIPO_DOCUMENTO = OLD.ID_TIPO_DOCUMENTO) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: el tipo de documento tiene postulantes asociados') END;
-            END
-        """)
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_GENERO")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_GENERO BEFORE DELETE ON GENERO
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN (SELECT COUNT(*) FROM POSTULANTE WHERE ID_GENERO = OLD.ID_GENERO) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: el genero tiene postulantes asociados') END;
-            END
-        """)
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_RED_SOCIAL")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_RED_SOCIAL BEFORE DELETE ON RED_SOCIAL
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN (SELECT COUNT(*) FROM RED_SOCIAL_POSTULANTE WHERE ID_RED_SOCIAL = OLD.ID_RED_SOCIAL) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: la red social tiene postulantes vinculados') END;
-            END
-        """)
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_INSTITUCION")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_INSTITUCION BEFORE DELETE ON INSTITUCION
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN (SELECT COUNT(*) FROM CERTIFICACION WHERE ID_INSTITUCION = OLD.ID_INSTITUCION) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: la institucion tiene certificaciones asociadas') END;
-                SELECT CASE WHEN (SELECT COUNT(*) FROM OFERTA_ACADEMICA WHERE ID_INSTITUCION = OLD.ID_INSTITUCION) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: la institucion tiene ofertas academicas') END;
-            END
-        """)
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_GRADO")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_GRADO BEFORE DELETE ON GRADO_ACADEMICO
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN (SELECT COUNT(*) FROM OFERTA_TRABAJO WHERE ID_GRADO_ACADEMICO = OLD.ID_GRADO_ACADEMICO) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: el grado academico tiene ofertas de trabajo') END;
-                SELECT CASE WHEN (SELECT COUNT(*) FROM OFERTA_ACADEMICA WHERE ID_GRADO_ACADEMICO = OLD.ID_GRADO_ACADEMICO) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: el grado academico tiene ofertas academicas') END;
-                SELECT CASE WHEN (SELECT COUNT(*) FROM POSTULANTE WHERE ID_GRADO_ACADEMICO = OLD.ID_GRADO_ACADEMICO) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: el grado academico tiene postulantes asociados') END;
-            END
-        """)
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_EMPRESA")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_EMPRESA BEFORE DELETE ON EMPRESA
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN (SELECT COUNT(*) FROM OFERTA_TRABAJO WHERE NIT = OLD.NIT) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: la empresa tiene ofertas de trabajo') END;
-                SELECT CASE WHEN (SELECT COUNT(*) FROM EXPERIENCIA_LABORAL WHERE NIT = OLD.NIT) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: la empresa tiene experiencias laborales') END;
-            END
-        """)
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_OFERTA_TRABAJO")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_OFERTA_TRABAJO BEFORE DELETE ON OFERTA_TRABAJO
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN (SELECT COUNT(*) FROM DETALLE_REQUISITO WHERE NIT = OLD.NIT AND ID_OFERTA = OLD.ID_OFERTA) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: la oferta tiene requisitos asociados') END;
-                SELECT CASE WHEN (SELECT COUNT(*) FROM POSTULACION WHERE NIT = OLD.NIT AND ID_OFERTA = OLD.ID_OFERTA) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: la oferta tiene postulaciones') END;
-            END
-        """)
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_OFERTA_ACADEMICA")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_OFERTA_ACADEMICA BEFORE DELETE ON OFERTA_ACADEMICA
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN (SELECT COUNT(*) FROM FORMACION_ACADEMICA WHERE ID_OFERTA_ACADEMICA = OLD.ID_OFERTA_ACADEMICA) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: la oferta academica tiene formaciones asociadas') END;
-            END
-        """)
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_TIPO_CERTIFICACION")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_TIPO_CERTIFICACION BEFORE DELETE ON TIPO_CERTIFICACION
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN (SELECT COUNT(*) FROM CERTIFICACION WHERE ID_TIPO_CERTIFICACION = OLD.ID_TIPO_CERTIFICACION) > 0
-                THEN RAISE(ABORT, 'No se puede eliminar: el tipo de certificacion tiene certificaciones asociadas') END;
-            END
-        """)
 
         // ================================================================
         // TRIGGERS DE INTEGRIDAD REFERENCIAL (5)
@@ -701,7 +541,7 @@ class ConnectionHelper(context: Context) :
             END
         """)
 
-        Log.d(TAG, "Base de datos creada: 23 tablas, 22 indices, 27 triggers")
+        Log.d(TAG, "Base de datos creada: 23 tablas, 22 indices, 23 triggers")
     }
 
     override fun onConfigure(db: SQLiteDatabase) {

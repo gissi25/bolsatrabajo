@@ -1433,6 +1433,9 @@ class EditorDialogFragment : DialogFragment() {
         if (tableName == "FORMACION_ACADEMICA" && column == "PERIODO") {
             return "Periodo (ej. 2024-2026)"
         }
+        if (tableName == "HABILIDAD_POSTULANTE" && column == "ID_HABILIDAD") {
+            return "Habilidad del postulante"
+        }
         val col = column.uppercase()
         return when (col) {
             "ID_GENERO" -> "Género"

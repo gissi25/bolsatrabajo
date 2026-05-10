@@ -51,7 +51,7 @@ object ValidationRules {
                 "FECHA_PUBLICACION" to FieldRule(field = "FECHA_PUBLICACION", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha de publicacion"),
                 "FECHA_CADUCIDAD" to FieldRule(field = "FECHA_CADUCIDAD", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha de caducidad"),
                 "EXPERIENCIA_ANIOS" to FieldRule(field = "EXPERIENCIA_ANIOS", required = true, friendlyName = "Anios de experiencia"),
-                "EDAD_MINIMA" to FieldRule(field = "EDAD_MINIMA", min = 16, max = 100, friendlyName = "Edad minima"),
+                "EDAD_MINIMA" to FieldRule(field = "EDAD_MINIMA", min = 18, max = 100, friendlyName = "Edad minima"),
                 "EDAD_MAXIMA" to FieldRule(field = "EDAD_MAXIMA", min = 16, max = 100, friendlyName = "Edad maxima"),
                 "DESCRIPCION_OFERTA_TRABAJO" to FieldRule(field = "DESCRIPCION_OFERTA_TRABAJO", required = true, friendlyName = "Descripcion de la oferta")
             )
