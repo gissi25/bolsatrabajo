@@ -231,7 +231,7 @@ class DeleteConfirmDialog : DialogFragment() {
         depsLayout.addView(totalText)
 
         val btnOk = MaterialButton(requireContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
-            text = getString(R.string.yes)
+            text = getString(R.string.cerrar)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
