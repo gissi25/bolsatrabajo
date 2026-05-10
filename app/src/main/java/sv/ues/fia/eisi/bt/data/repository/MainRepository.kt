@@ -10,6 +10,8 @@ import sv.ues.fia.eisi.bt.utils.TriggerErrorTranslator
 
 class MainRepository(context: Context) {
 
+    // Es la capa de acceso a datos (DAO/Repository).
+    // Usa ConnectionHelper para ejecutar operaciones CRUD
     private val dbHelper = ConnectionHelper(context)
     private var db: SQLiteDatabase? = null
 
