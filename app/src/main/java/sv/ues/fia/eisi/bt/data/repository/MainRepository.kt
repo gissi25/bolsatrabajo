@@ -157,6 +157,22 @@ class MainRepository(context: Context) {
         return result
     }
 
+    fun hasChildRecords(tableName: String, pkValues: List<String>): Boolean {
+        val children = getAllDependencies(tableName)
+        for ((childTable, childFkCols) in children) {
+            val whereClause = childFkCols.mapIndexed { i, col ->
+                val v = pkValues.getOrElse(i) { "" }
+                "$col = '$v'"
+            }.joinToString(" AND ")
+            val cursor = getDb().rawQuery("SELECT COUNT(*) FROM $childTable WHERE $whereClause", null)
+            cursor.moveToFirst()
+            val count = cursor.getInt(0)
+            cursor.close()
+            if (count > 0) return true
+        }
+        return false
+    }
+
     private fun getAllDependencies(tableName: String): List<Pair<String, List<String>>> {
         return when (tableName) {
             "DEPARTAMENTO" -> listOf("MUNICIPIO" to listOf("ID_DEPARTAMENTO"))

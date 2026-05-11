@@ -203,6 +203,48 @@ class EditorDialogFragment : DialogFragment() {
         if (docTypeColumnIndex != -1 && numDocColumnIndex != -1) {
             refreshNumDocHintAndValidation()
         }
+
+        if (isEditMode) {
+            blockPkFieldsIfHasChildren()
+        }
+    }
+
+    private fun blockPkFieldsIfHasChildren() {
+        val pkCols = getPrimaryKeyColumns(tableName)
+        val pkValues = pkCols.map { col ->
+            val idx = columns.indexOf(col)
+            if (idx >= 0 && idx < itemData.size) itemData[idx].trim() else ""
+        }
+        if (pkValues.all { it.isBlank() }) return
+        if (!viewModel.hasChildRecords(tableName, pkValues)) return
+
+        val blockedHint = "ID bloqueado: tiene registros dependientes"
+        for (pkCol in pkCols) {
+            val tf = textFields.values.find { it.first == pkCol }
+            if (tf != null) {
+                tf.second.isEnabled = false
+                var parent = tf.second.parent
+                while (parent != null) {
+                    if (parent is TextInputLayout) {
+                        parent.hint = blockedHint
+                        break
+                    }
+                    parent = parent.parent
+                }
+            }
+            val dd = dropDownFields.values.find { it.first == pkCol }
+            if (dd != null) {
+                dd.second.isEnabled = false
+                var parent = dd.second.parent
+                while (parent != null) {
+                    if (parent is TextInputLayout) {
+                        parent.hint = blockedHint
+                        break
+                    }
+                    parent = parent.parent
+                }
+            }
+        }
     }
 
     private fun createDropdownField(idx: Int, column: String, colIndex: Int) {
@@ -1191,6 +1233,7 @@ class EditorDialogFragment : DialogFragment() {
                 setMargins(0, 0, 0, 24)
             }
             hint = getHintText(column)
+            helperText = getHelperText(column)
         }
 
         val et = TextInputEditText(requireContext()).apply {
@@ -1506,6 +1549,26 @@ class EditorDialogFragment : DialogFragment() {
             "PASSWORD", "CONTRA" -> "Contraseña"
             "ROL" -> "Rol"
             else -> column.replace("ID_", "").replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
+        }
+    }
+
+    private fun getHelperText(column: String): String? {
+        return when (column.uppercase()) {
+            "ID_POSTULANTE" -> "Ej: AB12345"
+            "ID_OFERTA" -> "Ej: OF001"
+            "ID_CERTIFICACION" -> "Ej: C001"
+            "ID_EXPERIENCIA" -> "Ej: EL01"
+            "ID_FORMACION" -> "Ej: FOA001"
+            "ID_OFERTA_ACADEMICA" -> "Ej: OFA01"
+            "ID_POSTULACION" -> "Ej: POS001"
+            "ID_DETALLE" -> "Ej: D1"
+            "ID_INSTITUCION" -> "Ej: INS001"
+            "ID_HABILIDAD" -> "Ej: H01"
+            "NIT" -> if (tableName == "EMPRESA") "14 digitos" else null
+            "ID_MUNICIPIO" -> "Ej: 5"
+            "ID_DISTRITO" -> "Ej: 1"
+            "URL_PERFIL" -> "Ej: https://"
+            else -> null
         }
     }
 

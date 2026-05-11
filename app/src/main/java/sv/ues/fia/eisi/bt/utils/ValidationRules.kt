@@ -68,11 +68,11 @@ object ValidationRules {
                 "NOMBRE_DEPARTAMENTO" to FieldRule(field = "NOMBRE_DEPARTAMENTO", required = true, friendlyName = "Nombre de departamento")
             )
             "MUNICIPIO" -> mapOf(
-                "ID_MUNICIPIO" to FieldRule(field = "ID_MUNICIPIO", required = true, friendlyName = "Codigo municipio"),
+                "ID_MUNICIPIO" to FieldRule(field = "ID_MUNICIPIO", required = true, min = 1, max = 9999, friendlyName = "Codigo municipio"),
                 "NOMBRE_MUNICIPIO" to FieldRule(field = "NOMBRE_MUNICIPIO", required = true, friendlyName = "Nombre de municipio")
             )
             "DISTRITO" -> mapOf(
-                "ID_DISTRITO" to FieldRule(field = "ID_DISTRITO", required = true, friendlyName = "Codigo distrito"),
+                "ID_DISTRITO" to FieldRule(field = "ID_DISTRITO", required = true, min = 1, max = 9999, friendlyName = "Codigo distrito"),
                 "NOMBRE_DISTRITO" to FieldRule(field = "NOMBRE_DISTRITO", required = true, friendlyName = "Nombre de distrito")
             )
             "INSTITUCION" -> mapOf(

@@ -87,7 +87,7 @@ object TriggerErrorTranslator {
         "No se puede eliminar: la oferta academica tiene formaciones asociadas" to "Elimine primero las formaciones academicas asociadas",
         "No se puede eliminar: el tipo de certificacion tiene certificaciones asociadas" to "Elimine primero las certificaciones con este tipo",
         "UNIQUE constraint failed" to "Ya existe un registro con esos datos",
-        "FOREIGN KEY constraint failed" to "NO ES POSIBLE ELIMINAR ",
+        "FOREIGN KEY constraint failed" to "No se puede modificar: tiene registros asociados. Elimine primero los registros dependientes",
         "NOT NULL constraint failed" to "Un campo obligatorio esta vacio",
         "constraint failed" to "Operacion no permitida por las reglas de validacion"
     )
