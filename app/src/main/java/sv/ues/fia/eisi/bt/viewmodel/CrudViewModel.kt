@@ -166,4 +166,8 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
     fun getMunicipioByDistrito(deptoId: String, munId: String, distritoId: String): String? {
         return repository.getMunicipioByDistrito(deptoId, munId, distritoId)
     }
+
+    fun hasChildRecords(tableName: String, pkValues: List<String>): Boolean {
+        return repository.hasChildRecords(tableName, pkValues)
+    }
 }
