@@ -5,18 +5,22 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 
+//  Es la capa de base de datos local usando SQLite. Extiende SQLiteOpenHelper y se encarga de:
+//     - Crear las 22 tablas del esquema (CATEGORIA_HABILIDAD, GENERO, POSTULANTE, EMPRESA, etc.) con sus PKs, FKs, UNIQUEs.
+//     - Crear índices (22) para optimizar búsquedas.
+
+//  Básicamente es toda la lógica DDL de la BD en una sola clase.
+
 class ConnectionHelper(context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
         private const val DATABASE_NAME = "bolsadetabajo.db"
-        private const val DATABASE_VERSION = 11
+        private const val DATABASE_VERSION = 15
         private const val TAG = "ConnectionHelper"
     }
 
     override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL("PRAGMA foreign_keys = ON;")
-
         // ================================================================
         // CREATE TABLES (22 tablas con PKs naturales/compuestas/manuales)
         // ================================================================
@@ -26,49 +30,56 @@ class ConnectionHelper(context: Context) :
         db.execSQL("""
             CREATE TABLE CATEGORIA_HABILIDAD (
                 ID_CATEGORIA_HABILIDAD INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_CATEGORIA VARCHAR(50)
+                NOMBRE_CATEGORIA VARCHAR(50) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE GENERO (
                 ID_GENERO INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_GENERO VARCHAR(20)
+                NOMBRE_GENERO VARCHAR(20) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE TIPO_DOCUMENTO (
                 ID_TIPO_DOCUMENTO INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_TIPO VARCHAR(25)
+                NOMBRE_TIPO VARCHAR(25) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE DEPARTAMENTO (
                 ID_DEPARTAMENTO INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_DEPARTAMENTO VARCHAR(50)
+                NOMBRE_DEPARTAMENTO VARCHAR(50) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE GRADO_ACADEMICO (
                 ID_GRADO_ACADEMICO INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_GRADO VARCHAR(50)
+                NOMBRE_GRADO VARCHAR(50) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE RED_SOCIAL (
                 ID_RED_SOCIAL INTEGER PRIMARY KEY AUTOINCREMENT,
-                NOMBRE_RED VARCHAR(50)
+                NOMBRE_RED VARCHAR(50) UNIQUE
+            )
+        """)
+
+        db.execSQL("""
+            CREATE TABLE TIPO_CERTIFICACION (
+                ID_TIPO_CERTIFICACION INTEGER PRIMARY KEY AUTOINCREMENT,
+                NOMBRE_TIPO VARCHAR(100) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE USUARIO (
                 ID_USUARIO INTEGER PRIMARY KEY AUTOINCREMENT,
-                USERNAME VARCHAR(30),
+                USERNAME VARCHAR(30) UNIQUE COLLATE NOCASE,
                 PASSWORD VARCHAR(128),
                 ROL VARCHAR(20)
             )
@@ -82,7 +93,8 @@ class ConnectionHelper(context: Context) :
                 ID_MUNICIPIO INTEGER NOT NULL,
                 NOMBRE_MUNICIPIO VARCHAR(50),
                 PRIMARY KEY (ID_DEPARTAMENTO, ID_MUNICIPIO),
-                FOREIGN KEY (ID_DEPARTAMENTO) REFERENCES DEPARTAMENTO (ID_DEPARTAMENTO)
+                FOREIGN KEY (ID_DEPARTAMENTO) REFERENCES DEPARTAMENTO (ID_DEPARTAMENTO),
+                UNIQUE (ID_DEPARTAMENTO, NOMBRE_MUNICIPIO)
             )
         """)
 
@@ -93,7 +105,8 @@ class ConnectionHelper(context: Context) :
                 ID_DISTRITO INTEGER NOT NULL,
                 NOMBRE_DISTRITO VARCHAR(50),
                 PRIMARY KEY (ID_DEPARTAMENTO, ID_MUNICIPIO, ID_DISTRITO),
-                FOREIGN KEY (ID_DEPARTAMENTO, ID_MUNICIPIO) REFERENCES MUNICIPIO (ID_DEPARTAMENTO, ID_MUNICIPIO)
+                FOREIGN KEY (ID_DEPARTAMENTO, ID_MUNICIPIO) REFERENCES MUNICIPIO (ID_DEPARTAMENTO, ID_MUNICIPIO),
+                UNIQUE (ID_DEPARTAMENTO, ID_MUNICIPIO, NOMBRE_DISTRITO)
             )
         """)
 
@@ -111,7 +124,8 @@ class ConnectionHelper(context: Context) :
                 DESCRIPCION_OFERTA_TRABAJO VARCHAR(5000),
                 PRIMARY KEY (NIT, ID_OFERTA),
                 FOREIGN KEY (NIT) REFERENCES EMPRESA (NIT),
-                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO)
+                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO),
+                UNIQUE (NIT, TITULO_PUESTO)
             )
         """)
 
@@ -122,7 +136,8 @@ class ConnectionHelper(context: Context) :
                 ID_DETALLE VARCHAR(10) NOT NULL,
                 DESCRIPCION_REQUISITO VARCHAR(100),
                 PRIMARY KEY (NIT, ID_OFERTA, ID_DETALLE),
-                FOREIGN KEY (NIT, ID_OFERTA) REFERENCES OFERTA_TRABAJO (NIT, ID_OFERTA)
+                FOREIGN KEY (NIT, ID_OFERTA) REFERENCES OFERTA_TRABAJO (NIT, ID_OFERTA),
+                UNIQUE (NIT, ID_OFERTA, DESCRIPCION_REQUISITO)
             )
         """)
 
@@ -138,7 +153,8 @@ class ConnectionHelper(context: Context) :
                 CONTACTO_REFERENCIA VARCHAR(100),
                 PRIMARY KEY (ID_POSTULANTE, NIT, ID_EXPERIENCIA),
                 FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
-                FOREIGN KEY (NIT) REFERENCES EMPRESA (NIT)
+                FOREIGN KEY (NIT) REFERENCES EMPRESA (NIT),
+                UNIQUE (ID_POSTULANTE, NIT, PUESTO_TRABAJO)
             )
         """)
 
@@ -147,11 +163,15 @@ class ConnectionHelper(context: Context) :
                 ID_CERTIFICACION VARCHAR(10) NOT NULL,
                 ID_INSTITUCION VARCHAR(20) NOT NULL,
                 ID_POSTULANTE VARCHAR(20) NOT NULL,
+                ID_TIPO_CERTIFICACION INTEGER,
                 NOMBRE_CERTIFICACION VARCHAR(150),
                 FECHA_CERTIFICACION DATE,
+                PERIODO VARCHAR(50),
                 PRIMARY KEY (ID_CERTIFICACION, ID_INSTITUCION, ID_POSTULANTE),
                 FOREIGN KEY (ID_INSTITUCION) REFERENCES INSTITUCION (ID_INSTITUCION),
-                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE)
+                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
+                FOREIGN KEY (ID_TIPO_CERTIFICACION) REFERENCES TIPO_CERTIFICACION (ID_TIPO_CERTIFICACION),
+                UNIQUE (ID_POSTULANTE, NOMBRE_CERTIFICACION)
             )
         """)
 
@@ -161,6 +181,7 @@ class ConnectionHelper(context: Context) :
                 ID_POSTULANTE VARCHAR(20) NOT NULL,
                 ID_OFERTA_ACADEMICA VARCHAR(10),
                 TITULO_OBTENIDO VARCHAR(150),
+                PERIODO VARCHAR(50),
                 FECHA_OBTENCION DATE,
                 PRIMARY KEY (ID_FORMACION, ID_POSTULANTE),
                 FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
@@ -190,7 +211,8 @@ class ConnectionHelper(context: Context) :
                 ESTADO_PROCESO VARCHAR(50),
                 PRIMARY KEY (ID_POSTULACION),
                 FOREIGN KEY (NIT, ID_OFERTA) REFERENCES OFERTA_TRABAJO (NIT, ID_OFERTA),
-                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE)
+                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
+                UNIQUE (ID_POSTULANTE, NIT, ID_OFERTA)
             )
         """)
 
@@ -210,7 +232,7 @@ class ConnectionHelper(context: Context) :
         db.execSQL("""
             CREATE TABLE INSTITUCION (
                 ID_INSTITUCION VARCHAR(20) PRIMARY KEY,
-                NOMBRE_INSTITUCION VARCHAR(150)
+                NOMBRE_INSTITUCION VARCHAR(150) UNIQUE
             )
         """)
 
@@ -218,7 +240,7 @@ class ConnectionHelper(context: Context) :
             CREATE TABLE HABILIDAD (
                 ID_CATEGORIA_HABILIDAD INTEGER NOT NULL,
                 ID_HABILIDAD VARCHAR(10) NOT NULL,
-                NOMBRE_HABILIDAD VARCHAR(100),
+                NOMBRE_HABILIDAD VARCHAR(100) UNIQUE,
                 PRIMARY KEY (ID_CATEGORIA_HABILIDAD, ID_HABILIDAD),
                 FOREIGN KEY (ID_CATEGORIA_HABILIDAD) REFERENCES CATEGORIA_HABILIDAD (ID_CATEGORIA_HABILIDAD)
             )
@@ -230,7 +252,7 @@ class ConnectionHelper(context: Context) :
                 ID_DISTRITO_DEPTO INTEGER NOT NULL,
                 ID_DISTRITO_MUNICIPIO INTEGER NOT NULL,
                 ID_DISTRITO_ID INTEGER NOT NULL,
-                NOMBRE_EMPRESA VARCHAR(150),
+                NOMBRE_EMPRESA VARCHAR(150) UNIQUE,
                 CONTACTO_DIRECTO VARCHAR(100),
                 FOREIGN KEY (ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID) REFERENCES DISTRITO (ID_DEPARTAMENTO, ID_MUNICIPIO, ID_DISTRITO)
             )
@@ -241,20 +263,22 @@ class ConnectionHelper(context: Context) :
                 ID_POSTULANTE VARCHAR(20) PRIMARY KEY,
                 ID_GENERO INTEGER NOT NULL,
                 ID_TIPO_DOCUMENTO INTEGER NOT NULL,
+                NUM_DOCUMENTO VARCHAR(20) UNIQUE,
+                ID_GRADO_ACADEMICO INTEGER NOT NULL,
                 ID_DISTRITO_DEPTO INTEGER,
                 ID_DISTRITO_MUNICIPIO INTEGER,
                 ID_DISTRITO_ID INTEGER,
                 NOMBRE VARCHAR(100),
                 APELLIDO VARCHAR(100),
                 FECHA_NACIMIENTO DATE,
-                NUM_DOCUMENTO VARCHAR(20),
-                NUP VARCHAR(20),
+                NUP VARCHAR(20) UNIQUE,
                 DIRECCION_DETALLE VARCHAR(250),
                 TELEFONO_CASA VARCHAR(15),
                 TELEFONO_CELULAR VARCHAR(15),
-                EMAIL VARCHAR(100),
+                EMAIL VARCHAR(100) UNIQUE COLLATE NOCASE,
                 FOREIGN KEY (ID_GENERO) REFERENCES GENERO (ID_GENERO),
                 FOREIGN KEY (ID_TIPO_DOCUMENTO) REFERENCES TIPO_DOCUMENTO (ID_TIPO_DOCUMENTO),
+                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO),
                 FOREIGN KEY (ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID) REFERENCES DISTRITO (ID_DEPARTAMENTO, ID_MUNICIPIO, ID_DISTRITO)
             )
         """)
@@ -265,7 +289,8 @@ class ConnectionHelper(context: Context) :
                 ID_GRADO_ACADEMICO INTEGER,
                 ID_INSTITUCION VARCHAR(20),
                 FOREIGN KEY (ID_INSTITUCION) REFERENCES INSTITUCION (ID_INSTITUCION),
-                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO)
+                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO),
+                UNIQUE (ID_INSTITUCION, ID_GRADO_ACADEMICO)
             )
         """)
 
@@ -316,6 +341,26 @@ class ConnectionHelper(context: Context) :
                 THEN RAISE(ABORT, 'La fecha de nacimiento no puede ser futura') END;
                 SELECT CASE WHEN (strftime('%Y', 'now') - strftime('%Y', NEW.FECHA_NACIMIENTO)) < 18
                 THEN RAISE(ABORT, 'El postulante debe ser mayor de edad') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_POSTULANTE_GRADO")
+        db.execSQL("""
+            CREATE TRIGGER TR_POSTULANTE_GRADO BEFORE INSERT ON POSTULANTE
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (
+                    SELECT LOWER(NOMBRE_GRADO) FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO
+                ) IN ('bachiller')
+                THEN RAISE(ABORT, 'El postulante debe tener un grado academico superior a Bachiller') END;
+            END
+        """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_POSTULANTE_GRADO_UPD BEFORE UPDATE ON POSTULANTE
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (
+                    SELECT LOWER(NOMBRE_GRADO) FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO
+                ) IN ('bachiller')
+                THEN RAISE(ABORT, 'El postulante debe tener un grado academico superior a Bachiller') END;
             END
         """)
 
@@ -400,56 +445,9 @@ class ConnectionHelper(context: Context) :
             END
         """)
 
-        db.execSQL("DROP TRIGGER IF EXISTS TR_USUARIO_FORMATO")
-        db.execSQL("""
-            CREATE TRIGGER TR_USUARIO_FORMATO BEFORE INSERT ON USUARIO
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN LENGTH(NEW.PASSWORD) < 8
-                THEN RAISE(ABORT, 'Password minimo 8 caracteres') END;
-            END
-        """)
-        db.execSQL("""
-            CREATE TRIGGER IF NOT EXISTS TR_USUARIO_FORMATO_UPD BEFORE UPDATE ON USUARIO
-            FOR EACH ROW BEGIN
-                SELECT CASE WHEN LENGTH(NEW.PASSWORD) < 8
-                THEN RAISE(ABORT, 'Password minimo 8 caracteres') END;
-            END
-        """)
-
-        // ================================================================
-        // TRIGGERS DE CASCADA (3)
-        // ================================================================
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_DEPARTAMENTO")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_DEPARTAMENTO BEFORE DELETE ON DEPARTAMENTO
-            FOR EACH ROW BEGIN
-                DELETE FROM MUNICIPIO WHERE ID_DEPARTAMENTO = OLD.ID_DEPARTAMENTO;
-            END
-        """)
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_CATEGORIA")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_CATEGORIA BEFORE DELETE ON CATEGORIA_HABILIDAD
-            FOR EACH ROW BEGIN
-                DELETE FROM HABILIDAD_POSTULANTE WHERE ID_CATEGORIA_HABILIDAD = OLD.ID_CATEGORIA_HABILIDAD;
-                DELETE FROM HABILIDAD WHERE ID_CATEGORIA_HABILIDAD = OLD.ID_CATEGORIA_HABILIDAD;
-            END
-        """)
 
 
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_POSTULANTE")
-        db.execSQL("""
-            CREATE TRIGGER TR_DEL_POSTULANTE BEFORE DELETE ON POSTULANTE
-            FOR EACH ROW BEGIN
-                DELETE FROM POSTULACION WHERE ID_POSTULANTE = OLD.ID_POSTULANTE;
-                DELETE FROM EXPERIENCIA_LABORAL WHERE ID_POSTULANTE = OLD.ID_POSTULANTE;
-                DELETE FROM FORMACION_ACADEMICA WHERE ID_POSTULANTE = OLD.ID_POSTULANTE;
-                DELETE FROM CERTIFICACION WHERE ID_POSTULANTE = OLD.ID_POSTULANTE;
-                DELETE FROM HABILIDAD_POSTULANTE WHERE ID_POSTULANTE = OLD.ID_POSTULANTE;
-                DELETE FROM RED_SOCIAL_POSTULANTE WHERE ID_POSTULANTE = OLD.ID_POSTULANTE;
-            END
-        """)
+
 
         // ================================================================
         // TRIGGERS DE INTEGRIDAD REFERENCIAL (5)
@@ -527,6 +525,8 @@ class ConnectionHelper(context: Context) :
                 THEN RAISE(ABORT, 'El genero asociado no existe') END;
                 SELECT CASE WHEN (SELECT 1 FROM TIPO_DOCUMENTO WHERE ID_TIPO_DOCUMENTO = NEW.ID_TIPO_DOCUMENTO) IS NULL
                 THEN RAISE(ABORT, 'El tipo de documento asociado no existe') END;
+                SELECT CASE WHEN NEW.ID_GRADO_ACADEMICO IS NOT NULL AND (SELECT 1 FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO) IS NULL
+                THEN RAISE(ABORT, 'El grado academico asociado no existe') END;
             END
         """)
         db.execSQL("""
@@ -536,15 +536,21 @@ class ConnectionHelper(context: Context) :
                 THEN RAISE(ABORT, 'El genero asociado no existe') END;
                 SELECT CASE WHEN (SELECT 1 FROM TIPO_DOCUMENTO WHERE ID_TIPO_DOCUMENTO = NEW.ID_TIPO_DOCUMENTO) IS NULL
                 THEN RAISE(ABORT, 'El tipo de documento asociado no existe') END;
+                SELECT CASE WHEN NEW.ID_GRADO_ACADEMICO IS NOT NULL AND (SELECT 1 FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO) IS NULL
+                THEN RAISE(ABORT, 'El grado academico asociado no existe') END;
             END
         """)
 
-        Log.d(TAG, "Base de datos creada: 22 tablas, 22 indices, 14 triggers")
+        Log.d(TAG, "Base de datos creada: 23 tablas, 22 indices, 23 triggers")
+    }
+
+    override fun onConfigure(db: SQLiteDatabase) {
+        super.onConfigure(db)
+        db.setForeignKeyConstraintsEnabled(true)
     }
 
     override fun onOpen(db: SQLiteDatabase) {
         super.onOpen(db)
-        db.execSQL("PRAGMA foreign_keys = ON;")
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -561,7 +567,7 @@ class ConnectionHelper(context: Context) :
             "FORMACION_ACADEMICA", "EXPERIENCIA_LABORAL", "CERTIFICACION",
             "OFERTA_ACADEMICA", "DETALLE_REQUISITO", "OFERTA_TRABAJO",
             "HABILIDAD", "USUARIO", "POSTULANTE", "EMPRESA",
-            "RED_SOCIAL", "GRADO_ACADEMICO", "INSTITUCION",
+            "RED_SOCIAL", "TIPO_CERTIFICACION", "GRADO_ACADEMICO", "INSTITUCION",
             "DISTRITO", "MUNICIPIO", "DEPARTAMENTO",
             "TIPO_DOCUMENTO", "GENERO", "CATEGORIA_HABILIDAD"
         )
@@ -572,104 +578,4 @@ class ConnectionHelper(context: Context) :
 
     val writableDb: SQLiteDatabase
         get() = writableDatabase
-
-    val readableDb: SQLiteDatabase
-        get() = readableDatabase
-
-    fun getCount(tableName: String): Int {
-        var count = 0
-        try {
-            val db = readableDatabase
-            val cursor = db.rawQuery("SELECT COUNT(*) FROM $tableName", null)
-            if (cursor.moveToFirst()) {
-                count = cursor.getInt(0)
-            }
-            cursor.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return count
-    }
-
-    fun executeQuery(query: String): List<List<Any>> {
-        val results = mutableListOf<List<Any>>()
-        try {
-            val db = readableDatabase
-            val cursor = db.rawQuery(query, null)
-            while (cursor.moveToNext()) {
-                val row = mutableListOf<Any>()
-                for (i in 0 until cursor.columnCount) {
-                    when {
-                        cursor.isNull(i) -> row.add("")
-                        else -> row.add(cursor.getString(i) ?: "")
-                    }
-                }
-                results.add(row)
-            }
-            cursor.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return results
-    }
-
-    fun executeInsert(query: String): Long {
-        var id = -1L
-        try {
-            val db = writableDatabase
-            db.execSQL(query)
-            val cursor = db.rawQuery("SELECT last_insert_rowid()", null)
-            if (cursor.moveToFirst()) {
-                id = cursor.getLong(0)
-            }
-            cursor.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return id
-    }
-
-    fun executeUpdate(query: String): Int {
-        var rows = 0
-        try {
-            val db = writableDatabase
-            db.execSQL(query)
-            rows = 1
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return rows
-    }
-
-    fun executeDelete(query: String): Int {
-        var rows = 0
-        try {
-            val db = writableDatabase
-            db.execSQL(query)
-            rows = 1
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return rows
-    }
-
-    fun search(tableName: String, column: String, value: String): List<List<Any>> {
-        val query = "SELECT * FROM $tableName WHERE $column LIKE '%$value%'"
-        return executeQuery(query)
-    }
-
-    fun getAll(tableName: String): List<List<Any>> {
-        val query = "SELECT * FROM $tableName"
-        return executeQuery(query)
-    }
-
-    fun getById(tableName: String, idName: String, idValue: String): List<List<Any>> {
-        val query = "SELECT * FROM $tableName WHERE $idName = '$idValue'"
-        return executeQuery(query)
-    }
-
-    fun deleteById(tableName: String, idName: String, idValue: String): Int {
-        val query = "DELETE FROM $tableName WHERE $idName = '$idValue'"
-        return executeDelete(query)
-    }
 }

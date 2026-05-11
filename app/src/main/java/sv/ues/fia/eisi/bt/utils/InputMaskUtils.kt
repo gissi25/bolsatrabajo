@@ -4,12 +4,7 @@ object InputMaskUtils {
 
     const val DUI_LENGTH = 9
     const val NUP_LENGTH = 12
-    const val PASAPORTE_LENGTH = 9
     const val MIN_PASSWORD = 8
-    const val EXPERIENCIA_MIN = 0
-    const val EXPERIENCIA_MAX = 50
-    const val EDAD_MIN = 16
-    const val EDAD_MAX = 100
     const val TELEFONO_LENGTH = 8
     const val NIT_LENGTH_SIMPLE = 14
 
@@ -50,15 +45,6 @@ object InputMaskUtils {
         return if (digits.length > 14) digits.substring(0, 14) else digits
     }
 
-    fun validateRango(value: String, min: Int, max: Int, nombre: String): String? {
-        val n = value.toIntOrNull()
-        return when {
-            n == null -> "$nombre debe ser un número"
-            n < min || n > max -> "$nombre debe estar entre $min y $max"
-            else -> null
-        }
-    }
-
     fun validatePassword(value: String): String? {
         return if (value.length < MIN_PASSWORD) "Mínimo $MIN_PASSWORD caracteres" else null
     }
@@ -68,13 +54,23 @@ object InputMaskUtils {
             "Correo electrónico inválido" else null
     }
 
-    fun validateURL(value: String): String? {
-        return if (!value.startsWith("http://") && !value.startsWith("https://"))
-            "URL debe comenzar con http:// o https://" else null
-    }
-
     fun validateFecha(value: String): String? {
         return if (!value.matches(Regex("""\d{4}-\d{2}-\d{2}""")))
             "Formato: AAAA-MM-DD" else null
+    }
+
+    fun formatPeriodo(text: String): String {
+        val clean = text.filter { it.isDigit() }
+        val d = if (clean.length > 12) clean.substring(0, 12) else clean
+
+        return when {
+            d.length <= 2 -> d
+            d.length <= 4 -> "${d.substring(0, 2)}/${d.substring(2)}"
+            d.length <= 6 -> "${d.substring(0, 2)}/${d.substring(2, 4)}/${d.substring(4)}"
+            d.length <= 8 -> "${d.substring(0, 2)}/${d.substring(2, 4)}/${d.substring(4, 6)}--${d.substring(6)}"
+            d.length <= 10 -> "${d.substring(0, 2)}/${d.substring(2, 4)}/${d.substring(4, 6)}--${d.substring(6, 8)}/${d.substring(8)}"
+            d.length <= 12 -> "${d.substring(0, 2)}/${d.substring(2, 4)}/${d.substring(4, 6)}--${d.substring(6, 8)}/${d.substring(8, 10)}/${d.substring(10)}"
+            else -> d
+        }
     }
 }

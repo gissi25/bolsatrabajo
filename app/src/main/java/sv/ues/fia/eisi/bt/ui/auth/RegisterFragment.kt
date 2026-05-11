@@ -82,7 +82,7 @@ class RegisterFragment : Fragment() {
         viewModel.registerResult.observe(viewLifecycleOwner) { result ->
             result.onSuccess { userId ->
                 if (userId > 0) {
-                    StyledToast.show(requireContext(), "Registro exitoso. Ahora puedes iniciar sesión.")
+                    StyledToast.show(requireContext(), getString(R.string.registro_exitoso))
                     findNavController().navigate(R.id.action_register_to_login)
                 } else if (userId == -2L) {
                     tilUsername.error = getString(R.string.username_already_exists)

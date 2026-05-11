@@ -10,6 +10,8 @@ import sv.ues.fia.eisi.bt.utils.TriggerErrorTranslator
 
 class MainRepository(context: Context) {
 
+    // Es la capa de acceso a datos (DAO/Repository).
+    // Usa ConnectionHelper para ejecutar operaciones CRUD
     private val dbHelper = ConnectionHelper(context)
     private var db: SQLiteDatabase? = null
 
@@ -99,6 +101,8 @@ class MainRepository(context: Context) {
         }
     }
 
+
+
     data class DependencyInfo(val tableName: String, val displayName: String, val count: Int, val depth: Int = 1)
 
     fun getDeleteDependencies(tableName: String, id: String): List<DependencyInfo> {
@@ -161,7 +165,8 @@ class MainRepository(context: Context) {
             "GENERO" -> listOf("POSTULANTE" to listOf("ID_GENERO"))
             "TIPO_DOCUMENTO" -> listOf("POSTULANTE" to listOf("ID_TIPO_DOCUMENTO"))
             "INSTITUCION" -> listOf("OFERTA_ACADEMICA" to listOf("ID_INSTITUCION"), "CERTIFICACION" to listOf("ID_INSTITUCION"))
-            "GRADO_ACADEMICO" -> listOf("OFERTA_TRABAJO" to listOf("ID_GRADO_ACADEMICO"), "OFERTA_ACADEMICA" to listOf("ID_GRADO_ACADEMICO"))
+            "GRADO_ACADEMICO" -> listOf("OFERTA_TRABAJO" to listOf("ID_GRADO_ACADEMICO"), "OFERTA_ACADEMICA" to listOf("ID_GRADO_ACADEMICO"), "POSTULANTE" to listOf("ID_GRADO_ACADEMICO"))
+            "TIPO_CERTIFICACION" -> listOf("CERTIFICACION" to listOf("ID_TIPO_CERTIFICACION"))
             "CATEGORIA_HABILIDAD" -> listOf("HABILIDAD" to listOf("ID_CATEGORIA_HABILIDAD"))
             "HABILIDAD" -> listOf("HABILIDAD_POSTULANTE" to listOf("ID_CATEGORIA_HABILIDAD", "ID_HABILIDAD"))
             "RED_SOCIAL" -> listOf("RED_SOCIAL_POSTULANTE" to listOf("ID_RED_SOCIAL"))
@@ -180,33 +185,6 @@ class MainRepository(context: Context) {
         }
     }
 
-    fun getDeleteChain(tableName: String, id: String): List<DependencyInfo> {
-        val result = mutableListOf<DependencyInfo>()
-        checkDependenciesRecursive(tableName, id, result, mutableSetOf())
-        return result
-    }
-
-    private fun checkDependenciesRecursive(tableName: String, id: String, result: MutableList<DependencyInfo>, visited: MutableSet<String>) {
-        if (tableName in visited) return
-        visited.add(tableName)
-        
-        val deps = getAllDependencies(tableName)
-        for ((childTable, fkCols) in deps) {
-            val whereClause = fkCols.map { col -> "$col = '$id'" }.joinToString(" AND ")
-            val cursor = getDb().rawQuery("SELECT COUNT(*) FROM $childTable WHERE $whereClause", null)
-            if (cursor.moveToFirst()) {
-                val count = cursor.getInt(0)
-                if (count > 0) {
-                    result.add(DependencyInfo(
-                        childTable,
-                        childTable.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() },
-                        count
-                    ))
-                }
-            }
-            cursor.close()
-        }
-    }
 
     private fun getPrimaryKeyColumns(tableName: String): List<String> = Constants.getPrimaryKeyColumns(tableName)
 
@@ -214,7 +192,7 @@ class MainRepository(context: Context) {
         return setOf(
             "ID_USUARIO", "ID_GENERO", "ID_TIPO_DOCUMENTO",
             "ID_DEPARTAMENTO", "ID_GRADO_ACADEMICO", "ID_RED_SOCIAL",
-            "ID_CATEGORIA_HABILIDAD"
+            "ID_CATEGORIA_HABILIDAD", "ID_TIPO_CERTIFICACION"
         )
     }
 
@@ -355,6 +333,7 @@ class MainRepository(context: Context) {
             "DEPARTAMENTO" -> listOf("LOWER(NOMBRE_DEPARTAMENTO) = LOWER('{NOMBRE_DEPARTAMENTO}')" to "Ya existe un departamento con ese nombre")
             "GRADO_ACADEMICO" -> listOf("LOWER(NOMBRE_GRADO) = LOWER('{NOMBRE_GRADO}')" to "Ya existe un grado academico con ese nombre")
             "RED_SOCIAL" -> listOf("LOWER(NOMBRE_RED) = LOWER('{NOMBRE_RED}')" to "Ya existe una red social con ese nombre")
+            "TIPO_CERTIFICACION" -> listOf("LOWER(NOMBRE_TIPO) = LOWER('{NOMBRE_TIPO}')" to "Ya existe un tipo de certificacion con ese nombre")
             "INSTITUCION" -> listOf("LOWER(NOMBRE_INSTITUCION) = LOWER('{NOMBRE_INSTITUCION}')" to "Ya existe una institucion con ese nombre")
             "MUNICIPIO" -> listOf("ID_DEPARTAMENTO = {ID_DEPARTAMENTO} AND LOWER(NOMBRE_MUNICIPIO) = LOWER('{NOMBRE_MUNICIPIO}')" to "Ya existe un municipio con ese nombre en el departamento")
             "DISTRITO" -> listOf("ID_DEPARTAMENTO = {ID_DEPARTAMENTO} AND ID_MUNICIPIO = {ID_MUNICIPIO} AND LOWER(NOMBRE_DISTRITO) = LOWER('{NOMBRE_DISTRITO}')" to "Ya existe un distrito con ese nombre en el municipio")
@@ -365,6 +344,7 @@ class MainRepository(context: Context) {
             )
             "POSTULANTE" -> listOf(
                 "NUM_DOCUMENTO = '{NUM_DOCUMENTO}'" to "Ya existe un postulante con ese documento",
+                "NUP = '{NUP}'" to "Ya existe un postulante con ese NUP",
                 "LOWER(EMAIL) = LOWER('{EMAIL}')" to "Ya existe un postulante con ese email"
             )
             "USUARIO" -> listOf("LOWER(USERNAME) = LOWER('{USERNAME}')" to "Ya existe un usuario con ese nombre")
@@ -466,6 +446,7 @@ class MainRepository(context: Context) {
             "RED_SOCIAL", "POSTULANTE", "USUARIO", "EMPRESA",
             "OFERTA_TRABAJO", "DETALLE_REQUISITO", "OFERTA_ACADEMICA",
             "FORMACION_ACADEMICA", "EXPERIENCIA_LABORAL", "CERTIFICACION",
+            "TIPO_CERTIFICACION",
             "HABILIDAD", "HABILIDAD_POSTULANTE", "POSTULACION",
             "RED_SOCIAL_POSTULANTE"
         )
@@ -487,7 +468,8 @@ class MainRepository(context: Context) {
         val tablesToCheck = listOf(
             "CATEGORIA_HABILIDAD", "GENERO", "DEPARTAMENTO", "MUNICIPIO",
             "DISTRITO", "INSTITUCION", "GRADO_ACADEMICO", "RED_SOCIAL",
-            "HABILIDAD", "EMPRESA", "TIPO_DOCUMENTO", "OFERTA_ACADEMICA"
+            "HABILIDAD", "EMPRESA", "TIPO_DOCUMENTO", "OFERTA_ACADEMICA",
+            "TIPO_CERTIFICACION"
         )
 
         try {
@@ -517,6 +499,9 @@ class MainRepository(context: Context) {
                 }
                 for (nombre in SeedData.REDES_SOCIALES) {
                     insertRecord("RED_SOCIAL", listOf(nombre))
+                }
+                for (nombre in SeedData.TIPOS_CERTIFICACION) {
+                    insertRecord("TIPO_CERTIFICACION", listOf(nombre))
                 }
                 for (row in SeedData.INSTITUCIONES) {
                     insertRecord("INSTITUCION", row)
@@ -610,7 +595,7 @@ class MainRepository(context: Context) {
                 FROM POSTULACION p
                 LEFT JOIN POSTULANTE post ON p.ID_POSTULANTE = post.ID_POSTULANTE
                 LEFT JOIN OFERTA_TRABAJO o ON p.NIT = o.NIT AND p.ID_OFERTA = o.ID_OFERTA
-                WHERE post.NOMBRE LIKE '%$query%' OR post.APELLIDO LIKE '%$query%' OR o.TITULO_PUESTO LIKE '%$query%'
+                WHERE post.NOMBRE LIKE '%$query%' OR post.APELLIDO LIKE '%$query%' OR o.TITULO_PUESTO LIKE '%$query%' OR p.ESTADO_PROCESO LIKE '%$query%'
                 ORDER BY post.APELLIDO, post.NOMBRE, o.TITULO_PUESTO
                 """.trimIndent()
             }
@@ -641,7 +626,7 @@ class MainRepository(context: Context) {
             "DETALLE_REQUISITO" -> {
                 """
                 SELECT d.NIT, d.ID_OFERTA, d.ID_DETALLE, d.DESCRIPCION_REQUISITO,
-                       o.TITULO_PUESTO, e.NOMBRE_EMPRESA
+                       o.TITULO_PUESTO, e.NOMBRE_EMPRESA, o.FECHA_CADUCIDAD
                 FROM DETALLE_REQUISITO d
                 LEFT JOIN OFERTA_TRABAJO o ON d.NIT = o.NIT AND d.ID_OFERTA = o.ID_OFERTA
                 LEFT JOIN EMPRESA e ON d.NIT = e.NIT
@@ -663,11 +648,12 @@ class MainRepository(context: Context) {
             "CERTIFICACION" -> {
                 """
                 SELECT c.ID_CERTIFICACION, c.ID_INSTITUCION, c.ID_POSTULANTE,
-                       c.NOMBRE_CERTIFICACION, c.FECHA_CERTIFICACION,
-                       p.NOMBRE, p.APELLIDO, i.NOMBRE_INSTITUCION
+                       c.ID_TIPO_CERTIFICACION, c.NOMBRE_CERTIFICACION, c.FECHA_CERTIFICACION, c.PERIODO,
+                       p.NOMBRE, p.APELLIDO, i.NOMBRE_INSTITUCION, tc.NOMBRE_TIPO
                 FROM CERTIFICACION c
                 LEFT JOIN POSTULANTE p ON c.ID_POSTULANTE = p.ID_POSTULANTE
                 LEFT JOIN INSTITUCION i ON c.ID_INSTITUCION = i.ID_INSTITUCION
+                LEFT JOIN TIPO_CERTIFICACION tc ON c.ID_TIPO_CERTIFICACION = tc.ID_TIPO_CERTIFICACION
                 ORDER BY p.APELLIDO, p.NOMBRE, c.NOMBRE_CERTIFICACION
                 """.trimIndent()
             }
@@ -719,6 +705,7 @@ class MainRepository(context: Context) {
             "POSTULANTE" -> mapOf(
                 "ID_GENERO" to FkReference("ID_GENERO", "GENERO", "NOMBRE_GENERO"),
                 "ID_TIPO_DOCUMENTO" to FkReference("ID_TIPO_DOCUMENTO", "TIPO_DOCUMENTO", "NOMBRE_TIPO"),
+                "ID_GRADO_ACADEMICO" to FkReference("ID_GRADO_ACADEMICO", "GRADO_ACADEMICO", "NOMBRE_GRADO"),
                 "ID_DISTRITO_DEPTO" to FkReference("ID_DISTRITO_DEPTO", "DEPARTAMENTO", "NOMBRE_DEPARTAMENTO"),
                 "ID_DISTRITO_MUNICIPIO" to FkReference("ID_DISTRITO_MUNICIPIO", "MUNICIPIO", "NOMBRE_MUNICIPIO"),
                 "ID_DISTRITO_ID" to FkReference("ID_DISTRITO_ID", "DISTRITO", "NOMBRE_DISTRITO")
@@ -744,7 +731,8 @@ class MainRepository(context: Context) {
             )
             "CERTIFICACION" -> mapOf(
                 "ID_INSTITUCION" to FkReference("ID_INSTITUCION", "INSTITUCION", "NOMBRE_INSTITUCION"),
-                "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "ID_POSTULANTE")
+                "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "ID_POSTULANTE"),
+                "ID_TIPO_CERTIFICACION" to FkReference("ID_TIPO_CERTIFICACION", "TIPO_CERTIFICACION", "NOMBRE_TIPO")
             )
             "EXPERIENCIA_LABORAL" -> mapOf(
                 "ID_POSTULANTE" to FkReference("ID_POSTULANTE", "POSTULANTE", "ID_POSTULANTE"),
@@ -875,7 +863,7 @@ class MainRepository(context: Context) {
         }
     }
 
-    fun getFilteredOptions(childTable: String, childFkColumn: String, parentId: String, displayColumn: String? = null): List<Pair<String, String>> {
+    fun getFilteredOptions(childTable: String, childFkColumn: String, parentId: String, displayColumn: String? = null, includeExpired: Boolean = false): List<Pair<String, String>> {
         if (childTable == "HABILIDAD") {
             return try {
                 val cursor = getDb().rawQuery(
@@ -946,10 +934,11 @@ class MainRepository(context: Context) {
 
         if (childTable == "OFERTA_TRABAJO" && childFkColumn == "NIT") {
             return try {
+                val expirationFilter = if (!includeExpired) " AND o.FECHA_CADUCIDAD >= date('now')" else ""
                 val cursor = getDb().rawQuery(
                     "SELECT o.ID_OFERTA, o.TITULO_PUESTO, e.NOMBRE_EMPRESA FROM OFERTA_TRABAJO o " +
                     "LEFT JOIN EMPRESA e ON o.NIT = e.NIT " +
-                    "WHERE o.NIT = ? AND o.FECHA_CADUCIDAD >= date('now') " +
+                    "WHERE o.NIT = ?$expirationFilter " +
                     "ORDER BY o.FECHA_PUBLICACION DESC",
                     arrayOf(parentId)
                 )
@@ -1046,15 +1035,16 @@ class MainRepository(context: Context) {
             "POSTULACION" -> "ID_POSTULACION"
             "DETALLE_REQUISITO" -> "ID_DETALLE"
             "RED_SOCIAL_POSTULANTE" -> "ID_RED_SOCIAL"
+            "TIPO_CERTIFICACION" -> "ID_TIPO_CERTIFICACION"
             else -> "ID"
         }
     }
 
-    fun getDepartamentoByMunicipio(idMunicipio: String): String? {
+    fun getDepartamentoByMunicipio(deptoId: String, munId: String): String? {
         return try {
             val cursor = getDb().rawQuery(
-                "SELECT ID_DEPARTAMENTO FROM MUNICIPIO WHERE ID_MUNICIPIO = ?",
-                arrayOf(idMunicipio)
+                "SELECT ID_DEPARTAMENTO FROM MUNICIPIO WHERE ID_DEPARTAMENTO = ? AND ID_MUNICIPIO = ?",
+                arrayOf(deptoId, munId)
             )
             val result = if (cursor.moveToFirst()) cursor.getString(0) else null
             cursor.close()
@@ -1064,11 +1054,11 @@ class MainRepository(context: Context) {
         }
     }
 
-    fun getMunicipioByDistrito(idDistrito: String): String? {
+    fun getMunicipioByDistrito(deptoId: String, munId: String, distritoId: String): String? {
         return try {
             val cursor = getDb().rawQuery(
-                "SELECT ID_MUNICIPIO FROM DISTRITO WHERE ID_DISTRITO = ?",
-                arrayOf(idDistrito)
+                "SELECT ID_MUNICIPIO FROM DISTRITO WHERE ID_DEPARTAMENTO = ? AND ID_MUNICIPIO = ? AND ID_DISTRITO = ?",
+                arrayOf(deptoId, munId, distritoId)
             )
             val result = if (cursor.moveToFirst()) cursor.getString(0) else null
             cursor.close()
