@@ -664,7 +664,7 @@ class MainRepository(context: Context) {
             "CERTIFICACION" -> {
                 """
                 SELECT c.ID_CERTIFICACION, c.ID_INSTITUCION, c.ID_POSTULANTE,
-                       c.ID_TIPO_CERTIFICACION, c.NOMBRE_CERTIFICACION, c.FECHA_CERTIFICACION, c.PERIODO,
+                       c.ID_TIPO_CERTIFICACION, c.NOMBRE_CERTIFICACION, c.FECHA_CERTIFICACION, c.FECHA_INICIO, c.FECHA_FIN,
                        p.NOMBRE, p.APELLIDO, i.NOMBRE_INSTITUCION, tc.NOMBRE_TIPO
                 FROM CERTIFICACION c
                 LEFT JOIN POSTULANTE p ON c.ID_POSTULANTE = p.ID_POSTULANTE
@@ -676,7 +676,7 @@ class MainRepository(context: Context) {
             "FORMACION_ACADEMICA" -> {
                 """
                 SELECT f.ID_FORMACION, f.ID_POSTULANTE, f.ID_OFERTA_ACADEMICA,
-                       f.TITULO_OBTENIDO, f.FECHA_OBTENCION,
+                       f.TITULO_OBTENIDO, f.FECHA_INICIO, f.FECHA_FIN, f.FECHA_OBTENCION,
                        p.NOMBRE, p.APELLIDO,
                        oa.ID_GRADO_ACADEMICO, oa.ID_INSTITUCION
                 FROM FORMACION_ACADEMICA f
