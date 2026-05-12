@@ -3,6 +3,7 @@ package sv.ues.fia.eisi.bt.ui.crud
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
+import androidx.core.content.ContextCompat
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -22,8 +23,11 @@ class TableAdapter(
     private val canDelete: Boolean = true,
     private val onEditClick: (List<Any>, Int) -> Unit,
     private val onDeleteClick: (List<Any>, Int) -> Unit,
-    private val onViewClick: ((List<Any>, Int) -> Unit)? = null
+    private val onViewClick: ((List<Any>, Int) -> Unit)? = null,
+    private val onItemSelected: ((List<Any>, Int) -> Unit)? = null
 ) : ListAdapter<List<Any>, TableAdapter.ViewHolder>(RowDiffCallback()) {
+
+    var selectedPosition: Int = -1
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_table_row, parent, false)
@@ -32,6 +36,10 @@ class TableAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(getItem(position), position)
+    }
+
+    fun getSelectedItem(): List<Any>? {
+        return if (selectedPosition in 0 until itemCount) getItem(selectedPosition) else null
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -54,7 +62,16 @@ class TableAdapter(
                 val pos = bindingAdapterPosition
                 if (pos != RecyclerView.NO_POSITION) onDeleteClick(getItem(pos), pos)
             }
-            if (!canEdit && onViewClick != null) {
+            if (onItemSelected != null) {
+                itemView.setOnClickListener {
+                    val pos = bindingAdapterPosition
+                    if (pos != RecyclerView.NO_POSITION) {
+                        selectedPosition = if (selectedPosition == pos) -1 else pos
+                        notifyDataSetChanged()
+                        onItemSelected(if (selectedPosition >= 0) getItem(pos) else emptyList(), selectedPosition)
+                    }
+                }
+            } else if (!canEdit && onViewClick != null) {
                 itemView.setOnClickListener {
                     val pos = bindingAdapterPosition
                     if (pos != RecyclerView.NO_POSITION) onViewClick(getItem(pos), pos)
@@ -65,6 +82,18 @@ class TableAdapter(
         fun bind(item: List<Any>, position: Int) {
             val field0 = getStringSafely(item, 0)
             chipEstado.visibility = View.GONE
+
+            if (onItemSelected != null) {
+                val card = itemView as? com.google.android.material.card.MaterialCardView
+                if (card != null) {
+                    card.setStrokeColor(
+                        ContextCompat.getColor(itemView.context,
+                            if (selectedPosition == position) R.color.primary else R.color.outline
+                        )
+                    )
+                    card.strokeWidth = if (selectedPosition == position) 6 else 1
+                }
+            }
 
             if (tableName == "POSTULANTE") {
                 val nombre = getStringSafely(item, 8)

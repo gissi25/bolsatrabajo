@@ -6,6 +6,8 @@ import android.database.sqlite.SQLiteDatabase
 import sv.ues.fia.eisi.bt.data.local.ConnectionHelper
 import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.PasswordHasher
+import sv.ues.fia.eisi.bt.utils.OfertaFullData
+import sv.ues.fia.eisi.bt.utils.PostulantFullData
 import sv.ues.fia.eisi.bt.utils.TriggerErrorTranslator
 
 class MainRepository(context: Context) {
@@ -1085,4 +1087,200 @@ class MainRepository(context: Context) {
     }
 
     fun getColumnsForTable(tableName: String): List<String> = Constants.getColumnsForTable(tableName)
+
+    fun getPostulantFullData(idPostulante: String): PostulantFullData? {
+        return try {
+            val cursor = getDb().rawQuery("""
+                SELECT p.ID_POSTULANTE, p.NOMBRE, p.APELLIDO, p.FECHA_NACIMIENTO,
+                       p.EMAIL, p.TELEFONO_CASA, p.TELEFONO_CELULAR, p.DIRECCION_DETALLE, p.NUP,
+                       g.NOMBRE_GRADO
+                FROM POSTULANTE p
+                LEFT JOIN GRADO_ACADEMICO g ON p.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO
+                WHERE p.ID_POSTULANTE = '$idPostulante'
+            """.trimIndent(), null)
+            if (!cursor.moveToFirst()) { cursor.close(); return null }
+
+            val data = PostulantFullData(
+                idPostulante = cursor.getString(0) ?: "",
+                nombre = cursor.getString(1) ?: "",
+                apellido = cursor.getString(2) ?: "",
+                fechaNacimiento = cursor.getString(3) ?: "",
+                email = cursor.getString(4) ?: "",
+                telefonoCasa = cursor.getString(5) ?: "",
+                telefonoCelular = cursor.getString(6) ?: "",
+                direccion = cursor.getString(7) ?: "",
+                nup = cursor.getString(8) ?: "",
+                gradoAcademico = cursor.getString(9) ?: "",
+                formaciones = getFormacionesForPostulant(idPostulante),
+                certificaciones = getCertificacionesForPostulant(idPostulante),
+                habilidades = getHabilidadesForPostulant(idPostulante),
+                experiencias = getExperienciasForPostulant(idPostulante),
+                redesSociales = getRedesForPostulant(idPostulante)
+            )
+            cursor.close()
+            data
+        } catch (e: Exception) { null }
+    }
+
+    fun getOfertaFullData(nit: String, idOferta: String): OfertaFullData? {
+        return try {
+            val cursor = getDb().rawQuery("""
+                SELECT o.NIT, o.ID_OFERTA, o.TITULO_PUESTO, o.FECHA_PUBLICACION,
+                       o.FECHA_CADUCIDAD, o.EXPERIENCIA_ANIOS, o.EDAD_MINIMA, o.EDAD_MAXIMA,
+                       o.DESCRIPCION_OFERTA_TRABAJO, g.NOMBRE_GRADO, e.NOMBRE_EMPRESA, e.CONTACTO_DIRECTO
+                FROM OFERTA_TRABAJO o
+                LEFT JOIN EMPRESA e ON o.NIT = e.NIT
+                LEFT JOIN GRADO_ACADEMICO g ON o.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO
+                WHERE o.NIT = '$nit' AND o.ID_OFERTA = '$idOferta'
+            """.trimIndent(), null)
+            if (!cursor.moveToFirst()) { cursor.close(); return null }
+
+            val reqCursor = getDb().rawQuery("""
+                SELECT DESCRIPCION_REQUISITO FROM DETALLE_REQUISITO
+                WHERE NIT = '$nit' AND ID_OFERTA = '$idOferta'
+                ORDER BY ID_DETALLE
+            """.trimIndent(), null)
+            val requisitos = mutableListOf<String>()
+            while (reqCursor.moveToNext()) {
+                reqCursor.getString(0)?.trim()?.let { if (it.isNotBlank()) requisitos.add(it) }
+            }
+            reqCursor.close()
+
+            val data = OfertaFullData(
+                nit = cursor.getString(0) ?: "",
+                idOferta = cursor.getString(1) ?: "",
+                tituloPuesto = cursor.getString(2) ?: "",
+                fechaPublicacion = cursor.getString(3) ?: "",
+                fechaCaducidad = cursor.getString(4) ?: "",
+                experienciaAnios = cursor.getString(5) ?: "",
+                edadMinima = cursor.getString(6) ?: "",
+                edadMaxima = cursor.getString(7) ?: "",
+                descripcion = cursor.getString(8) ?: "",
+                nombreGrado = cursor.getString(9) ?: "",
+                nombreEmpresa = cursor.getString(10) ?: "",
+                contactoEmpresa = cursor.getString(11) ?: "",
+                requisitos = requisitos
+            )
+            cursor.close()
+            data
+        } catch (e: Exception) { null }
+    }
+
+    private fun getFormacionesForPostulant(idPostulante: String): List<List<String>> {
+        val results = mutableListOf<List<String>>()
+        try {
+            val cursor = getDb().rawQuery("""
+                SELECT f.TITULO_OBTENIDO, i.NOMBRE_INSTITUCION, f.FECHA_INICIO, f.FECHA_FIN, g.NOMBRE_GRADO
+                FROM FORMACION_ACADEMICA f
+                LEFT JOIN OFERTA_ACADEMICA oa ON f.ID_OFERTA_ACADEMICA = oa.ID_OFERTA_ACADEMICA
+                LEFT JOIN INSTITUCION i ON oa.ID_INSTITUCION = i.ID_INSTITUCION
+                LEFT JOIN GRADO_ACADEMICO g ON oa.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO
+                WHERE f.ID_POSTULANTE = '$idPostulante'
+                ORDER BY f.FECHA_FIN DESC
+            """.trimIndent(), null)
+            while (cursor.moveToNext()) {
+                results.add(listOf(
+                    cursor.getString(0) ?: "",
+                    cursor.getString(1) ?: "",
+                    cursor.getString(2) ?: "",
+                    cursor.getString(3) ?: "",
+                    cursor.getString(4) ?: ""
+                ))
+            }
+            cursor.close()
+        } catch (_: Exception) {}
+        return results
+    }
+
+    private fun getCertificacionesForPostulant(idPostulante: String): List<List<String>> {
+        val results = mutableListOf<List<String>>()
+        try {
+            val cursor = getDb().rawQuery("""
+                SELECT c.NOMBRE_CERTIFICACION, i.NOMBRE_INSTITUCION, c.FECHA_CERTIFICACION, tc.NOMBRE_TIPO
+                FROM CERTIFICACION c
+                LEFT JOIN INSTITUCION i ON c.ID_INSTITUCION = i.ID_INSTITUCION
+                LEFT JOIN TIPO_CERTIFICACION tc ON c.ID_TIPO_CERTIFICACION = tc.ID_TIPO_CERTIFICACION
+                WHERE c.ID_POSTULANTE = '$idPostulante'
+                ORDER BY c.FECHA_CERTIFICACION DESC
+            """.trimIndent(), null)
+            while (cursor.moveToNext()) {
+                results.add(listOf(
+                    cursor.getString(0) ?: "",
+                    cursor.getString(1) ?: "",
+                    cursor.getString(2) ?: "",
+                    cursor.getString(3) ?: ""
+                ))
+            }
+            cursor.close()
+        } catch (_: Exception) {}
+        return results
+    }
+
+    private fun getHabilidadesForPostulant(idPostulante: String): List<List<String>> {
+        val results = mutableListOf<List<String>>()
+        try {
+            val cursor = getDb().rawQuery("""
+                SELECT h.NOMBRE_HABILIDAD, hp.NIVEL_DESTREZA
+                FROM HABILIDAD_POSTULANTE hp
+                LEFT JOIN HABILIDAD h ON hp.ID_CATEGORIA_HABILIDAD = h.ID_CATEGORIA_HABILIDAD AND hp.ID_HABILIDAD = h.ID_HABILIDAD
+                WHERE hp.ID_POSTULANTE = '$idPostulante'
+                ORDER BY h.NOMBRE_HABILIDAD
+            """.trimIndent(), null)
+            while (cursor.moveToNext()) {
+                results.add(listOf(
+                    cursor.getString(0) ?: "",
+                    cursor.getString(1) ?: ""
+                ))
+            }
+            cursor.close()
+        } catch (_: Exception) {}
+        return results
+    }
+
+    private fun getExperienciasForPostulant(idPostulante: String): List<List<String>> {
+        val results = mutableListOf<List<String>>()
+        try {
+            val cursor = getDb().rawQuery("""
+                SELECT e.PUESTO_TRABAJO, em.NOMBRE_EMPRESA, e.FECHA_INICIO, e.FECHA_FIN, e.DESCP_EXPERIENCIA_LABORAL
+                FROM EXPERIENCIA_LABORAL e
+                LEFT JOIN EMPRESA em ON e.NIT = em.NIT
+                WHERE e.ID_POSTULANTE = '$idPostulante'
+                ORDER BY e.FECHA_FIN DESC
+            """.trimIndent(), null)
+            while (cursor.moveToNext()) {
+                val inicio = cursor.getString(2) ?: ""
+                val fin = cursor.getString(3) ?: ""
+                val periodo = if (inicio.isNotBlank() || fin.isNotBlank()) "$inicio — $fin" else ""
+                results.add(listOf(
+                    cursor.getString(0) ?: "",
+                    cursor.getString(1) ?: "",
+                    periodo,
+                    cursor.getString(4) ?: ""
+                ))
+            }
+            cursor.close()
+        } catch (_: Exception) {}
+        return results
+    }
+
+    private fun getRedesForPostulant(idPostulante: String): List<List<String>> {
+        val results = mutableListOf<List<String>>()
+        try {
+            val cursor = getDb().rawQuery("""
+                SELECT r.NOMBRE_RED, rp.URL_PERFIL
+                FROM RED_SOCIAL_POSTULANTE rp
+                LEFT JOIN RED_SOCIAL r ON rp.ID_RED_SOCIAL = r.ID_RED_SOCIAL
+                WHERE rp.ID_POSTULANTE = '$idPostulante'
+                ORDER BY r.NOMBRE_RED
+            """.trimIndent(), null)
+            while (cursor.moveToNext()) {
+                results.add(listOf(
+                    cursor.getString(0) ?: "",
+                    cursor.getString(1) ?: ""
+                ))
+            }
+            cursor.close()
+        } catch (_: Exception) {}
+        return results
+    }
 }

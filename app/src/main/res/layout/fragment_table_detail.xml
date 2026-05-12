@@ -79,6 +79,20 @@
         app:shapeAppearance="@style/ShapeAppearance.BT.FAB"
         app:tint="?attr/colorOnPrimary" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabExport"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="80dp"
+        android:backgroundTint="#FF43A047"
+        android:src="@android:drawable/ic_menu_save"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:shapeAppearance="@style/ShapeAppearance.BT.FAB"
+        app:tint="?attr/colorOnPrimary" />
+
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
