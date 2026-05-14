@@ -30,6 +30,7 @@ import sv.ues.fia.eisi.bt.utils.StyledToast
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.ThemeToggleHelper
+import sv.ues.fia.eisi.bt.utils.removeAccents
 import sv.ues.fia.eisi.bt.viewmodel.CrudViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -53,6 +54,9 @@ class TableDetailFragment : Fragment() {
     private var allItems: List<List<Any>> = emptyList()
     private var canEdit: Boolean = false
     private var canDelete: Boolean = false
+    private val searchHandler = Handler(Looper.getMainLooper())
+    private var searchRunnable: Runnable? = null
+    private var lastTableQuery: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -176,23 +180,29 @@ class TableDetailFragment : Fragment() {
     private fun setupSearchView() {
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
+                searchRunnable?.let { searchHandler.removeCallbacks(it) }
                 query?.let { filterItems(it) }
                 return true
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                if (newText.isNullOrBlank()) {
-                    adapter.submitList(allItems)
-                } else {
-                    filterItems(newText)
+                searchRunnable?.let { searchHandler.removeCallbacks(it) }
+                searchRunnable = Runnable {
+                    if (newText.isNullOrBlank()) {
+                        adapter.submitList(allItems)
+                    } else {
+                        filterItems(newText)
+                    }
                 }
+                searchHandler.postDelayed(searchRunnable!!, 300)
                 return true
             }
         })
     }
 
     private fun filterItems(query: String) {
-        if (query.isBlank()) {
+        val q = query.removeAccents()
+        if (q.isBlank()) {
             adapter.submitList(allItems)
             return
         }
@@ -204,7 +214,7 @@ class TableDetailFragment : Fragment() {
 
         val filtered = allItems.filter { item ->
             val matchesNormal = item.any { value ->
-                value.toString().contains(query, ignoreCase = true)
+                value.toString().removeAccents().contains(q, ignoreCase = true)
             }
 
             if (matchesNormal) {
@@ -212,31 +222,31 @@ class TableDetailFragment : Fragment() {
             } else if (tableName == "OFERTA_TRABAJO") {
                 val fechaCad = item.getOrNull(5)?.toString() ?: ""
                 when {
-                    query.contains("vigente", ignoreCase = true) ->
+                    q.contains("vigente", ignoreCase = true) ->
                         fechaCad.isNotBlank() && fechaCad >= hoy
-                    query.contains("vencida", ignoreCase = true) ->
+                    q.contains("vencida", ignoreCase = true) ->
                         fechaCad.isNotBlank() && fechaCad <= hoy
                     else -> false
                 }
             } else if (tableName == "DETALLE_REQUISITO") {
                 val fechaCad = item.getOrNull(6)?.toString() ?: ""
                 when {
-                    query.contains("vigente", ignoreCase = true) ->
+                    q.contains("vigente", ignoreCase = true) ->
                         fechaCad.isNotBlank() && fechaCad >= hoy
-                    query.contains("vencido", ignoreCase = true) ->
+                    q.contains("vencido", ignoreCase = true) ->
                         fechaCad.isNotBlank() && fechaCad <= hoy
                     else -> false
                 }
             } else if (tableName == "POSTULACION") {
                 val estado = item.getOrNull(5)?.toString() ?: ""
                 when {
-                    query.contains("activo", ignoreCase = true) ->
+                    q.contains("activo", ignoreCase = true) ->
                         estado.contains("activo", ignoreCase = true)
-                    query.contains("en proceso", ignoreCase = true) ->
+                    q.contains("en proceso", ignoreCase = true) ->
                         estado.contains("en proceso", ignoreCase = true)
-                    query.contains("contratado", ignoreCase = true) ->
+                    q.contains("contratado", ignoreCase = true) ->
                         estado.contains("contratado", ignoreCase = true)
-                    query.contains("rechazado", ignoreCase = true) ->
+                    q.contains("rechazado", ignoreCase = true) ->
                         estado.contains("rechazado", ignoreCase = true)
                     else -> false
                 }
@@ -246,9 +256,11 @@ class TableDetailFragment : Fragment() {
         }
         adapter.submitList(filtered)
 
-        if (filtered.isEmpty()) {
+        val currentQ = query.trim()
+        if (filtered.isEmpty() && currentQ.isNotBlank() && currentQ != lastTableQuery) {
             StyledToast.show(requireContext(), "Sin resultados")
         }
+        lastTableQuery = if (filtered.isNotEmpty()) null else currentQ
     }
 
     private fun setupFab() {

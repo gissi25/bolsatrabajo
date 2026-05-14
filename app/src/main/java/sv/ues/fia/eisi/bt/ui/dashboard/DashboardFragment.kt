@@ -1,6 +1,8 @@
 package sv.ues.fia.eisi.bt.ui.dashboard
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -33,6 +35,9 @@ class DashboardFragment : Fragment() {
     private lateinit var btnThemeToggle: ImageButton
     private lateinit var btnInsertScript: ImageButton
     private lateinit var btnLogout: ImageButton
+    private val searchHandler = Handler(Looper.getMainLooper())
+    private var searchRunnable: Runnable? = null
+    private var lastSearchQuery: String? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_dashboard, container, false)
@@ -96,9 +101,11 @@ class DashboardFragment : Fragment() {
 
         viewModel.items.observe(viewLifecycleOwner) { items ->
             adapter.submitList(items)
-            if (items.isEmpty() && etSearch.text?.toString()?.isNotBlank() == true) {
+            val currentQuery = etSearch.text?.toString()
+            if (items.isEmpty() && currentQuery?.isNotBlank() == true && currentQuery != lastSearchQuery) {
                 StyledToast.show(requireContext(), "Sin resultados")
             }
+            lastSearchQuery = if (items.isNotEmpty()) null else currentQuery
         }
 
         viewModel.loadTables(role)
@@ -114,12 +121,16 @@ class DashboardFragment : Fragment() {
 
     private fun setupSearch() {
         etSearch.addTextChangedListener { text ->
-            val query = text?.toString() ?: ""
-            if (query.isEmpty()) {
-                viewModel.loadOriginalTables()
-            } else {
-                viewModel.filterTables(query)
+            searchRunnable?.let { searchHandler.removeCallbacks(it) }
+            searchRunnable = Runnable {
+                val query = text?.toString() ?: ""
+                if (query.isEmpty()) {
+                    viewModel.loadOriginalTables()
+                } else {
+                    viewModel.filterTables(query)
+                }
             }
+            searchHandler.postDelayed(searchRunnable!!, 300)
         }
     }
 

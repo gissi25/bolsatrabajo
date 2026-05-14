@@ -498,7 +498,7 @@ class MainRepository(context: Context) {
                 val count = cursor.getInt(0)
                 cursor.close()
                 if (count > 0) {
-                    return "Ya existen datos en la base de datos"
+                    return "La base de datos ya fué llenada"
                 }
             }
 

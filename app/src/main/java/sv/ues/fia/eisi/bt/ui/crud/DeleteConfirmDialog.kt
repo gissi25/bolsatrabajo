@@ -171,7 +171,7 @@ class DeleteConfirmDialog : DialogFragment() {
         depsLayout: LinearLayout,
         buttonsLayout: LinearLayout
     ) {
-        titleTv.text = getString(R.string.eliminar_registro)
+        titleTv.text = getString(R.string.confirmar_eliminar)
         depsLayout.removeAllViews()
         val noDepsText = TextView(requireContext()).apply {
             text = getString(R.string.sin_dependencias)
@@ -181,6 +181,24 @@ class DeleteConfirmDialog : DialogFragment() {
         }
         depsLayout.addView(noDepsText)
         depsLayout.visibility = View.VISIBLE
+
+        buttonsLayout.removeAllViews()
+        val btnCancel = MaterialButton(requireContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = getString(R.string.cerrar)
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginEnd = 16
+            }
+            setOnClickListener { dismiss() }
+        }
+        buttonsLayout.addView(btnCancel)
+        val btnDelete = MaterialButton(requireContext()).apply {
+            text = getString(R.string.delete)
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            setBackgroundColor(android.graphics.Color.parseColor("#D32F2F"))
+            setTextColor(android.graphics.Color.WHITE)
+            setOnClickListener { performDelete() }
+        }
+        buttonsLayout.addView(btnDelete)
         buttonsLayout.visibility = View.VISIBLE
     }
 
@@ -192,45 +210,17 @@ class DeleteConfirmDialog : DialogFragment() {
     ) {
         titleTv.text = getString(R.string.no_se_puede_eliminar)
         depsLayout.removeAllViews()
-        val warningText = TextView(requireContext()).apply {
+        val msgText = TextView(requireContext()).apply {
             text = getString(R.string.dependencias_en_cadena)
-            setPadding(0, 0, 0, 16)
-            setTextColor(requireContext().getColor(R.color.text_primary))
-            setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Body1)
-        }
-        depsLayout.addView(warningText)
-
-        val grouped = deps.groupBy { it.depth }
-        for ((depth, items) in grouped) {
-            val levelLabel = if (depth == 1) "Directos:" else "Nivel $depth:"
-            val levelTitle = TextView(requireContext()).apply {
-                text = "\n$levelLabel"
-                setPadding(16, 8, 0, 4)
-                setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Body2)
-                setTextColor(requireContext().getColor(R.color.text_secondary))
-            }
-            depsLayout.addView(levelTitle)
-            for (item in items) {
-                val depText = TextView(requireContext()).apply {
-                    text = "  \u2022 ${item.count} ${item.displayName}"
-                    setPadding(32, 0, 0, 4)
-                    setTextColor(requireContext().getColor(R.color.text_secondary))
-                }
-                depsLayout.addView(depText)
-            }
-        }
-
-        val totalRecords = deps.sumOf { it.count }
-        val totalText = TextView(requireContext()).apply {
-            text = "\n${getString(R.string.total_registros_vinculados, totalRecords)}"
             setPadding(0, 0, 0, 32)
+            setTextColor(requireContext().getColor(R.color.text_secondary))
             gravity = android.view.Gravity.CENTER
-            setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Body1)
-            setTextColor(android.graphics.Color.parseColor("#D32F2F"))
         }
-        depsLayout.addView(totalText)
+        depsLayout.addView(msgText)
+        depsLayout.visibility = View.VISIBLE
 
-        val btnOk = MaterialButton(requireContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+        buttonsLayout.removeAllViews()
+        val btnClose = MaterialButton(requireContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = getString(R.string.cerrar)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -238,8 +228,7 @@ class DeleteConfirmDialog : DialogFragment() {
             )
             setOnClickListener { dismiss() }
         }
-        buttonsLayout.removeAllViews()
-        buttonsLayout.addView(btnOk)
+        buttonsLayout.addView(btnClose)
         buttonsLayout.visibility = View.VISIBLE
     }
 

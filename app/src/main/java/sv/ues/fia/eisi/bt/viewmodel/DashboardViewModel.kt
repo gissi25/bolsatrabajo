@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
 import sv.ues.fia.eisi.bt.utils.Constants
+import sv.ues.fia.eisi.bt.utils.removeAccents
 
 sealed class DashboardItem {
     data class Section(val title: String, val isExpanded: Boolean = false) : DashboardItem()
@@ -138,19 +139,20 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun filterTables(query: String) {
-        if (query.isBlank()) {
+        val q = query.removeAccents()
+        if (q.isBlank()) {
             _items.value = allItemsOriginal.filter { item ->
                 item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionTitle in expandedSections
             }
         } else {
             val matchingNames = allItemsOriginal.filterIsInstance<DashboardItem.Table>()
-                .filter { it.info.displayName.contains(query, ignoreCase = true) || it.info.name.contains(query, ignoreCase = true) }
+                .filter { it.info.displayName.removeAccents().contains(q, ignoreCase = true) || it.info.name.removeAccents().contains(q, ignoreCase = true) }
                 .map { it.sectionTitle }.toSet()
             val filtered = allItemsOriginal.filter { item ->
                 when (item) {
                     is DashboardItem.Section -> item.title in matchingNames
                     is DashboardItem.Table ->
-                        (item.info.displayName.contains(query, ignoreCase = true) || item.info.name.contains(query, ignoreCase = true))
+                        (item.info.displayName.removeAccents().contains(q, ignoreCase = true) || item.info.name.removeAccents().contains(q, ignoreCase = true))
                 }
             }
             _items.value = filtered
