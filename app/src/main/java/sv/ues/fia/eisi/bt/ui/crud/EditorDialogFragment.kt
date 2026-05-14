@@ -400,6 +400,7 @@ class EditorDialogFragment : DialogFragment() {
             override fun afterTextChanged(s: Editable?) {
                 if (column == "ID_TIPO_DOCUMENTO") {
                     refreshNumDocHintAndValidation()
+                    textFields[numDocColumnIndex]?.second?.setText("")
                 }
             }
         })

@@ -301,6 +301,16 @@ class MainRepository(context: Context) {
     }
 
     private fun checkDuplicateInsert(tableName: String, cols: Map<String, Any>, idCol: String?) {
+        val dupChecks = getDuplicateCheckFields(tableName)
+        for ((whereSql, errorMsg) in dupChecks) {
+            val resolvedSql = replacePlaceholders(whereSql, cols)
+            val dupCursor = getDb().rawQuery("SELECT COUNT(*) FROM $tableName WHERE $resolvedSql", null)
+            dupCursor.moveToFirst()
+            val exists = dupCursor.getInt(0) > 0
+            dupCursor.close()
+            if (exists) throw Exception(errorMsg)
+        }
+
         if (idCol == null) {
             val pkCols = getPrimaryKeyColumns(tableName)
             if (pkCols.isNotEmpty()) {
@@ -316,16 +326,6 @@ class MainRepository(context: Context) {
                     if (exists) throw Exception("Duplicado: Ya existe un registro con esa clave")
                 }
             }
-        }
-
-        val dupChecks = getDuplicateCheckFields(tableName)
-        for ((whereSql, errorMsg) in dupChecks) {
-            val resolvedSql = replacePlaceholders(whereSql, cols)
-            val dupCursor = getDb().rawQuery("SELECT COUNT(*) FROM $tableName WHERE $resolvedSql", null)
-            dupCursor.moveToFirst()
-            val exists = dupCursor.getInt(0) > 0
-            dupCursor.close()
-            if (exists) throw Exception(errorMsg)
         }
     }
 
