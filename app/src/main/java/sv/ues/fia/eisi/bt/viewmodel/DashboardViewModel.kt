@@ -54,7 +54,6 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 }
                 val roleTables = Constants.getRoleTables(currentRole)
                 val filtered = all.filter { roleTables.containsKey(it.name) }
-                expandedSections.clear()
                 allItemsOriginal = buildSectionedList(filtered)
                 _items.postValue(allItemsOriginal.filter { item ->
                     item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionTitle in expandedSections

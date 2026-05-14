@@ -542,6 +542,9 @@ class MainRepository(context: Context) {
                 for (row in SeedData.OFERTAS_ACADEMICAS) {
                     insertRecord("OFERTA_ACADEMICA", row)
                 }
+                for (row in SeedData.USUARIOS) {
+                    insertRecord("USUARIO", row)
+                }
                 getDb().setTransactionSuccessful()
             } finally {
                 getDb().endTransaction()

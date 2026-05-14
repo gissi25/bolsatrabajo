@@ -130,7 +130,7 @@ class EditorDialogFragment : DialogFragment() {
         viewModel.operationResult.observe(viewLifecycleOwner) { result ->
             if (result == null) return@observe
             btnSave.isEnabled = true
-            btnSave.text = if (isEditMode) "Actualizar" else "Guardar"
+            btnSave.text = getString(R.string.save)
             when (result) {
                 is Resource.Success -> {
                     if (tableName == "USUARIO" && isEditMode) {

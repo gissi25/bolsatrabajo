@@ -76,7 +76,7 @@ object ValidationRules {
                 "NOMBRE_DISTRITO" to FieldRule(field = "NOMBRE_DISTRITO", required = true, friendlyName = "Nombre de distrito")
             )
             "INSTITUCION" -> mapOf(
-                "ID_INSTITUCION" to FieldRule(field = "ID_INSTITUCION", required = true, pattern = "^[A-Za-z]{2,}\\d{2,}$", friendlyName = "Codigo institucion", maxLength = 20),
+                "ID_INSTITUCION" to FieldRule(field = "ID_INSTITUCION", required = true, pattern = "^INS\\d{3,}$", friendlyName = "Codigo institucion", maxLength = 20),
                 "NOMBRE_INSTITUCION" to FieldRule(field = "NOMBRE_INSTITUCION", required = true, friendlyName = "Nombre de institucion")
             )
             "GRADO_ACADEMICO" -> mapOf(

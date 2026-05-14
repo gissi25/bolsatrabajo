@@ -128,7 +128,7 @@ class DashboardFragment : Fragment() {
             onItemClick = { tableItem ->
                 val bundle = Bundle().apply {
                     putString(Constants.BUNDLE_TABLE_NAME, tableItem.info.name)
-                    putString("tableDisplayName", tableItem.info.displayName)
+                    putString(Constants.BUNDLE_TABLE_DISPLAY_NAME, tableItem.info.displayName)
                 }
                 findNavController().navigate(R.id.action_dashboard_to_tableDetail, bundle)
             },
