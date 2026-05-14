@@ -1097,9 +1097,16 @@ class MainRepository(context: Context) {
             val cursor = getDb().rawQuery("""
                 SELECT p.ID_POSTULANTE, p.NOMBRE, p.APELLIDO, p.FECHA_NACIMIENTO,
                        p.EMAIL, p.TELEFONO_CASA, p.TELEFONO_CELULAR, p.DIRECCION_DETALLE, p.NUP,
-                       g.NOMBRE_GRADO
+                       g.NOMBRE_GRADO,
+                       gen.NOMBRE_GENERO, td.NOMBRE_TIPO, p.NUM_DOCUMENTO,
+                       dep.NOMBRE_DEPARTAMENTO, m.NOMBRE_MUNICIPIO, d.NOMBRE_DISTRITO
                 FROM POSTULANTE p
                 LEFT JOIN GRADO_ACADEMICO g ON p.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO
+                LEFT JOIN GENERO gen ON p.ID_GENERO = gen.ID_GENERO
+                LEFT JOIN TIPO_DOCUMENTO td ON p.ID_TIPO_DOCUMENTO = td.ID_TIPO_DOCUMENTO
+                LEFT JOIN DISTRITO d ON p.ID_DISTRITO_DEPTO = d.ID_DEPARTAMENTO AND p.ID_DISTRITO_MUNICIPIO = d.ID_MUNICIPIO AND p.ID_DISTRITO_ID = d.ID_DISTRITO
+                LEFT JOIN DEPARTAMENTO dep ON d.ID_DEPARTAMENTO = dep.ID_DEPARTAMENTO
+                LEFT JOIN MUNICIPIO m ON d.ID_DEPARTAMENTO = m.ID_DEPARTAMENTO AND d.ID_MUNICIPIO = m.ID_MUNICIPIO
                 WHERE p.ID_POSTULANTE = '$idPostulante'
             """.trimIndent(), null)
             if (!cursor.moveToFirst()) { cursor.close(); return null }
@@ -1115,6 +1122,12 @@ class MainRepository(context: Context) {
                 direccion = cursor.getString(7) ?: "",
                 nup = cursor.getString(8) ?: "",
                 gradoAcademico = cursor.getString(9) ?: "",
+                genero = cursor.getString(10) ?: "",
+                tipoDocumento = cursor.getString(11) ?: "",
+                numDocumento = cursor.getString(12) ?: "",
+                departamento = cursor.getString(13) ?: "",
+                municipio = cursor.getString(14) ?: "",
+                distrito = cursor.getString(15) ?: "",
                 formaciones = getFormacionesForPostulant(idPostulante),
                 certificaciones = getCertificacionesForPostulant(idPostulante),
                 habilidades = getHabilidadesForPostulant(idPostulante),
@@ -1131,10 +1144,14 @@ class MainRepository(context: Context) {
             val cursor = getDb().rawQuery("""
                 SELECT o.NIT, o.ID_OFERTA, o.TITULO_PUESTO, o.FECHA_PUBLICACION,
                        o.FECHA_CADUCIDAD, o.EXPERIENCIA_ANIOS, o.EDAD_MINIMA, o.EDAD_MAXIMA,
-                       o.DESCRIPCION_OFERTA_TRABAJO, g.NOMBRE_GRADO, e.NOMBRE_EMPRESA, e.CONTACTO_DIRECTO
+                       o.DESCRIPCION_OFERTA_TRABAJO, g.NOMBRE_GRADO, e.NOMBRE_EMPRESA, e.CONTACTO_DIRECTO,
+                       dep.NOMBRE_DEPARTAMENTO, m.NOMBRE_MUNICIPIO, d.NOMBRE_DISTRITO
                 FROM OFERTA_TRABAJO o
                 LEFT JOIN EMPRESA e ON o.NIT = e.NIT
                 LEFT JOIN GRADO_ACADEMICO g ON o.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO
+                LEFT JOIN DISTRITO d ON e.ID_DISTRITO_DEPTO = d.ID_DEPARTAMENTO AND e.ID_DISTRITO_MUNICIPIO = d.ID_MUNICIPIO AND e.ID_DISTRITO_ID = d.ID_DISTRITO
+                LEFT JOIN DEPARTAMENTO dep ON d.ID_DEPARTAMENTO = dep.ID_DEPARTAMENTO
+                LEFT JOIN MUNICIPIO m ON d.ID_DEPARTAMENTO = m.ID_DEPARTAMENTO AND d.ID_MUNICIPIO = m.ID_MUNICIPIO
                 WHERE o.NIT = '$nit' AND o.ID_OFERTA = '$idOferta'
             """.trimIndent(), null)
             if (!cursor.moveToFirst()) { cursor.close(); return null }
@@ -1163,6 +1180,9 @@ class MainRepository(context: Context) {
                 nombreGrado = cursor.getString(9) ?: "",
                 nombreEmpresa = cursor.getString(10) ?: "",
                 contactoEmpresa = cursor.getString(11) ?: "",
+                empresaDepartamento = cursor.getString(12) ?: "",
+                empresaMunicipio = cursor.getString(13) ?: "",
+                empresaDistrito = cursor.getString(14) ?: "",
                 requisitos = requisitos
             )
             cursor.close()
@@ -1174,7 +1194,7 @@ class MainRepository(context: Context) {
         val results = mutableListOf<List<String>>()
         try {
             val cursor = getDb().rawQuery("""
-                SELECT f.TITULO_OBTENIDO, i.NOMBRE_INSTITUCION, f.FECHA_INICIO, f.FECHA_FIN, g.NOMBRE_GRADO
+                SELECT f.TITULO_OBTENIDO, i.NOMBRE_INSTITUCION, f.FECHA_INICIO, f.FECHA_FIN, g.NOMBRE_GRADO, f.FECHA_OBTENCION
                 FROM FORMACION_ACADEMICA f
                 LEFT JOIN OFERTA_ACADEMICA oa ON f.ID_OFERTA_ACADEMICA = oa.ID_OFERTA_ACADEMICA
                 LEFT JOIN INSTITUCION i ON oa.ID_INSTITUCION = i.ID_INSTITUCION
@@ -1188,7 +1208,8 @@ class MainRepository(context: Context) {
                     cursor.getString(1) ?: "",
                     cursor.getString(2) ?: "",
                     cursor.getString(3) ?: "",
-                    cursor.getString(4) ?: ""
+                    cursor.getString(4) ?: "",
+                    cursor.getString(5) ?: ""
                 ))
             }
             cursor.close()
@@ -1200,7 +1221,7 @@ class MainRepository(context: Context) {
         val results = mutableListOf<List<String>>()
         try {
             val cursor = getDb().rawQuery("""
-                SELECT c.NOMBRE_CERTIFICACION, i.NOMBRE_INSTITUCION, c.FECHA_CERTIFICACION, tc.NOMBRE_TIPO
+                SELECT c.NOMBRE_CERTIFICACION, i.NOMBRE_INSTITUCION, c.FECHA_CERTIFICACION, tc.NOMBRE_TIPO, c.FECHA_INICIO, c.FECHA_FIN
                 FROM CERTIFICACION c
                 LEFT JOIN INSTITUCION i ON c.ID_INSTITUCION = i.ID_INSTITUCION
                 LEFT JOIN TIPO_CERTIFICACION tc ON c.ID_TIPO_CERTIFICACION = tc.ID_TIPO_CERTIFICACION
@@ -1212,7 +1233,9 @@ class MainRepository(context: Context) {
                     cursor.getString(0) ?: "",
                     cursor.getString(1) ?: "",
                     cursor.getString(2) ?: "",
-                    cursor.getString(3) ?: ""
+                    cursor.getString(3) ?: "",
+                    cursor.getString(4) ?: "",
+                    cursor.getString(5) ?: ""
                 ))
             }
             cursor.close()
@@ -1245,21 +1268,20 @@ class MainRepository(context: Context) {
         val results = mutableListOf<List<String>>()
         try {
             val cursor = getDb().rawQuery("""
-                SELECT e.PUESTO_TRABAJO, em.NOMBRE_EMPRESA, e.FECHA_INICIO, e.FECHA_FIN, e.DESCP_EXPERIENCIA_LABORAL
+                SELECT e.PUESTO_TRABAJO, em.NOMBRE_EMPRESA, e.FECHA_INICIO, e.FECHA_FIN, e.DESCP_EXPERIENCIA_LABORAL, e.CONTACTO_REFERENCIA
                 FROM EXPERIENCIA_LABORAL e
                 LEFT JOIN EMPRESA em ON e.NIT = em.NIT
                 WHERE e.ID_POSTULANTE = '$idPostulante'
                 ORDER BY e.FECHA_FIN DESC
             """.trimIndent(), null)
             while (cursor.moveToNext()) {
-                val inicio = cursor.getString(2) ?: ""
-                val fin = cursor.getString(3) ?: ""
-                val periodo = if (inicio.isNotBlank() || fin.isNotBlank()) "$inicio — $fin" else ""
                 results.add(listOf(
                     cursor.getString(0) ?: "",
                     cursor.getString(1) ?: "",
-                    periodo,
-                    cursor.getString(4) ?: ""
+                    cursor.getString(2) ?: "",
+                    cursor.getString(3) ?: "",
+                    cursor.getString(4) ?: "",
+                    cursor.getString(5) ?: ""
                 ))
             }
             cursor.close()

@@ -22,6 +22,12 @@ data class PostulantFullData(
     val direccion: String,
     val nup: String,
     val gradoAcademico: String,
+    val genero: String,
+    val tipoDocumento: String,
+    val numDocumento: String,
+    val departamento: String,
+    val municipio: String,
+    val distrito: String,
     val formaciones: List<List<String>>,
     val certificaciones: List<List<String>>,
     val habilidades: List<List<String>>,
@@ -42,6 +48,9 @@ data class OfertaFullData(
     val nombreGrado: String,
     val nombreEmpresa: String,
     val contactoEmpresa: String,
+    val empresaDepartamento: String,
+    val empresaMunicipio: String,
+    val empresaDistrito: String,
     val requisitos: List<String>
 )
 
@@ -51,8 +60,9 @@ object CVExportUtil {
     private const val PAGE_HEIGHT = 792
     private const val MARGIN = 50f
     private const val CONTENT_WIDTH = PAGE_WIDTH - 2 * MARGIN
-    private const val LINE_HEIGHT = 24f
-    private const val SECTION_SPACE = 55f
+    private const val COL_WIDTH = (CONTENT_WIDTH - 30) / 2
+    private const val LINE_HEIGHT = 26f
+    private const val SECTION_SPACE = 60f
     private const val PAGE_MAX_Y = PAGE_HEIGHT - MARGIN - 20f
 
     private val ACCENT = Color.rgb(51, 102, 255)
@@ -83,6 +93,7 @@ object CVExportUtil {
 
         init {
             canvas = newPage()
+            y = MARGIN + 55f
         }
 
         private fun newPage(): Canvas {
@@ -120,16 +131,29 @@ object CVExportUtil {
     private fun drawCVDocument(mgr: PageManager, data: PostulantFullData) {
         with(mgr) {
             drawPageTitle(canvas, "CURRICULUM VITAE")
-            y += 20
             y = drawSectionHeader(canvas, "Datos Personales", y)
-            y = drawField(canvas, "Nombre completo", "${data.nombre} ${data.apellido}", y)
-            y = drawField(canvas, "Fecha de nacimiento", data.fechaNacimiento, y)
-            y = drawField(canvas, "Correo electronico", data.email, y)
-            y = drawField(canvas, "Telefono celular", data.telefonoCelular, y)
-            if (data.telefonoCasa.isNotBlank()) y = drawField(canvas, "Telefono casa", data.telefonoCasa, y)
-            if (data.direccion.isNotBlank()) y = drawField(canvas, "Direccion", data.direccion, y)
-            if (data.nup.isNotBlank()) y = drawField(canvas, "NUP", data.nup, y)
-            y = drawField(canvas, "Grado academico", data.gradoAcademico, y)
+
+            val fullDir = buildString {
+                if (data.direccion.isNotBlank()) append(data.direccion)
+                if (data.distrito.isNotBlank()) { append(", "); append(data.distrito) }
+                if (data.municipio.isNotBlank()) { append(", "); append(data.municipio) }
+                if (data.departamento.isNotBlank()) { append(", "); append(data.departamento) }
+            }
+
+            val docInfo = buildString {
+                if (data.tipoDocumento.isNotBlank()) append(data.tipoDocumento)
+                if (data.numDocumento.isNotBlank()) { if (isNotEmpty()) append(" "); append(data.numDocumento) }
+            }
+
+            y = drawField2Col(canvas, "Codigo", data.idPostulante, "Grado", data.gradoAcademico, y)
+            y = drawField2Col(canvas, "Nombre", "${data.nombre} ${data.apellido}", "Genero", data.genero, y)
+            y = drawField2Col(canvas, "Nacimiento", data.fechaNacimiento, "Documento", docInfo, y)
+            y = drawField2Col(canvas, "NUP", data.nup, "Email", data.email, y)
+            y = drawField2Col(canvas, "Telefono", data.telefonoCelular, "Tel. Casa", data.telefonoCasa, y)
+            if (fullDir.isNotBlank()) {
+                checkPage()
+                y = drawSectionField(canvas, "Direccion", fullDir, y, this)
+            }
 
             if (data.formaciones.isNotEmpty()) {
                 y += SECTION_SPACE; checkPage()
@@ -140,14 +164,17 @@ object CVExportUtil {
                     val inicio = f.getOrElse(2) { "" }
                     val fin = f.getOrElse(3) { "" }
                     val grado = f.getOrElse(4) { "" }
-                    val periodo = if (inicio.isNotBlank() || fin.isNotBlank()) "$inicio — $fin" else ""
-                    y = drawBullet(canvas, titulo, y); checkPage()
+                    val fechaObtencion = f.getOrElse(5) { "" }
+                    val periodo = if (inicio.isNotBlank() || fin.isNotBlank()) "$inicio → $fin" else ""
+
+                    y = drawBullet(canvas, titulo.ifBlank { "(sin titulo)" }, y, this)
                     val sub = buildString {
                         if (institucion.isNotBlank()) append(institucion)
                         if (grado.isNotBlank()) { if (isNotEmpty()) append("  |  "); append(grado) }
                         if (periodo.isNotBlank()) { if (isNotEmpty()) append("  |  "); append(periodo) }
                     }
-                    if (sub.isNotBlank()) { y = drawSubtext(canvas, sub, y); checkPage() }
+                    if (sub.isNotBlank()) { y = drawSubtext(canvas, sub, y, this) }
+                    if (fechaObtencion.isNotBlank()) { y = drawSmallText(canvas, "Obtencion: $fechaObtencion", y, this) }
                 }
             }
 
@@ -157,30 +184,32 @@ object CVExportUtil {
                 for (c in data.certificaciones) {
                     val nombre = c.getOrElse(0) { "" }
                     val institucion = c.getOrElse(1) { "" }
-                    val fecha = c.getOrElse(2) { "" }
+                    val fechaCert = c.getOrElse(2) { "" }
                     val tipo = c.getOrElse(3) { "" }
-                    y = drawBullet(canvas, nombre, y); checkPage()
+                    val periodoInicio = c.getOrElse(4) { "" }
+                    val periodoFin = c.getOrElse(5) { "" }
+                    val periodo = if (periodoInicio.isNotBlank() || periodoFin.isNotBlank()) "$periodoInicio → $periodoFin" else ""
+
+                    y = drawBullet(canvas, nombre.ifBlank { "(sin nombre)" }, y, this)
                     val sub = buildString {
                         if (tipo.isNotBlank()) append(tipo)
                         if (institucion.isNotBlank()) { if (isNotEmpty()) append("  |  "); append(institucion) }
-                        if (fecha.isNotBlank()) { if (isNotEmpty()) append("  |  "); append(fecha) }
+                        if (periodo.isNotBlank()) { if (isNotEmpty()) append("  |  "); append(periodo) }
                     }
-                    if (sub.isNotBlank()) { y = drawSubtext(canvas, sub, y); checkPage() }
+                    if (sub.isNotBlank()) { y = drawSubtext(canvas, sub, y, this) }
+                    if (fechaCert.isNotBlank()) { y = drawSmallText(canvas, "Certificado: $fechaCert", y, this) }
                 }
             }
 
             if (data.habilidades.isNotEmpty()) {
                 y += SECTION_SPACE; checkPage()
                 y = drawSectionHeader(canvas, "Habilidades", y)
-                val sb = StringBuilder()
                 for (h in data.habilidades) {
                     val nombre = h.getOrElse(0) { "" }
                     val nivel = h.getOrElse(1) { "" }
-                    if (sb.isNotEmpty()) sb.append("  •  ")
-                    sb.append(nombre)
-                    if (nivel.isNotBlank()) sb.append(" ($nivel)")
+                    val label = if (nivel.isNotBlank()) "$nombre ($nivel)" else nombre
+                    y = drawBullet(canvas, label, y, this)
                 }
-                y = drawBodyText(canvas, sb.toString(), y); checkPage()
             }
 
             if (data.experiencias.isNotEmpty()) {
@@ -189,15 +218,20 @@ object CVExportUtil {
                 for (e in data.experiencias) {
                     val puesto = e.getOrElse(0) { "" }
                     val empresa = e.getOrElse(1) { "" }
-                    val periodo = e.getOrElse(2) { "" }
-                    val desc = e.getOrElse(3) { "" }
-                    y = drawBullet(canvas, puesto, y); checkPage()
+                    val inicio = e.getOrElse(2) { "" }
+                    val fin = e.getOrElse(3) { "" }
+                    val desc = e.getOrElse(4) { "" }
+                    val contacto = e.getOrElse(5) { "" }
+                    val periodo = if (inicio.isNotBlank() || fin.isNotBlank()) "$inicio → $fin" else ""
+
+                    y = drawBullet(canvas, puesto.ifBlank { "(sin puesto)" }, y, this)
                     val sub = buildString {
                         if (empresa.isNotBlank()) append(empresa)
                         if (periodo.isNotBlank()) { if (isNotEmpty()) append("  |  "); append(periodo) }
                     }
-                    if (sub.isNotBlank()) { y = drawSubtext(canvas, sub, y); checkPage() }
-                    if (desc.isNotBlank()) { y = drawSmallText(canvas, desc, y); checkPage() }
+                    if (sub.isNotBlank()) { y = drawSubtext(canvas, sub, y, this) }
+                    if (desc.isNotBlank()) { y = drawSmallText(canvas, desc, y, this) }
+                    if (contacto.isNotBlank()) { y = drawSmallText(canvas, "Contacto: $contacto", y, this) }
                 }
             }
 
@@ -207,7 +241,8 @@ object CVExportUtil {
                 for (r in data.redesSociales) {
                     val nombre = r.getOrElse(0) { "" }
                     val url = r.getOrElse(1) { "" }
-                    y = drawBullet(canvas, if (url.isNotBlank()) "$nombre: $url" else nombre, y); checkPage()
+                    val label = if (url.isNotBlank()) "$nombre: $url" else nombre
+                    y = drawBullet(canvas, label, y, this)
                 }
             }
         }
@@ -216,34 +251,35 @@ object CVExportUtil {
     private fun drawOfertaDocument(mgr: PageManager, data: OfertaFullData) {
         with(mgr) {
             drawPageTitle(canvas, "DETALLE DE LA VACANTE")
-            y += 20
+
+            val dirEmpresa = buildString {
+                if (data.empresaDistrito.isNotBlank()) append(data.empresaDistrito)
+                if (data.empresaMunicipio.isNotBlank()) { if (isNotEmpty()) append(", "); append(data.empresaMunicipio) }
+                if (data.empresaDepartamento.isNotBlank()) { if (isNotEmpty()) append(", "); append(data.empresaDepartamento) }
+            }
 
             y = drawSectionHeader(canvas, "Empresa", y)
-            y = drawField(canvas, "Nombre", data.nombreEmpresa, y)
-            y = drawField(canvas, "NIT", data.nit, y)
-            if (data.contactoEmpresa.isNotBlank()) y = drawField(canvas, "Contacto", data.contactoEmpresa, y)
+            y = drawField2Col(canvas, "Nombre", data.nombreEmpresa, "NIT", data.nit, y)
+            y = drawField2Col(canvas, "Contacto", data.contactoEmpresa, "Ubicacion", dirEmpresa, y)
 
             y += SECTION_SPACE; checkPage()
             y = drawSectionHeader(canvas, "Puesto", y)
-            y = drawField(canvas, "Titulo del puesto", data.tituloPuesto, y)
-            y = drawField(canvas, "Grado academico requerido", data.nombreGrado, y)
-            if (data.experienciaAnios.isNotBlank()) y = drawField(canvas, "Experiencia requerida", "${data.experienciaAnios} años", y)
-            if (data.edadMinima.isNotBlank()) y = drawField(canvas, "Edad requerida", "${data.edadMinima} — ${data.edadMaxima} años", y)
-            y = drawField(canvas, "Fecha de publicacion", data.fechaPublicacion, y)
-            y = drawField(canvas, "Fecha de caducidad", data.fechaCaducidad, y)
+            y = drawField2Col(canvas, "Titulo", data.tituloPuesto, "Grado requerido", data.nombreGrado, y)
+            y = drawField2Col(canvas, "Experiencia", if (data.experienciaAnios.isNotBlank()) "${data.experienciaAnios} años" else "", "Edad", if (data.edadMinima.isNotBlank()) "${data.edadMinima} — ${data.edadMaxima} años" else "", y)
+            y = drawField2Col(canvas, "Publicacion", data.fechaPublicacion, "Caducidad", data.fechaCaducidad, y)
 
             if (data.requisitos.isNotEmpty()) {
                 y += SECTION_SPACE; checkPage()
                 y = drawSectionHeader(canvas, "Requisitos", y)
                 for (r in data.requisitos) {
-                    y = drawBullet(canvas, r, y); checkPage()
+                    y = drawBullet(canvas, r, y, this)
                 }
             }
 
             if (data.descripcion.isNotBlank()) {
                 y += SECTION_SPACE; checkPage()
                 y = drawSectionHeader(canvas, "Descripcion", y)
-                y = drawSmallText(canvas, data.descripcion, y)
+                y = drawSmallText(canvas, data.descripcion, y, this)
             }
         }
     }
@@ -259,106 +295,111 @@ object CVExportUtil {
     }
 
     private fun drawSectionHeader(canvas: Canvas, text: String, y: Float): Float {
-        val linePaint = Paint().apply {
-            color = ACCENT
-            strokeWidth = 3f
-        }
-        canvas.drawLine(MARGIN, y, MARGIN, y + 24, linePaint)
-
         val textPaint = Paint().apply {
             color = ACCENT_DARK
             textSize = 13f
             typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
         }
-        canvas.drawText(text.uppercase(), MARGIN + 14, y + 17, textPaint)
-
+        canvas.drawText(text.uppercase(), MARGIN, y + 17, textPaint)
         val dividerPaint = Paint().apply {
             color = Color.argb(60, 51, 102, 255)
-            strokeWidth = 1f
+            strokeWidth = 1.5f
         }
-        canvas.drawLine(MARGIN, y + 24, PAGE_WIDTH - MARGIN, y + 24, dividerPaint)
-        return y + 48
+        canvas.drawLine(MARGIN, y + 28, PAGE_WIDTH - MARGIN, y + 28, dividerPaint)
+        return y + 44
     }
 
-    private fun drawField(canvas: Canvas, label: String, value: String, y: Float): Float {
+    private fun drawField2Col(canvas: Canvas, label1: String, value1: String, label2: String, value2: String, y: Float): Float {
         val labelPaint = Paint().apply {
             color = TEXT_MEDIUM
-            textSize = 10f
+            textSize = 9f
         }
-        canvas.drawText(label, MARGIN + 10, y + 10, labelPaint)
-
         val valuePaint = Paint().apply {
             color = TEXT_DARK
-            textSize = 11.5f
+            textSize = 10.5f
         }
-        canvas.drawText(value, MARGIN + 10, y + 26, valuePaint)
-        return y + LINE_HEIGHT + 6
+        val x1 = MARGIN
+        val x2 = MARGIN + COL_WIDTH + 30
+        canvas.drawText(label1, x1, y + 10, labelPaint)
+        canvas.drawText(value1, x1, y + 24, valuePaint)
+        canvas.drawText(label2, x2, y + 10, labelPaint)
+        canvas.drawText(value2, x2, y + 24, valuePaint)
+        return y + LINE_HEIGHT
     }
 
-    private fun drawBullet(canvas: Canvas, text: String, y: Float): Float {
-        val bulletPaint = Paint().apply {
-            color = ACCENT
-            textSize = 14f
+    private fun drawSectionField(canvas: Canvas, label: String, value: String, y: Float, mgr: PageManager): Float {
+        val labelPaint = Paint().apply {
+            color = TEXT_MEDIUM
+            textSize = 9f
         }
+        canvas.drawText(label, MARGIN, y + 10, labelPaint)
+        val valuePaint = Paint().apply {
+            color = TEXT_DARK
+            textSize = 10.5f
+        }
+        val wrapped = wrapText(value, valuePaint, CONTENT_WIDTH)
+        var cy = y + 20
+        for (line in wrapped) {
+            mgr.checkPage()
+            canvas.drawText(line, MARGIN, cy, valuePaint)
+            cy += LINE_HEIGHT - 4
+        }
+        return cy + 4
+    }
+
+    private fun drawBullet(canvas: Canvas, text: String, y: Float, mgr: PageManager): Float {
         val textPaint = Paint().apply {
             color = TEXT_DARK
-            textSize = 11.5f
+            textSize = 10.5f
         }
-        val bx = MARGIN + 10
-        canvas.drawText("●", bx, y + 4, bulletPaint)
         val wrapped = wrapText(text, textPaint, CONTENT_WIDTH - 40)
         var cy = y
-        for (line in wrapped) {
-            canvas.drawText(line, bx + 18, cy + 4, textPaint)
+        for ((i, line) in wrapped.withIndex()) {
+            mgr.checkPage()
+            if (i == 0) {
+                canvas.drawText("●", MARGIN, cy + 4, Paint().apply { color = ACCENT; textSize = 12f })
+                canvas.drawText(line, MARGIN + 16, cy + 4, textPaint)
+            } else {
+                canvas.drawText(line, MARGIN + 16, cy + 4, textPaint)
+            }
             cy += LINE_HEIGHT
         }
         return cy
     }
 
-    private fun drawSubtext(canvas: Canvas, text: String, y: Float): Float {
+    private fun drawSubtext(canvas: Canvas, text: String, y: Float, mgr: PageManager): Float {
         val paint = Paint().apply {
             color = TEXT_MEDIUM
-            textSize = 9.5f
+            textSize = 9f
             typeface = Typeface.create("sans-serif", Typeface.ITALIC)
         }
-        val wrapped = wrapText(text, paint, CONTENT_WIDTH - 40)
+        val wrapped = wrapText(text, paint, CONTENT_WIDTH - 30)
         var cy = y
         for (line in wrapped) {
+            mgr.checkPage()
             canvas.drawText(line, MARGIN + 30, cy + 4, paint)
-            cy += LINE_HEIGHT - 4
+            cy += LINE_HEIGHT - 6
         }
         return cy
     }
 
-    private fun drawBodyText(canvas: Canvas, text: String, y: Float): Float {
-        val paint = Paint().apply {
-            color = TEXT_DARK
-            textSize = 11f
-        }
-        val wrapped = wrapText(text, paint, CONTENT_WIDTH - 20)
-        var cy = y
-        for (line in wrapped) {
-            canvas.drawText(line, MARGIN + 10, cy + 4, paint)
-            cy += LINE_HEIGHT - 2
-        }
-        return cy
-    }
-
-    private fun drawSmallText(canvas: Canvas, text: String, y: Float): Float {
+    private fun drawSmallText(canvas: Canvas, text: String, y: Float, mgr: PageManager): Float {
         val paint = Paint().apply {
             color = TEXT_MEDIUM
-            textSize = 9.5f
+            textSize = 9f
         }
-        val wrapped = wrapText(text, paint, CONTENT_WIDTH - 20)
+        val wrapped = wrapText(text, paint, CONTENT_WIDTH - 30)
         var cy = y
         for (line in wrapped) {
-            canvas.drawText(line, MARGIN + 10, cy + 4, paint)
-            cy += LINE_HEIGHT - 4
+            mgr.checkPage()
+            canvas.drawText(line, MARGIN + 30, cy + 4, paint)
+            cy += LINE_HEIGHT - 6
         }
         return cy
     }
 
     private fun wrapText(text: String, paint: Paint, maxWidth: Float): List<String> {
+        if (text.isEmpty()) return listOf("")
         val result = mutableListOf<String>()
         val words = text.split(" ")
         val current = StringBuilder()
