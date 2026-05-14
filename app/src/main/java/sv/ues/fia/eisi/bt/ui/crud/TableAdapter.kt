@@ -195,11 +195,11 @@ class TableAdapter(
                 tvSecondary.text = institucion.ifBlank { "(sin institucion)" }
             } else if (tableName == "CERTIFICACION") {
                 val nombre = getStringSafely(item, 4)
-                val postNombre = getStringSafely(item, 7)
-                val postApellido = getStringSafely(item, 8)
+                val fechaInicio = getStringSafely(item, 5)
+                val fechaFin = getStringSafely(item, 6)
                 tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)}, ${getStringSafely(item, 2)})"
                 tvPrimary.text = nombre.ifBlank { "(sin certificacion)" }
-                tvSecondary.text = "$postNombre $postApellido".trim().ifBlank { "(sin postulante)" }
+                tvSecondary.text = if (fechaInicio.isNotBlank() && fechaFin.isNotBlank()) "$fechaInicio → $fechaFin" else "(sin periodo)"
             } else if (tableName == "FORMACION_ACADEMICA") {
                 val titulo = getStringSafely(item, 3)
                 val fechaInicio = getStringSafely(item, 4)
