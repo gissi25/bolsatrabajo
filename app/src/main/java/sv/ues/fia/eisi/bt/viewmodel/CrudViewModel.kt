@@ -10,6 +10,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
+import sv.ues.fia.eisi.bt.utils.OfertaFullData
+import sv.ues.fia.eisi.bt.utils.PostulantFullData
 import sv.ues.fia.eisi.bt.utils.TriggerErrorTranslator
 
 sealed class Resource {
@@ -169,5 +171,13 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
 
     fun hasChildRecords(tableName: String, pkValues: List<String>): Boolean {
         return repository.hasChildRecords(tableName, pkValues)
+    }
+
+    fun getPostulantFullData(idPostulante: String): PostulantFullData? {
+        return repository.getPostulantFullData(idPostulante)
+    }
+
+    fun getOfertaFullData(nit: String, idOferta: String): OfertaFullData? {
+        return repository.getOfertaFullData(nit, idOferta)
     }
 }

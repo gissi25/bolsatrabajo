@@ -19,6 +19,7 @@ import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.StyledToast
 import sv.ues.fia.eisi.bt.utils.ThemeToggleHelper
+import sv.ues.fia.eisi.bt.viewmodel.DashboardItem
 import sv.ues.fia.eisi.bt.viewmodel.DashboardViewModel
 import sv.ues.fia.eisi.bt.viewmodel.Resource
 
@@ -93,9 +94,9 @@ class DashboardFragment : Fragment() {
         setupSearch()
         setupRecyclerView()
 
-        viewModel.tables.observe(viewLifecycleOwner) { tables ->
-            adapter.submitList(tables)
-            if (tables.isEmpty() && etSearch.text?.toString()?.isNotBlank() == true) {
+        viewModel.items.observe(viewLifecycleOwner) { items ->
+            adapter.submitList(items)
+            if (items.isEmpty() && etSearch.text?.toString()?.isNotBlank() == true) {
                 StyledToast.show(requireContext(), "Sin resultados")
             }
         }
@@ -123,15 +124,30 @@ class DashboardFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        adapter = DashboardAdapter { table ->
-            val bundle = Bundle().apply {
-                putString(Constants.BUNDLE_TABLE_NAME, table.name)
-                putString("tableDisplayName", table.displayName)
+        adapter = DashboardAdapter(
+            onItemClick = { tableItem ->
+                val bundle = Bundle().apply {
+                    putString(Constants.BUNDLE_TABLE_NAME, tableItem.info.name)
+                    putString(Constants.BUNDLE_TABLE_DISPLAY_NAME, tableItem.info.displayName)
+                }
+                findNavController().navigate(R.id.action_dashboard_to_tableDetail, bundle)
+            },
+            onSectionClick = { title ->
+                viewModel.toggleSection(title)
             }
-            findNavController().navigate(R.id.action_dashboard_to_tableDetail, bundle)
-        }
+        )
 
-        recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
+        val glm = GridLayoutManager(requireContext(), 2)
+        glm.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+            override fun getSpanSize(position: Int): Int {
+                return when (adapter.currentList.getOrNull(position)) {
+                    is DashboardItem.Section -> 2
+                    is DashboardItem.Table -> 1
+                    null -> 1
+                }
+            }
+        }
+        recyclerView.layoutManager = glm
         recyclerView.adapter = adapter
     }
 

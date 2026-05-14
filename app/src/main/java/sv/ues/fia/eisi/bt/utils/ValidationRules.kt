@@ -76,7 +76,7 @@ object ValidationRules {
                 "NOMBRE_DISTRITO" to FieldRule(field = "NOMBRE_DISTRITO", required = true, friendlyName = "Nombre de distrito")
             )
             "INSTITUCION" -> mapOf(
-                "ID_INSTITUCION" to FieldRule(field = "ID_INSTITUCION", required = true, pattern = "^[A-Za-z]{2,}\\d{2,}$", friendlyName = "Codigo institucion", maxLength = 20),
+                "ID_INSTITUCION" to FieldRule(field = "ID_INSTITUCION", required = true, pattern = "^INS\\d{3,}$", friendlyName = "Codigo institucion", maxLength = 20),
                 "NOMBRE_INSTITUCION" to FieldRule(field = "NOMBRE_INSTITUCION", required = true, friendlyName = "Nombre de institucion")
             )
             "GRADO_ACADEMICO" -> mapOf(
@@ -97,7 +97,8 @@ object ValidationRules {
                 "ID_CERTIFICACION" to FieldRule(field = "ID_CERTIFICACION", required = true, pattern = "^C\\d{3,}$", friendlyName = "Codigo certificacion", maxLength = 10),
                 "NOMBRE_CERTIFICACION" to FieldRule(field = "NOMBRE_CERTIFICACION", required = true, friendlyName = "Nombre de certificacion"),
                 "FECHA_CERTIFICACION" to FieldRule(field = "FECHA_CERTIFICACION", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha de certificacion"),
-                "PERIODO" to FieldRule(field = "PERIODO", required = true, pattern = "^\\d{2}/\\d{2}/\\d{2}--\\d{2}/\\d{2}/\\d{2}$", friendlyName = "Periodo")
+                "FECHA_INICIO" to FieldRule(field = "FECHA_INICIO", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha inicio"),
+                "FECHA_FIN" to FieldRule(field = "FECHA_FIN", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha fin")
             )
             "TIPO_CERTIFICACION" -> mapOf(
                 "NOMBRE_TIPO" to FieldRule(field = "NOMBRE_TIPO", required = true, friendlyName = "Nombre de tipo")
@@ -113,7 +114,8 @@ object ValidationRules {
             "FORMACION_ACADEMICA" -> mapOf(
                 "ID_FORMACION" to FieldRule(field = "ID_FORMACION", required = true, pattern = "^FOA\\d{3,}$", friendlyName = "Codigo formacion", maxLength = 10),
                 "TITULO_OBTENIDO" to FieldRule(field = "TITULO_OBTENIDO", required = true, friendlyName = "Titulo obtenido"),
-                "PERIODO" to FieldRule(field = "PERIODO", required = true, pattern = "^\\d{2}/\\d{2}/\\d{2}--\\d{2}/\\d{2}/\\d{2}$", friendlyName = "Periodo"),
+                "FECHA_INICIO" to FieldRule(field = "FECHA_INICIO", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha inicio"),
+                "FECHA_FIN" to FieldRule(field = "FECHA_FIN", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha fin"),
                 "FECHA_OBTENCION" to FieldRule(field = "FECHA_OBTENCION", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyName = "Fecha de obtencion")
             )
             "OFERTA_ACADEMICA" -> mapOf(
@@ -162,14 +164,18 @@ object ValidationRules {
         }
         val today = utcFormat.format(Date())
 
-        val futureDateTables = mapOf(
+        val futureDateCols = setOf(
             "CERTIFICACION" to "FECHA_CERTIFICACION",
+            "CERTIFICACION" to "FECHA_INICIO",
+            "CERTIFICACION" to "FECHA_FIN",
             "EXPERIENCIA_LABORAL" to "FECHA_FIN",
             "POSTULACION" to "FECHA_APLICACION",
             "OFERTA_TRABAJO" to "FECHA_PUBLICACION",
-            "FORMACION_ACADEMICA" to "FECHA_OBTENCION"
+            "FORMACION_ACADEMICA" to "FECHA_OBTENCION",
+            "FORMACION_ACADEMICA" to "FECHA_INICIO",
+            "FORMACION_ACADEMICA" to "FECHA_FIN"
         )
-        if (futureDateTables[tableName] == column && trimmed > today) {
+        if (Pair(tableName, column) in futureDateCols && trimmed > today) {
             return "${rules.friendlyName} no puede ser una fecha futura"
         }
 

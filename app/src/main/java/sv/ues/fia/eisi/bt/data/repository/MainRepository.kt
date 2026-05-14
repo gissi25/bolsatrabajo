@@ -6,6 +6,8 @@ import android.database.sqlite.SQLiteDatabase
 import sv.ues.fia.eisi.bt.data.local.ConnectionHelper
 import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.PasswordHasher
+import sv.ues.fia.eisi.bt.utils.OfertaFullData
+import sv.ues.fia.eisi.bt.utils.PostulantFullData
 import sv.ues.fia.eisi.bt.utils.TriggerErrorTranslator
 
 class MainRepository(context: Context) {
@@ -299,6 +301,16 @@ class MainRepository(context: Context) {
     }
 
     private fun checkDuplicateInsert(tableName: String, cols: Map<String, Any>, idCol: String?) {
+        val dupChecks = getDuplicateCheckFields(tableName)
+        for ((whereSql, errorMsg) in dupChecks) {
+            val resolvedSql = replacePlaceholders(whereSql, cols)
+            val dupCursor = getDb().rawQuery("SELECT COUNT(*) FROM $tableName WHERE $resolvedSql", null)
+            dupCursor.moveToFirst()
+            val exists = dupCursor.getInt(0) > 0
+            dupCursor.close()
+            if (exists) throw Exception(errorMsg)
+        }
+
         if (idCol == null) {
             val pkCols = getPrimaryKeyColumns(tableName)
             if (pkCols.isNotEmpty()) {
@@ -314,16 +326,6 @@ class MainRepository(context: Context) {
                     if (exists) throw Exception("Duplicado: Ya existe un registro con esa clave")
                 }
             }
-        }
-
-        val dupChecks = getDuplicateCheckFields(tableName)
-        for ((whereSql, errorMsg) in dupChecks) {
-            val resolvedSql = replacePlaceholders(whereSql, cols)
-            val dupCursor = getDb().rawQuery("SELECT COUNT(*) FROM $tableName WHERE $resolvedSql", null)
-            dupCursor.moveToFirst()
-            val exists = dupCursor.getInt(0) > 0
-            dupCursor.close()
-            if (exists) throw Exception(errorMsg)
         }
     }
 
@@ -367,6 +369,7 @@ class MainRepository(context: Context) {
             "OFERTA_TRABAJO" -> listOf("NIT = '{NIT}' AND LOWER(TITULO_PUESTO) = LOWER('{TITULO_PUESTO}')" to "Ya existe una oferta con ese titulo en la empresa")
             "DETALLE_REQUISITO" -> listOf("NIT = '{NIT}' AND ID_OFERTA = '{ID_OFERTA}' AND LOWER(DESCRIPCION_REQUISITO) = LOWER('{DESCRIPCION_REQUISITO}')" to "Ya existe un requisito con esa descripcion en la oferta")
             "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND NIT = '{NIT}' AND LOWER(PUESTO_TRABAJO) = LOWER('{PUESTO_TRABAJO}')" to "Ya existe una experiencia con ese puesto para el postulante")
+            "FORMACION_ACADEMICA" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND LOWER(TITULO_OBTENIDO) = LOWER('{TITULO_OBTENIDO}') AND FECHA_INICIO = '{FECHA_INICIO}' AND FECHA_FIN = '{FECHA_FIN}'" to "Ya existe una formacion academica con ese titulo en el mismo periodo para el postulante")
             "CERTIFICACION" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND LOWER(NOMBRE_CERTIFICACION) = LOWER('{NOMBRE_CERTIFICACION}')" to "Ya existe una certificacion con ese nombre para el postulante")
             "POSTULACION" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND NIT = '{NIT}' AND ID_OFERTA = '{ID_OFERTA}'" to "El postulante ya aplico a esta oferta")
             "RED_SOCIAL_POSTULANTE" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND ID_RED_SOCIAL = {ID_RED_SOCIAL}" to "La red social ya esta vinculada al postulante")
@@ -540,6 +543,9 @@ class MainRepository(context: Context) {
                 for (row in SeedData.OFERTAS_ACADEMICAS) {
                     insertRecord("OFERTA_ACADEMICA", row)
                 }
+                for (row in SeedData.USUARIOS) {
+                    insertRecord("USUARIO", row)
+                }
                 getDb().setTransactionSuccessful()
             } finally {
                 getDb().endTransaction()
@@ -664,7 +670,7 @@ class MainRepository(context: Context) {
             "CERTIFICACION" -> {
                 """
                 SELECT c.ID_CERTIFICACION, c.ID_INSTITUCION, c.ID_POSTULANTE,
-                       c.ID_TIPO_CERTIFICACION, c.NOMBRE_CERTIFICACION, c.FECHA_CERTIFICACION, c.PERIODO,
+                       c.ID_TIPO_CERTIFICACION, c.NOMBRE_CERTIFICACION, c.FECHA_INICIO, c.FECHA_FIN, c.FECHA_CERTIFICACION,
                        p.NOMBRE, p.APELLIDO, i.NOMBRE_INSTITUCION, tc.NOMBRE_TIPO
                 FROM CERTIFICACION c
                 LEFT JOIN POSTULANTE p ON c.ID_POSTULANTE = p.ID_POSTULANTE
@@ -676,7 +682,7 @@ class MainRepository(context: Context) {
             "FORMACION_ACADEMICA" -> {
                 """
                 SELECT f.ID_FORMACION, f.ID_POSTULANTE, f.ID_OFERTA_ACADEMICA,
-                       f.TITULO_OBTENIDO, f.FECHA_OBTENCION,
+                       f.TITULO_OBTENIDO, f.FECHA_INICIO, f.FECHA_FIN, f.FECHA_OBTENCION,
                        p.NOMBRE, p.APELLIDO,
                        oa.ID_GRADO_ACADEMICO, oa.ID_INSTITUCION
                 FROM FORMACION_ACADEMICA f
@@ -1085,4 +1091,222 @@ class MainRepository(context: Context) {
     }
 
     fun getColumnsForTable(tableName: String): List<String> = Constants.getColumnsForTable(tableName)
+
+    fun getPostulantFullData(idPostulante: String): PostulantFullData? {
+        return try {
+            val cursor = getDb().rawQuery("""
+                SELECT p.ID_POSTULANTE, p.NOMBRE, p.APELLIDO, p.FECHA_NACIMIENTO,
+                       p.EMAIL, p.TELEFONO_CASA, p.TELEFONO_CELULAR, p.DIRECCION_DETALLE, p.NUP,
+                       g.NOMBRE_GRADO,
+                       gen.NOMBRE_GENERO, td.NOMBRE_TIPO, p.NUM_DOCUMENTO,
+                       dep.NOMBRE_DEPARTAMENTO, m.NOMBRE_MUNICIPIO, d.NOMBRE_DISTRITO
+                FROM POSTULANTE p
+                LEFT JOIN GRADO_ACADEMICO g ON p.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO
+                LEFT JOIN GENERO gen ON p.ID_GENERO = gen.ID_GENERO
+                LEFT JOIN TIPO_DOCUMENTO td ON p.ID_TIPO_DOCUMENTO = td.ID_TIPO_DOCUMENTO
+                LEFT JOIN DISTRITO d ON p.ID_DISTRITO_DEPTO = d.ID_DEPARTAMENTO AND p.ID_DISTRITO_MUNICIPIO = d.ID_MUNICIPIO AND p.ID_DISTRITO_ID = d.ID_DISTRITO
+                LEFT JOIN DEPARTAMENTO dep ON d.ID_DEPARTAMENTO = dep.ID_DEPARTAMENTO
+                LEFT JOIN MUNICIPIO m ON d.ID_DEPARTAMENTO = m.ID_DEPARTAMENTO AND d.ID_MUNICIPIO = m.ID_MUNICIPIO
+                WHERE p.ID_POSTULANTE = '$idPostulante'
+            """.trimIndent(), null)
+            if (!cursor.moveToFirst()) { cursor.close(); return null }
+
+            val data = PostulantFullData(
+                idPostulante = cursor.getString(0) ?: "",
+                nombre = cursor.getString(1) ?: "",
+                apellido = cursor.getString(2) ?: "",
+                fechaNacimiento = cursor.getString(3) ?: "",
+                email = cursor.getString(4) ?: "",
+                telefonoCasa = cursor.getString(5) ?: "",
+                telefonoCelular = cursor.getString(6) ?: "",
+                direccion = cursor.getString(7) ?: "",
+                nup = cursor.getString(8) ?: "",
+                gradoAcademico = cursor.getString(9) ?: "",
+                genero = cursor.getString(10) ?: "",
+                tipoDocumento = cursor.getString(11) ?: "",
+                numDocumento = cursor.getString(12) ?: "",
+                departamento = cursor.getString(13) ?: "",
+                municipio = cursor.getString(14) ?: "",
+                distrito = cursor.getString(15) ?: "",
+                formaciones = getFormacionesForPostulant(idPostulante),
+                certificaciones = getCertificacionesForPostulant(idPostulante),
+                habilidades = getHabilidadesForPostulant(idPostulante),
+                experiencias = getExperienciasForPostulant(idPostulante),
+                redesSociales = getRedesForPostulant(idPostulante)
+            )
+            cursor.close()
+            data
+        } catch (e: Exception) { null }
+    }
+
+    fun getOfertaFullData(nit: String, idOferta: String): OfertaFullData? {
+        return try {
+            val cursor = getDb().rawQuery("""
+                SELECT o.NIT, o.ID_OFERTA, o.TITULO_PUESTO, o.FECHA_PUBLICACION,
+                       o.FECHA_CADUCIDAD, o.EXPERIENCIA_ANIOS, o.EDAD_MINIMA, o.EDAD_MAXIMA,
+                       o.DESCRIPCION_OFERTA_TRABAJO, g.NOMBRE_GRADO, e.NOMBRE_EMPRESA, e.CONTACTO_DIRECTO,
+                       dep.NOMBRE_DEPARTAMENTO, m.NOMBRE_MUNICIPIO, d.NOMBRE_DISTRITO
+                FROM OFERTA_TRABAJO o
+                LEFT JOIN EMPRESA e ON o.NIT = e.NIT
+                LEFT JOIN GRADO_ACADEMICO g ON o.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO
+                LEFT JOIN DISTRITO d ON e.ID_DISTRITO_DEPTO = d.ID_DEPARTAMENTO AND e.ID_DISTRITO_MUNICIPIO = d.ID_MUNICIPIO AND e.ID_DISTRITO_ID = d.ID_DISTRITO
+                LEFT JOIN DEPARTAMENTO dep ON d.ID_DEPARTAMENTO = dep.ID_DEPARTAMENTO
+                LEFT JOIN MUNICIPIO m ON d.ID_DEPARTAMENTO = m.ID_DEPARTAMENTO AND d.ID_MUNICIPIO = m.ID_MUNICIPIO
+                WHERE o.NIT = '$nit' AND o.ID_OFERTA = '$idOferta'
+            """.trimIndent(), null)
+            if (!cursor.moveToFirst()) { cursor.close(); return null }
+
+            val reqCursor = getDb().rawQuery("""
+                SELECT DESCRIPCION_REQUISITO FROM DETALLE_REQUISITO
+                WHERE NIT = '$nit' AND ID_OFERTA = '$idOferta'
+                ORDER BY ID_DETALLE
+            """.trimIndent(), null)
+            val requisitos = mutableListOf<String>()
+            while (reqCursor.moveToNext()) {
+                reqCursor.getString(0)?.trim()?.let { if (it.isNotBlank()) requisitos.add(it) }
+            }
+            reqCursor.close()
+
+            val data = OfertaFullData(
+                nit = cursor.getString(0) ?: "",
+                idOferta = cursor.getString(1) ?: "",
+                tituloPuesto = cursor.getString(2) ?: "",
+                fechaPublicacion = cursor.getString(3) ?: "",
+                fechaCaducidad = cursor.getString(4) ?: "",
+                experienciaAnios = cursor.getString(5) ?: "",
+                edadMinima = cursor.getString(6) ?: "",
+                edadMaxima = cursor.getString(7) ?: "",
+                descripcion = cursor.getString(8) ?: "",
+                nombreGrado = cursor.getString(9) ?: "",
+                nombreEmpresa = cursor.getString(10) ?: "",
+                contactoEmpresa = cursor.getString(11) ?: "",
+                empresaDepartamento = cursor.getString(12) ?: "",
+                empresaMunicipio = cursor.getString(13) ?: "",
+                empresaDistrito = cursor.getString(14) ?: "",
+                requisitos = requisitos
+            )
+            cursor.close()
+            data
+        } catch (e: Exception) { null }
+    }
+
+    private fun getFormacionesForPostulant(idPostulante: String): List<List<String>> {
+        val results = mutableListOf<List<String>>()
+        try {
+            val cursor = getDb().rawQuery("""
+                SELECT f.TITULO_OBTENIDO, i.NOMBRE_INSTITUCION, f.FECHA_INICIO, f.FECHA_FIN, g.NOMBRE_GRADO, f.FECHA_OBTENCION
+                FROM FORMACION_ACADEMICA f
+                LEFT JOIN OFERTA_ACADEMICA oa ON f.ID_OFERTA_ACADEMICA = oa.ID_OFERTA_ACADEMICA
+                LEFT JOIN INSTITUCION i ON oa.ID_INSTITUCION = i.ID_INSTITUCION
+                LEFT JOIN GRADO_ACADEMICO g ON oa.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO
+                WHERE f.ID_POSTULANTE = '$idPostulante'
+                ORDER BY f.FECHA_FIN DESC
+            """.trimIndent(), null)
+            while (cursor.moveToNext()) {
+                results.add(listOf(
+                    cursor.getString(0) ?: "",
+                    cursor.getString(1) ?: "",
+                    cursor.getString(2) ?: "",
+                    cursor.getString(3) ?: "",
+                    cursor.getString(4) ?: "",
+                    cursor.getString(5) ?: ""
+                ))
+            }
+            cursor.close()
+        } catch (_: Exception) {}
+        return results
+    }
+
+    private fun getCertificacionesForPostulant(idPostulante: String): List<List<String>> {
+        val results = mutableListOf<List<String>>()
+        try {
+            val cursor = getDb().rawQuery("""
+                SELECT c.NOMBRE_CERTIFICACION, i.NOMBRE_INSTITUCION, c.FECHA_CERTIFICACION, tc.NOMBRE_TIPO, c.FECHA_INICIO, c.FECHA_FIN
+                FROM CERTIFICACION c
+                LEFT JOIN INSTITUCION i ON c.ID_INSTITUCION = i.ID_INSTITUCION
+                LEFT JOIN TIPO_CERTIFICACION tc ON c.ID_TIPO_CERTIFICACION = tc.ID_TIPO_CERTIFICACION
+                WHERE c.ID_POSTULANTE = '$idPostulante'
+                ORDER BY c.FECHA_CERTIFICACION DESC
+            """.trimIndent(), null)
+            while (cursor.moveToNext()) {
+                results.add(listOf(
+                    cursor.getString(0) ?: "",
+                    cursor.getString(1) ?: "",
+                    cursor.getString(2) ?: "",
+                    cursor.getString(3) ?: "",
+                    cursor.getString(4) ?: "",
+                    cursor.getString(5) ?: ""
+                ))
+            }
+            cursor.close()
+        } catch (_: Exception) {}
+        return results
+    }
+
+    private fun getHabilidadesForPostulant(idPostulante: String): List<List<String>> {
+        val results = mutableListOf<List<String>>()
+        try {
+            val cursor = getDb().rawQuery("""
+                SELECT h.NOMBRE_HABILIDAD, hp.NIVEL_DESTREZA
+                FROM HABILIDAD_POSTULANTE hp
+                LEFT JOIN HABILIDAD h ON hp.ID_CATEGORIA_HABILIDAD = h.ID_CATEGORIA_HABILIDAD AND hp.ID_HABILIDAD = h.ID_HABILIDAD
+                WHERE hp.ID_POSTULANTE = '$idPostulante'
+                ORDER BY h.NOMBRE_HABILIDAD
+            """.trimIndent(), null)
+            while (cursor.moveToNext()) {
+                results.add(listOf(
+                    cursor.getString(0) ?: "",
+                    cursor.getString(1) ?: ""
+                ))
+            }
+            cursor.close()
+        } catch (_: Exception) {}
+        return results
+    }
+
+    private fun getExperienciasForPostulant(idPostulante: String): List<List<String>> {
+        val results = mutableListOf<List<String>>()
+        try {
+            val cursor = getDb().rawQuery("""
+                SELECT e.PUESTO_TRABAJO, em.NOMBRE_EMPRESA, e.FECHA_INICIO, e.FECHA_FIN, e.DESCP_EXPERIENCIA_LABORAL, e.CONTACTO_REFERENCIA
+                FROM EXPERIENCIA_LABORAL e
+                LEFT JOIN EMPRESA em ON e.NIT = em.NIT
+                WHERE e.ID_POSTULANTE = '$idPostulante'
+                ORDER BY e.FECHA_FIN DESC
+            """.trimIndent(), null)
+            while (cursor.moveToNext()) {
+                results.add(listOf(
+                    cursor.getString(0) ?: "",
+                    cursor.getString(1) ?: "",
+                    cursor.getString(2) ?: "",
+                    cursor.getString(3) ?: "",
+                    cursor.getString(4) ?: "",
+                    cursor.getString(5) ?: ""
+                ))
+            }
+            cursor.close()
+        } catch (_: Exception) {}
+        return results
+    }
+
+    private fun getRedesForPostulant(idPostulante: String): List<List<String>> {
+        val results = mutableListOf<List<String>>()
+        try {
+            val cursor = getDb().rawQuery("""
+                SELECT r.NOMBRE_RED, rp.URL_PERFIL
+                FROM RED_SOCIAL_POSTULANTE rp
+                LEFT JOIN RED_SOCIAL r ON rp.ID_RED_SOCIAL = r.ID_RED_SOCIAL
+                WHERE rp.ID_POSTULANTE = '$idPostulante'
+                ORDER BY r.NOMBRE_RED
+            """.trimIndent(), null)
+            while (cursor.moveToNext()) {
+                results.add(listOf(
+                    cursor.getString(0) ?: "",
+                    cursor.getString(1) ?: ""
+                ))
+            }
+            cursor.close()
+        } catch (_: Exception) {}
+        return results
+    }
 }

@@ -1,18 +1,31 @@
 package sv.ues.fia.eisi.bt.ui.crud
 
+import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Typeface
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import sv.ues.fia.eisi.bt.utils.CVExportUtil
+import sv.ues.fia.eisi.bt.utils.OfertaFullData
+import sv.ues.fia.eisi.bt.utils.PostulantFullData
 import sv.ues.fia.eisi.bt.utils.StyledToast
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.utils.Constants
@@ -30,6 +43,7 @@ class TableDetailFragment : Fragment() {
     private lateinit var searchView: SearchView
     private lateinit var toolbar: MaterialToolbar
     private lateinit var fabAdd: FloatingActionButton
+    private lateinit var fabExport: FloatingActionButton
     private lateinit var progressBar: ProgressBar
     private lateinit var btnThemeToggle: ImageButton
     private lateinit var adapter: TableAdapter
@@ -42,34 +56,41 @@ class TableDetailFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            tableName = it.getString(Constants.BUNDLE_TABLE_NAME, "")
-            tableDisplayName = it.getString("tableDisplayName", tableName)
-        }
+        tableName = arguments?.getString(Constants.BUNDLE_TABLE_NAME) ?: ""
+        tableDisplayName = arguments?.getString(Constants.BUNDLE_TABLE_DISPLAY_NAME) ?: ""
+        canEdit = arguments?.getBoolean(Constants.BUNDLE_CAN_EDIT) ?: false
+        canDelete = arguments?.getBoolean(Constants.BUNDLE_CAN_DELETE) ?: false
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
+        inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_table_detail, container, false)
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
+        val view = inflater.inflate(R.layout.fragment_table_detail, container, false)
+        
+        // Sincronizando con los IDs del layout XML
         recyclerView = view.findViewById(R.id.recyclerItems)
         searchView = view.findViewById(R.id.searchView)
         toolbar = view.findViewById(R.id.toolbar)
         fabAdd = view.findViewById(R.id.fabAdd)
+        fabExport = view.findViewById(R.id.fabExport)
         progressBar = view.findViewById(R.id.progressBar)
         btnThemeToggle = view.findViewById(R.id.btnThemeToggle)
+
+        setupToolbar()
+        setupSearchView()
+        setupFab()
 
         btnThemeToggle.setImageResource(ThemeToggleHelper.getIconRes())
         btnThemeToggle.setOnClickListener {
             ThemeToggleHelper.toggle(requireActivity())
         }
+
+        return view
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         val prefs = requireContext().getSharedPreferences(
             Constants.PREFS_NAME,
@@ -86,15 +107,18 @@ class TableDetailFragment : Fragment() {
         canEdit = access == Constants.AccessLevel.FULL
         canDelete = access == Constants.AccessLevel.FULL
 
-        setupToolbar()
-        setupRecyclerView()
-        setupSearchView()
-        setupFab()
-
         if (!canEdit) fabAdd.visibility = View.GONE
         if (role == Constants.ROLE_EMPRESA && tableName == "POSTULACION") {
             fabAdd.visibility = View.GONE
         }
+
+        if (tableName == "POSTULACION") {
+            fabExport.visibility = View.VISIBLE
+            fabExport.isEnabled = false
+            fabExport.alpha = 0.4f
+        }
+
+        setupRecyclerView()
 
         viewModel.setTable(tableName)
 
@@ -117,6 +141,18 @@ class TableDetailFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
+        val onItemSelected: ((List<Any>, Int) -> Unit)? = if (tableName == "POSTULACION") {
+            { item, position ->
+                if (position < 0 || item.isEmpty()) {
+                    fabExport.isEnabled = false
+                    fabExport.alpha = 0.4f
+                } else {
+                    fabExport.isEnabled = true
+                    fabExport.alpha = 1.0f
+                }
+            }
+        } else null
+
         adapter = TableAdapter(
             tableName = tableName,
             canEdit = canEdit,
@@ -129,7 +165,8 @@ class TableDetailFragment : Fragment() {
             },
             onViewClick = if (!canEdit) { item, _ ->
                 showViewDialog(item)
-            } else null
+            } else null,
+            onItemSelected = onItemSelected
         )
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -218,6 +255,204 @@ class TableDetailFragment : Fragment() {
         fabAdd.setOnClickListener {
             showEditDialog(emptyList(), false)
         }
+
+        fabExport.setOnClickListener {
+            val selectedItem = adapter.getSelectedItem() ?: return@setOnClickListener
+            exportPdfs(selectedItem)
+        }
+    }
+
+    private fun exportPdfs(item: List<Any>) {
+        val idPostulante = item.getOrNull(3)?.toString()?.trim() ?: ""
+        val nit = item.getOrNull(1)?.toString()?.trim() ?: ""
+        val idOferta = item.getOrNull(2)?.toString()?.trim() ?: ""
+
+        if (idPostulante.isBlank() || nit.isBlank() || idOferta.isBlank()) {
+            StyledToast.show(requireContext(), "Error: datos de postulacion incompletos")
+            return
+        }
+
+        val progressLayout = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(80, 50, 80, 50)
+            gravity = Gravity.CENTER
+            addView(ProgressBar(requireContext(), null, android.R.attr.progressBarStyle).apply {
+                isIndeterminate = true
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { gravity = Gravity.CENTER }
+            })
+        }
+        val tvMsg = TextView(requireContext()).apply {
+            text = "Generando CV del postulante\ny datos de la vacante..."
+            textSize = 16f
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = 32 }
+        }
+        progressLayout.addView(tvMsg)
+        val loadingDialog = MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Exportando PDFs")
+            .setView(progressLayout)
+            .setCancelable(false)
+            .show()
+
+        Thread {
+            val postulantData: PostulantFullData? = viewModel.getPostulantFullData(idPostulante)
+            val ofertaData: OfertaFullData? = viewModel.getOfertaFullData(nit, idOferta)
+
+            if (postulantData == null || ofertaData == null) {
+                Handler(Looper.getMainLooper()).post {
+                    loadingDialog.dismiss()
+                    StyledToast.show(requireContext(), "Error al obtener datos para los PDFs")
+                }
+                return@Thread
+            }
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                tvMsg.text = "Generando archivos PDF..."
+            }, 1500)
+
+            try {
+                val cvFile = CVExportUtil.generateCVPdf(
+                    requireContext(), postulantData,
+                    "CV_${postulantData.idPostulante}.pdf"
+                )
+                val ofertaFile = CVExportUtil.generateOfertaPdf(
+                    requireContext(), ofertaData,
+                    "Vacante_${nit}_${idOferta}.pdf"
+                )
+
+                Handler(Looper.getMainLooper()).post {
+                    loadingDialog.dismiss()
+                    val cvUri = CVExportUtil.getPdfUri(requireContext(), cvFile)
+                    val ofertaUri = CVExportUtil.getPdfUri(requireContext(), ofertaFile)
+
+                    // DISEÑO MODERNO DEL MODAL DE RESULTADOS
+                    val resultLayout = LinearLayout(requireContext()).apply {
+                        orientation = LinearLayout.VERTICAL
+                        setPadding(70, 60, 70, 50)
+                        gravity = Gravity.CENTER_HORIZONTAL
+
+                        // Título llamativo
+                        addView(TextView(requireContext()).apply {
+                            text = "¡PDFs Listos!"
+                            textSize = 22f
+                            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+                            setTextColor(requireContext().getColor(R.color.text_primary))
+                            gravity = Gravity.CENTER
+                            layoutParams = LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT
+                            ).apply { bottomMargin = 20 }
+                        })
+
+                        // Cuerpo descriptivo
+                        addView(TextView(requireContext()).apply {
+                            text = "El CV y el detalle de la vacante se han generado correctamente. Compáralos para evaluar el perfil."
+                            textSize = 15f
+                            gravity = Gravity.CENTER
+                            setLineSpacing(0f, 1.2f)
+                            setTextColor(requireContext().getColor(R.color.text_secondary))
+                            layoutParams = LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT
+                            ).apply { bottomMargin = 45 }
+                        })
+
+                        // Botón principal: VER VACANTE (Relleno)
+                        val btnVacante = MaterialButton(requireContext()).apply {
+                            text = "VER VACANTE"
+                            backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary))
+                            setTextColor(requireContext().getColor(R.color.on_primary))
+                            cornerRadius = 28
+                            setPadding(0, 35, 0, 35)
+                            layoutParams = LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT
+                            ).apply { bottomMargin = 16 }
+                        }
+                        addView(btnVacante)
+
+                        // Botón secundario: VER CV (Relleno)
+                        val btnCV = MaterialButton(requireContext()).apply {
+                            text = "VER CV"
+                            backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary))
+                            setTextColor(requireContext().getColor(R.color.on_primary))
+                            cornerRadius = 28
+                            setPadding(0, 35, 0, 35)
+                            layoutParams = LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT
+                            ).apply { bottomMargin = 16 }
+                        }
+                        addView(btnCV)
+
+                        // Botón Cerrar: Estilo Texto/Chip (Más pequeño)
+                        val btnCerrar = MaterialButton(requireContext(), null).apply {
+                            text = "Cerrar"
+                            isAllCaps = false
+                            textSize = 14f
+                            setTextColor(requireContext().getColor(R.color.text_secondary))
+                            backgroundTintList = ColorStateList.valueOf(android.graphics.Color.TRANSPARENT)
+                            elevation = 0f
+                            layoutParams = LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT
+                            ).apply { topMargin = 30 }
+                        }
+                        addView(btnCerrar)
+
+                        val finalDialog = MaterialAlertDialogBuilder(requireContext())
+                            .setView(this)
+                            .create()
+
+                        btnVacante.setOnClickListener {
+                            try {
+                                requireActivity().startActivity(Intent(Intent.ACTION_VIEW).apply {
+                                    setDataAndType(ofertaUri, "application/pdf")
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                })
+                            } catch (e: Exception) {
+                                StyledToast.show(requireContext(), "Sin visor PDF disponible")
+                            }
+                        }
+
+                        btnCV.setOnClickListener {
+                            try {
+                                requireActivity().startActivity(Intent(Intent.ACTION_VIEW).apply {
+                                    setDataAndType(cvUri, "application/pdf")
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                })
+                            } catch (e: Exception) {
+                                StyledToast.show(requireContext(), "Sin visor PDF disponible")
+                            }
+                        }
+
+                        btnCerrar.setOnClickListener { finalDialog.dismiss() }
+
+                        finalDialog.setOnDismissListener {
+                            adapter.selectedPosition = -1
+                            adapter.notifyDataSetChanged()
+                            fabExport.isEnabled = false
+                            fabExport.alpha = 0.4f
+                        }
+
+                        finalDialog.show()
+                    }
+                }
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post {
+                    loadingDialog.dismiss()
+                    StyledToast.show(requireContext(), "Error al generar PDFs: ${e.message}")
+                }
+            }
+        }.start()
     }
 
     private fun showEditDialog(itemData: List<Any>, isEditMode: Boolean) {
