@@ -202,11 +202,11 @@ class TableAdapter(
                 tvSecondary.text = "$postNombre $postApellido".trim().ifBlank { "(sin postulante)" }
             } else if (tableName == "FORMACION_ACADEMICA") {
                 val titulo = getStringSafely(item, 3)
-                val postNombre = getStringSafely(item, 5)
-                val postApellido = getStringSafely(item, 6)
+                val fechaInicio = getStringSafely(item, 4)
+                val fechaFin = getStringSafely(item, 5)
                 tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)})"
                 tvPrimary.text = titulo.ifBlank { "(sin titulo)" }
-                tvSecondary.text = "$postNombre $postApellido".trim().ifBlank { "(sin postulante)" }
+                tvSecondary.text = if (fechaInicio.isNotBlank() && fechaFin.isNotBlank()) "$fechaInicio → $fechaFin" else "(sin periodo)"
             } else if (tableName == "USUARIO") {
                 val username = getStringSafely(item, 1)
                 val rol = getStringSafely(item, 3)

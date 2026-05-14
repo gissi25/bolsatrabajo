@@ -369,6 +369,7 @@ class MainRepository(context: Context) {
             "OFERTA_TRABAJO" -> listOf("NIT = '{NIT}' AND LOWER(TITULO_PUESTO) = LOWER('{TITULO_PUESTO}')" to "Ya existe una oferta con ese titulo en la empresa")
             "DETALLE_REQUISITO" -> listOf("NIT = '{NIT}' AND ID_OFERTA = '{ID_OFERTA}' AND LOWER(DESCRIPCION_REQUISITO) = LOWER('{DESCRIPCION_REQUISITO}')" to "Ya existe un requisito con esa descripcion en la oferta")
             "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND NIT = '{NIT}' AND LOWER(PUESTO_TRABAJO) = LOWER('{PUESTO_TRABAJO}')" to "Ya existe una experiencia con ese puesto para el postulante")
+            "FORMACION_ACADEMICA" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND LOWER(TITULO_OBTENIDO) = LOWER('{TITULO_OBTENIDO}') AND FECHA_INICIO = '{FECHA_INICIO}' AND FECHA_FIN = '{FECHA_FIN}'" to "Ya existe una formacion academica con ese titulo en el mismo periodo para el postulante")
             "CERTIFICACION" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND LOWER(NOMBRE_CERTIFICACION) = LOWER('{NOMBRE_CERTIFICACION}')" to "Ya existe una certificacion con ese nombre para el postulante")
             "POSTULACION" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND NIT = '{NIT}' AND ID_OFERTA = '{ID_OFERTA}'" to "El postulante ya aplico a esta oferta")
             "RED_SOCIAL_POSTULANTE" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND ID_RED_SOCIAL = {ID_RED_SOCIAL}" to "La red social ya esta vinculada al postulante")
