@@ -52,11 +52,10 @@
 
     <!-- DeleteConfirmDialog -->
     <string name="consultando_dependencias">Consultando dependencias...</string>
-    <string name="eliminar_registro">¿Eliminar este registro?</string>
-    <string name="sin_dependencias">Este registro no tiene dependencias.</string>
+    <string name="confirmar_eliminar">¿Está seguro que quiere eliminar este registro?</string>
+    <string name="sin_dependencias">No posee registros asociados.</string>
     <string name="no_se_puede_eliminar">No se puede eliminar</string>
-    <string name="total_registros_vinculados">Total: %d registros vinculados</string>
-    <string name="dependencias_en_cadena">Este registro tiene dependencias en cadena. No se puede eliminar porque afectaria datos en varios niveles:</string>
+    <string name="dependencias_en_cadena">Posee registros asociados.</string>
     <string name="cerrar">Cerrar</string>
     <string name="sin_permiso_eliminar">No tienes permiso para eliminar registros de esta tabla</string>
     <string name="no_eliminar_propio_usuario">No puedes eliminar tu propio usuario mientras está activo</string>

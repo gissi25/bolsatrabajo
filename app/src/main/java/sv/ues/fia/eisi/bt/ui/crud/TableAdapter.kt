@@ -3,6 +3,7 @@ package sv.ues.fia.eisi.bt.ui.crud
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
+import androidx.core.content.ContextCompat
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -22,8 +23,11 @@ class TableAdapter(
     private val canDelete: Boolean = true,
     private val onEditClick: (List<Any>, Int) -> Unit,
     private val onDeleteClick: (List<Any>, Int) -> Unit,
-    private val onViewClick: ((List<Any>, Int) -> Unit)? = null
+    private val onViewClick: ((List<Any>, Int) -> Unit)? = null,
+    private val onItemSelected: ((List<Any>, Int) -> Unit)? = null
 ) : ListAdapter<List<Any>, TableAdapter.ViewHolder>(RowDiffCallback()) {
+
+    var selectedPosition: Int = -1
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_table_row, parent, false)
@@ -32,6 +36,10 @@ class TableAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(getItem(position), position)
+    }
+
+    fun getSelectedItem(): List<Any>? {
+        return if (selectedPosition in 0 until itemCount) getItem(selectedPosition) else null
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -54,7 +62,16 @@ class TableAdapter(
                 val pos = bindingAdapterPosition
                 if (pos != RecyclerView.NO_POSITION) onDeleteClick(getItem(pos), pos)
             }
-            if (!canEdit && onViewClick != null) {
+            if (onItemSelected != null) {
+                itemView.setOnClickListener {
+                    val pos = bindingAdapterPosition
+                    if (pos != RecyclerView.NO_POSITION) {
+                        selectedPosition = if (selectedPosition == pos) -1 else pos
+                        notifyDataSetChanged()
+                        onItemSelected(if (selectedPosition >= 0) getItem(pos) else emptyList(), selectedPosition)
+                    }
+                }
+            } else if (!canEdit && onViewClick != null) {
                 itemView.setOnClickListener {
                     val pos = bindingAdapterPosition
                     if (pos != RecyclerView.NO_POSITION) onViewClick(getItem(pos), pos)
@@ -65,6 +82,18 @@ class TableAdapter(
         fun bind(item: List<Any>, position: Int) {
             val field0 = getStringSafely(item, 0)
             chipEstado.visibility = View.GONE
+
+            if (onItemSelected != null) {
+                val card = itemView as? com.google.android.material.card.MaterialCardView
+                if (card != null) {
+                    card.setStrokeColor(
+                        ContextCompat.getColor(itemView.context,
+                            if (selectedPosition == position) R.color.primary else R.color.outline
+                        )
+                    )
+                    card.strokeWidth = if (selectedPosition == position) 6 else 1
+                }
+            }
 
             if (tableName == "POSTULANTE") {
                 val nombre = getStringSafely(item, 8)
@@ -166,18 +195,18 @@ class TableAdapter(
                 tvSecondary.text = institucion.ifBlank { "(sin institucion)" }
             } else if (tableName == "CERTIFICACION") {
                 val nombre = getStringSafely(item, 4)
-                val postNombre = getStringSafely(item, 7)
-                val postApellido = getStringSafely(item, 8)
+                val fechaInicio = getStringSafely(item, 5)
+                val fechaFin = getStringSafely(item, 6)
                 tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)}, ${getStringSafely(item, 2)})"
                 tvPrimary.text = nombre.ifBlank { "(sin certificacion)" }
-                tvSecondary.text = "$postNombre $postApellido".trim().ifBlank { "(sin postulante)" }
+                tvSecondary.text = if (fechaInicio.isNotBlank() && fechaFin.isNotBlank()) "$fechaInicio → $fechaFin" else "(sin periodo)"
             } else if (tableName == "FORMACION_ACADEMICA") {
                 val titulo = getStringSafely(item, 3)
-                val postNombre = getStringSafely(item, 5)
-                val postApellido = getStringSafely(item, 6)
+                val fechaInicio = getStringSafely(item, 4)
+                val fechaFin = getStringSafely(item, 5)
                 tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)})"
                 tvPrimary.text = titulo.ifBlank { "(sin titulo)" }
-                tvSecondary.text = "$postNombre $postApellido".trim().ifBlank { "(sin postulante)" }
+                tvSecondary.text = if (fechaInicio.isNotBlank() && fechaFin.isNotBlank()) "$fechaInicio → $fechaFin" else "(sin periodo)"
             } else if (tableName == "USUARIO") {
                 val username = getStringSafely(item, 1)
                 val rol = getStringSafely(item, 3)

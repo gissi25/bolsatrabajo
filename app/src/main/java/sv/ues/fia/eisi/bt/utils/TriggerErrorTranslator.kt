@@ -3,6 +3,10 @@ package sv.ues.fia.eisi.bt.utils
 object TriggerErrorTranslator {
 
     private val ERROR_MAP = mapOf(
+        "UNIQUE constraint failed" to "Ya existe un registro con esos datos",
+        "FOREIGN KEY constraint failed" to "No se puede modificar: tiene registros asociados. Elimine primero los registros dependientes",
+        "NOT NULL constraint failed" to "Un campo obligatorio esta vacio",
+        "constraint failed" to "Operacion no permitida por las reglas de validacion",
         "Duplicado: Ya existe un registro con esa clave" to "Ya existe un registro con esa combinacion de valores",
         "Ya existe un genero con ese nombre" to "Ya existe un genero con ese nombre",
         "Ya existe una categoria con ese nombre" to "Ya existe una categoria con ese nombre",
@@ -60,6 +64,14 @@ object TriggerErrorTranslator {
         "Correo electronico no valido" to "El formato del correo electronico no es valido",
         "correo electronico" to "El formato del correo electronico no es valido",
         "fecha de nacimiento" to "La fecha de nacimiento no es valida",
+        "fecha de certificacion no puede ser menor a la fecha fin" to "La fecha de certificacion no puede ser menor a la fecha fin del periodo",
+        "fecha de certificacion no puede exceder un año" to "La fecha de certificacion no puede exceder un año despues de la fecha fin del periodo",
+        "fecha de certificacion no puede ser una fecha futura" to "La fecha de certificacion no puede ser una fecha futura",
+        "fecha de obtencion no puede ser menor a la fecha fin" to "La fecha de obtencion no puede ser menor a la fecha fin del periodo",
+        "fecha de obtencion no puede exceder un año" to "La fecha de obtencion no puede exceder un año despues de la fecha fin del periodo",
+        "fecha de obtencion no puede ser una fecha futura" to "La fecha de obtencion no puede ser una fecha futura",
+        "fecha inicio no puede ser una fecha futura" to "La fecha de inicio no puede ser una fecha futura",
+        "fecha fin no puede ser una fecha futura" to "La fecha fin no puede ser una fecha futura",
         "No se puede eliminar: el departamento tiene municipios asociados" to "Elimine primero los municipios asociados a este departamento",
         "No se puede eliminar: el municipio tiene distritos asociados" to "Elimine primero los distritos asociados a este municipio",
         "No se puede eliminar: el distrito tiene postulantes asociados" to "Elimine primero los postulantes asociados a este distrito",
@@ -85,11 +97,7 @@ object TriggerErrorTranslator {
         "No se puede eliminar: la oferta tiene requisitos asociados" to "Elimine primero los requisitos de esta oferta de trabajo",
         "No se puede eliminar: la oferta tiene postulaciones" to "Elimine primero las postulaciones a esta oferta de trabajo",
         "No se puede eliminar: la oferta academica tiene formaciones asociadas" to "Elimine primero las formaciones academicas asociadas",
-        "No se puede eliminar: el tipo de certificacion tiene certificaciones asociadas" to "Elimine primero las certificaciones con este tipo",
-        "UNIQUE constraint failed" to "Ya existe un registro con esos datos",
-        "FOREIGN KEY constraint failed" to "No se puede modificar: tiene registros asociados. Elimine primero los registros dependientes",
-        "NOT NULL constraint failed" to "Un campo obligatorio esta vacio",
-        "constraint failed" to "Operacion no permitida por las reglas de validacion"
+        "No se puede eliminar: el tipo de certificacion tiene certificaciones asociadas" to "Elimine primero las certificaciones con este tipo"
     )
 
     fun translate(errorMessage: String?): String {

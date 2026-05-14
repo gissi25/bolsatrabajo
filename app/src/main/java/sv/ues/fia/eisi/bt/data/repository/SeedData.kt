@@ -51,8 +51,8 @@ object SeedData {
         listOf("INS001", "Universidad de El Salvador (UES)"),
         listOf("INS002", "Escuela Nacional de Agricultura(ENA)"),
         listOf("INS003", "Fundación Gloria de Kriete"),
-        listOf("INS004", "Cuerpo de Bomberos de El Salvador"),
-        listOf("INS005", "Banco Central de Reserva de El Salvador (BCR)"),
+        listOf("INS004", "Universidad Don Bosco"),
+        listOf("INS005", "Universidad José Matías Delgado"),
         listOf("INS006", "Ministerio de Educación, Ciencia y Tecnología (MINED)")
     )
 
@@ -149,6 +149,11 @@ object SeedData {
         listOf(5, "H01", "Integración de Gemini API y Google AI Studio"),
         listOf(5, "H02", "Ingeniería de prompts avanzados"),
         listOf(5, "H03", "Automatización de procesos con IA")
+    )
+
+    val USUARIOS = listOf(
+        listOf("postulante", "12345678", "postulante"),
+        listOf("empresa", "12345678", "gerente de empresa")
     )
 
     val EMPRESAS = listOf(

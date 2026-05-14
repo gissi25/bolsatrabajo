@@ -274,7 +274,8 @@ CREATE TABLE CERTIFICACION (
     ID_TIPO_CERTIFICACION INTEGER,
     NOMBRE_CERTIFICACION VARCHAR(150),
     FECHA_CERTIFICACION DATE,
-    PERIODO VARCHAR(50),
+    FECHA_INICIO DATE NOT NULL,
+    FECHA_FIN DATE NOT NULL,
     PRIMARY KEY (ID_CERTIFICACION, ID_INSTITUCION, ID_POSTULANTE),
     FOREIGN KEY (ID_INSTITUCION) REFERENCES INSTITUCION (ID_INSTITUCION),
     FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
@@ -286,7 +287,8 @@ CREATE TABLE FORMACION_ACADEMICA (
     ID_POSTULANTE VARCHAR(20) NOT NULL,
     ID_OFERTA_ACADEMICA VARCHAR(10),
     TITULO_OBTENIDO VARCHAR(150),
-    PERIODO VARCHAR(50),
+    FECHA_INICIO DATE NOT NULL,
+    FECHA_FIN DATE NOT NULL,
     FECHA_OBTENCION DATE,
     PRIMARY KEY (ID_FORMACION, ID_POSTULANTE),
     FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
@@ -725,7 +727,8 @@ Retorna `null` si es válido, o un mensaje de error si no cumple. Se usa en `Edi
 | ID_CERTIFICACION | ✅ | `^C\d{3,}$` | Prefijo C + dígitos |
 | NOMBRE_CERTIFICACION | ✅ | — | — |
 | FECHA_CERTIFICACION | ✅ | `^\d{4}-\d{2}-\d{2}$` | No futura |
-| PERIODO | ✅ | `^\d{2}/\d{2}/\d{2}--\d{2}/\d{2}/\d{2}$` | Formato `DD/MM/AA--DD/MM/AA` |
+| FECHA_INICIO | ✅ | `^\d{4}-\d{2}-\d{2}$` | Inicio del periodo |
+| FECHA_FIN | ✅ | `^\d{4}-\d{2}-\d{2}$` | Fin del periodo |
 
 #### EXPERIENCIA_LABORAL
 
@@ -745,7 +748,8 @@ Retorna `null` si es válido, o un mensaje de error si no cumple. Se usa en `Edi
 | ID_FORMACION | ✅ | `^FOA\d{3,}$` | Prefijo FOA + dígitos |
 | TITULO_OBTENIDO | ✅ | — | — |
 | FECHA_OBTENCION | ✅ | `^\d{4}-\d{2}-\d{2}$` | No futura |
-| PERIODO | ✅ | `^\d{2}/\d{2}/\d{2}--\d{2}/\d{2}/\d{2}$` | Formato rango de fechas |
+| FECHA_INICIO | ✅ | `^\d{4}-\d{2}-\d{2}$` | Inicio del periodo |
+| FECHA_FIN | ✅ | `^\d{4}-\d{2}-\d{2}$` | Fin del periodo |
 
 #### POSTULACION
 
@@ -898,21 +902,18 @@ fun formatTelefono(text: String): String {
 
 **Longitud máxima:** 9 caracteres
 
-### 7.5 Período — `DD/MM/AA--DD/MM/AA`
+### 7.5 Período — `FECHA_INICIO` / `FECHA_FIN`
 
-```kotlin
-fun formatPeriodo(text: String): String {
-    val digits = text.filter { it.isDigit() }.take(12)
-    return when {
-        digits.length > 10 -> "${digits.substring(0, 2)}/${digits.substring(2, 4)}/${digits.substring(4, 6)}--${digits.substring(6, 8)}/${digits.substring(8, 10)}/${digits.substring(10, 12)}"
-        digits.length > 8 -> "${digits.substring(0, 2)}/${digits.substring(2, 4)}/${digits.substring(4, 6)}--${digits.substring(6, 8)}/${digits.substring(8, 10)}"
-        digits.length > 6 -> "${digits.substring(0, 2)}/${digits.substring(2, 4)}/${digits.substring(4, 6)}--${digits.substring(6, 8)}"
-        digits.length > 4 -> "${digits.substring(0, 2)}/${digits.substring(2, 4)}/${digits.substring(4, 6)}"
-        digits.length > 2 -> "${digits.substring(0, 2)}/${digits.substring(2, 4)}"
-        else -> digits
-    }
-}
-```
+El campo `PERIODO` (string con máscara `DD/MM/AA--DD/MM/AA`) fue reemplazado por dos campos `DATE`:
+
+- `FECHA_INICIO`: Fecha de inicio del período (formato `YYYY-MM-DD`)
+- `FECHA_FIN`: Fecha de fin del período (formato `YYYY-MM-DD`)
+
+Ambos campos usan el validador de fecha estándar sin máscara especial.
+
+**Validaciones adicionales:**
+- `FECHA_INICIO` debe ser menor a `FECHA_FIN`
+- `FECHA_CERTIFICACION` / `FECHA_OBTENCION` debe estar entre `FECHA_FIN` y `FECHA_FIN + 1 año`
 
 ### 7.6 Aplicación por Tabla
 
@@ -922,8 +923,8 @@ fun formatPeriodo(text: String): String {
 | EMPRESA | NIT | NIT Simple (14 dígitos) |
 | EMPRESA | CONTACTO_DIRECTO | Teléfono XXXX-XXXX |
 | EXPERIENCIA_LABORAL | CONTACTO_REFERENCIA | Teléfono XXXX-XXXX |
-| CERTIFICACION | PERIODO | DD/MM/AA--DD/MM/AA |
-| FORMACION_ACADEMICA | PERIODO | DD/MM/AA--DD/MM/AA |
+| CERTIFICACION | FECHA_INICIO / FECHA_FIN | YYYY-MM-DD / YYYY-MM-DD |
+| FORMACION_ACADEMICA | FECHA_INICIO / FECHA_FIN | YYYY-MM-DD / YYYY-MM-DD |
 
 ### 7.7 Validadores Adicionales
 
@@ -1710,8 +1711,8 @@ Transiciones con animaciones slide (300ms):
 | "dirección, teléfono de casa, personal u otro, datos de contacto, correo electrónico" | ✅ | POSTULANTE: DIRECCION_DETALLE, TELEFONO_CASA, TELEFONO_CELULAR, EMAIL |
 | "redes sociales" | ✅ | RED_SOCIAL_POSTULANTE vinculado a RED_SOCIAL (con URL de perfil) |
 | "experiencia laboral: puesto, periodo, funciones, organización, contacto" | ✅ | EXPERIENCIA_LABORAL: PUESTO_TRABAJO, FECHA_INICIO, FECHA_FIN, DESCP_EXPERIENCIA_LABORAL, NIT (organización), CONTACTO_REFERENCIA |
-| "conocimientos académicos: títulos, diplomas, cursos, institución, fecha" | ✅ | FORMACION_ACADEMICA: TITULO_OBTENIDO, PERIODO, FECHA_OBTENCION, ID_OFERTA_ACADEMICA (que referencia INSTITUCION y GRADO_ACADEMICO) |
-| "certificaciones: código, nombre, institución, periodo" | ✅ | CERTIFICACION: ID_CERTIFICACION, NOMBRE_CERTIFICACION, ID_INSTITUCION, FECHA_CERTIFICACION, PERIODO, ID_TIPO_CERTIFICACION |
+| "conocimientos académicos: títulos, diplomas, cursos, institución, fecha" | ✅ | FORMACION_ACADEMICA: TITULO_OBTENIDO, FECHA_INICIO, FECHA_FIN, FECHA_OBTENCION, ID_OFERTA_ACADEMICA (que referencia INSTITUCION y GRADO_ACADEMICO) |
+| "certificaciones: código, nombre, institución, periodo" | ✅ | CERTIFICACION: ID_CERTIFICACION, NOMBRE_CERTIFICACION, ID_INSTITUCION, FECHA_CERTIFICACION, FECHA_INICIO, FECHA_FIN, ID_TIPO_CERTIFICACION |
 | "habilidades técnicas categorizadas" | ✅ | CATEGORIA_HABILIDAD → HABILIDAD → HABILIDAD_POSTULANTE con nivel de destreza |
 | "el sistema no debe permitir ingresar postulantes que tengan grado de bachiller o inferior" | ✅ | Trigger `TR_POSTULANTE_GRADO` que verifica que el grado académico no sea "Bachiller" |
 

@@ -41,6 +41,19 @@
             android:textColor="?attr/colorOnSurfaceVariant"
             android:textSize="14sp" />
 
+        <TextView
+            android:id="@+id/tvAccessBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/badge_rounded"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="3dp"
+            android:textColor="@android:color/white"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

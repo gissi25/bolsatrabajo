@@ -130,7 +130,7 @@ class EditorDialogFragment : DialogFragment() {
         viewModel.operationResult.observe(viewLifecycleOwner) { result ->
             if (result == null) return@observe
             btnSave.isEnabled = true
-            btnSave.text = if (isEditMode) "Actualizar" else "Guardar"
+            btnSave.text = getString(R.string.save)
             when (result) {
                 is Resource.Success -> {
                     if (tableName == "USUARIO" && isEditMode) {
@@ -400,6 +400,7 @@ class EditorDialogFragment : DialogFragment() {
             override fun afterTextChanged(s: Editable?) {
                 if (column == "ID_TIPO_DOCUMENTO") {
                     refreshNumDocHintAndValidation()
+                    textFields[numDocColumnIndex]?.second?.setText("")
                 }
             }
         })
@@ -1358,7 +1359,6 @@ class EditorDialogFragment : DialogFragment() {
             }
             column.contains("TELEFONO") || column.contains("TEL") || column == "CONTACTO_REFERENCIA" || column == "CONTACTO_DIRECTO" -> InputMaskUtils.formatTelefono(text)
             column == "NIT" && tableName == "EMPRESA" -> InputMaskUtils.formatNitSimple(text)
-            column == "PERIODO" -> InputMaskUtils.formatPeriodo(text)
             else -> text
         }
     }
@@ -1373,7 +1373,6 @@ class EditorDialogFragment : DialogFragment() {
             column.contains("NUM_DOCUMENTO") -> 17
             column.contains("CODIGO") || column.contains("CERTIFICACION") -> 30
             column.contains("NIVEL_DESTREZA") -> 12
-            column == "PERIODO" -> 18
             column.contains("EXPERIENCIA_ANIOS") -> 2
             column.contains("EDAD_MINIMA") || column.contains("EDAD_MAXIMA") -> 2
             else -> 0
@@ -1391,13 +1390,6 @@ class EditorDialogFragment : DialogFragment() {
                 for (i in start until end) { if (!source[i].isDigit() && source[i] != '-') return@InputFilter "" }
                 null
             })
-        }
-        if (column == "PERIODO") {
-            filters.add(InputFilter { source, start, end, _, _, _ ->
-                for (i in start until end) { if (!source[i].isDigit() && source[i] != '/' && source[i] != '-') return@InputFilter "" }
-                null
-            })
-            filters.add(InputFilter.LengthFilter(18))
         }
         if (column == "NIT" && tableName == "EMPRESA") {
             filters.add(InputFilter { source, start, end, _, _, _ ->
@@ -1426,7 +1418,6 @@ class EditorDialogFragment : DialogFragment() {
             col in stringIdCols -> android.text.InputType.TYPE_CLASS_TEXT
             col in numericIdCols || col.contains("NUP") -> android.text.InputType.TYPE_CLASS_NUMBER
             col.contains("NUM_") || col.contains("DOCUMENTO") -> android.text.InputType.TYPE_CLASS_TEXT
-            col == "PERIODO" -> android.text.InputType.TYPE_CLASS_PHONE
             col.contains("FECHA") || col.contains("DATE") -> android.text.InputType.TYPE_CLASS_TEXT
             col.contains("EMAIL") -> android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
             col.contains("TELEFONO") || col.contains("TEL") || col == "CONTACTO_REFERENCIA" || col == "CONTACTO_DIRECTO" -> android.text.InputType.TYPE_CLASS_PHONE
@@ -1470,11 +1461,21 @@ class EditorDialogFragment : DialogFragment() {
         if (tableName == "CERTIFICACION") {
             when (column) {
                 "ID_TIPO_CERTIFICACION" -> return "Tipo de certificacion"
-                "PERIODO" -> return "Periodo (ej. 2024-2026)"
+                "FECHA_INICIO" -> return "Periodo - Fecha inicio"
+                "FECHA_FIN" -> return "Periodo - Fecha fin"
             }
         }
-        if (tableName == "FORMACION_ACADEMICA" && column == "PERIODO") {
-            return "Periodo (ej. 2024-2026)"
+        if (tableName == "FORMACION_ACADEMICA") {
+            when (column) {
+                "FECHA_INICIO" -> return "Periodo - Fecha inicio"
+                "FECHA_FIN" -> return "Periodo - Fecha fin"
+            }
+        }
+        if (tableName == "EXPERIENCIA_LABORAL") {
+            when (column) {
+                "FECHA_INICIO" -> return "Periodo - Fecha inicio"
+                "FECHA_FIN" -> return "Periodo - Fecha fin"
+            }
         }
         if (tableName == "HABILIDAD_POSTULANTE" && column == "ID_HABILIDAD") {
             return "Habilidad del postulante"
@@ -1750,6 +1751,51 @@ class EditorDialogFragment : DialogFragment() {
                     values.add(textValue)
                 }
             }
+        }
+
+        val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+        dateFormat.timeZone = java.util.TimeZone.getTimeZone("UTC")
+
+        fun validatePeriodDates(inicioIdx: Int, finIdx: Int, fechaRefIdx: Int, fechaRefName: String): Boolean {
+            if (inicioIdx < 0 || finIdx < 0 || fechaRefIdx < 0) return true
+            val fechaInicio = values.getOrNull(inicioIdx)?.toString()?.trim() ?: ""
+            val fechaFin = values.getOrNull(finIdx)?.toString()?.trim() ?: ""
+            val fechaRef = values.getOrNull(fechaRefIdx)?.toString()?.trim() ?: ""
+            if (fechaInicio.isBlank() || fechaFin.isBlank() || fechaRef.isBlank()) return true
+            try {
+                val dInicio = dateFormat.parse(fechaInicio)!!
+                val dFin = dateFormat.parse(fechaFin)!!
+                val dRef = dateFormat.parse(fechaRef)!!
+                if (!dInicio.before(dFin)) {
+                    StyledToast.show(requireContext(), "Fecha inicio debe ser menor a fecha fin")
+                    btnSave.isEnabled = true; return false
+                }
+                if (dRef.before(dFin)) {
+                    StyledToast.show(requireContext(), "$fechaRefName no puede ser menor a la fecha fin del periodo")
+                    btnSave.isEnabled = true; return false
+                }
+                val cal = java.util.Calendar.getInstance()
+                cal.time = dFin
+                cal.add(java.util.Calendar.YEAR, 1)
+                if (dRef.after(cal.time)) {
+                    StyledToast.show(requireContext(), "$fechaRefName no puede exceder un año despues de la fecha fin del periodo")
+                    btnSave.isEnabled = true; return false
+                }
+            } catch (_: Exception) { return true }
+            return true
+        }
+
+        if (tableName == "CERTIFICACION") {
+            val inicioIdx = editableColumns.indexOf("FECHA_INICIO")
+            val finIdx = editableColumns.indexOf("FECHA_FIN")
+            val certIdx = editableColumns.indexOf("FECHA_CERTIFICACION")
+            if (!validatePeriodDates(inicioIdx, finIdx, certIdx, "Fecha de certificacion")) return
+        }
+        if (tableName == "FORMACION_ACADEMICA") {
+            val inicioIdx = editableColumns.indexOf("FECHA_INICIO")
+            val finIdx = editableColumns.indexOf("FECHA_FIN")
+            val obtenIdx = editableColumns.indexOf("FECHA_OBTENCION")
+            if (!validatePeriodDates(inicioIdx, finIdx, obtenIdx, "Fecha de obtencion")) return
         }
 
         if (tableName == "USUARIO") {
