@@ -59,3 +59,8 @@ object InputMaskUtils {
             "Formato: AAAA-MM-DD" else null
     }
 }
+
+fun String.removeAccents(): String {
+    return java.text.Normalizer.normalize(this, java.text.Normalizer.Form.NFD)
+        .replace(Regex("[\\u0300-\\u036f]"), "")
+}
