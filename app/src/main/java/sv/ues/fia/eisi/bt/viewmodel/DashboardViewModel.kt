@@ -11,6 +11,7 @@ import kotlinx.coroutines.withContext
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
 import sv.ues.fia.eisi.bt.utils.Constants
+import sv.ues.fia.eisi.bt.utils.TriggerErrorTranslator
 import sv.ues.fia.eisi.bt.utils.removeAccents
 
 sealed class DashboardItem {
@@ -188,7 +189,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                     _seedResult.postValue(Resource.Success(getApplication<Application>().getString(R.string.seed_inserted)))
                     refreshCounts()
                 } else {
-                    _seedResult.postValue(Resource.Error(error, error))
+                    _seedResult.postValue(Resource.Error(error, TriggerErrorTranslator.translate(error, getApplication())))
                 }
             } catch (e: Exception) {
                 _seedResult.postValue(Resource.Error(e.message ?: getApplication<Application>().getString(R.string.error_desconocido), getApplication<Application>().getString(R.string.seed_error)))

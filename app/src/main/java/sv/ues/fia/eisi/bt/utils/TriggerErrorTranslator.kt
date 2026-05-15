@@ -24,12 +24,15 @@ object TriggerErrorTranslator {
         "Ya existe una empresa con ese NIT" to R.string.error_duplicado_empresa_nit,
         "Ya existe una empresa con ese nombre" to R.string.error_duplicado_empresa_nombre,
         "Ya existe un postulante con ese documento" to R.string.error_duplicado_postulante_doc,
+        "Ya existe un postulante con ese NUP" to R.string.error_duplicado_postulante_nup,
         "Ya existe un postulante con ese email" to R.string.error_duplicado_postulante_email,
         "Ya existe un usuario con ese nombre" to R.string.error_duplicado_usuario,
         "Ya existe una oferta con ese titulo en la empresa" to R.string.error_duplicado_oferta,
         "Ya existe un requisito con esa descripcion en la oferta" to R.string.error_duplicado_requisito,
         "Ya existe una experiencia con ese puesto para el postulante" to R.string.error_duplicado_experiencia,
+        "Ya existe una formacion academica con ese titulo en el mismo periodo para el postulante" to R.string.error_duplicado_formacion_academica,
         "Ya existe una certificacion con ese codigo para el postulante" to R.string.error_duplicado_certificacion,
+        "Ya existe una certificacion con ese nombre para el postulante" to R.string.error_duplicado_certificacion_nombre,
         "El postulante ya aplico a esta oferta" to R.string.error_postulante_ya_aplico,
         "La oferta de trabajo ha vencido" to R.string.error_oferta_vencida,
         "El postulante debe tener un grado academico superior a Bachiller" to R.string.error_grado_academico_insuficiente,
@@ -104,7 +107,7 @@ object TriggerErrorTranslator {
     )
 
     fun translate(errorMessage: String?, context: Context? = null): String {
-        if (errorMessage.isNullOrBlank()) return context?.getString(R.string.error_desconocido) ?: "Unknown error"
+        if (errorMessage.isNullOrBlank()) return context?.getString(R.string.error_desconocido) ?: "Error desconocido"
         ERROR_MAP.entries.forEach { (key, resId) ->
             if (errorMessage.contains(key, ignoreCase = true)) {
                 return context?.getString(resId) ?: errorMessage

@@ -1135,8 +1135,8 @@ class EditorDialogFragment : DialogFragment() {
 
         // 1. Actualizar Hint dinámico
         til.hint = when (tipo) {
-            "DUI" -> "DUI"
-            "NIT" -> "NIT"
+            "DUI" -> getString(R.string.hint_dui)
+            "NIT" -> getString(R.string.hint_nit_doc)
             "PASAPORTE" -> getString(R.string.doc_pasaporte)
             else -> getHintText("NUM_DOCUMENTO")
         }
@@ -1715,20 +1715,20 @@ class EditorDialogFragment : DialogFragment() {
                     }
 
                     if (options.isEmpty()) {
-                        StyledToast.show(requireContext(), getString(R.string.no_hay_datos_en, fkRef.refTable))
+                        StyledToast.show(requireContext(), getString(R.string.no_hay_datos_en, requireContext().getTableDisplayName(fkRef.refTable)))
                         return
                     }
 
                     val autoComplete = dropDownFields.values.find { it.first == col }?.second
                     val selectedText = autoComplete?.text?.toString()?.trim() ?: ""
                     if (selectedText.isBlank()) {
-                        StyledToast.show(requireContext(), getString(R.string.debe_seleccionar, fkRef.refTable))
+                        StyledToast.show(requireContext(), getString(R.string.debe_seleccionar, requireContext().getTableDisplayName(fkRef.refTable)))
                         return
                     }
 
                     val selectedOption = options.find { it.second == selectedText }
                     if (selectedOption == null) {
-                        StyledToast.show(requireContext(), getString(R.string.seleccione_opcion_valida, fkRef.refTable, selectedText))
+                        StyledToast.show(requireContext(), getString(R.string.seleccione_opcion_valida, requireContext().getTableDisplayName(fkRef.refTable), selectedText))
                         return
                     }
                     values.add(selectedOption.first)

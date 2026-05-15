@@ -501,4 +501,16 @@
     <string name="error_eliminar_oferta_postulaciones">Exclua primeiro as candidaturas a esta oferta de trabalho</string>
     <string name="error_eliminar_oferta_academica">Exclua primeiro as formações acadêmicas associadas</string>
     <string name="error_eliminar_tipo_certificacion">Exclua primeiro as certificações com este tipo</string>
+
+    <!-- Auth hardcoded fix -->
+    <string name="error_campos_vacios">Por favor, preencha todos os campos</string>
+
+    <!-- Document type hints for EditorDialog -->
+    <string name="hint_dui">DUI</string>
+    <string name="hint_nit_doc">NIT</string>
+
+    <!-- Missing duplicate check error messages -->
+    <string name="error_duplicado_postulante_nup">Já existe um candidato com esse NUP</string>
+    <string name="error_duplicado_formacion_academica">Já existe uma formação acadêmica com esse título no mesmo período para o candidato</string>
+    <string name="error_duplicado_certificacion_nombre">Já existe uma certificação com esse nome para o candidato</string>
 </resources>

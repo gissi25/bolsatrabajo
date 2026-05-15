@@ -17,6 +17,7 @@ import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.LocaleHelper
 import sv.ues.fia.eisi.bt.utils.StyledToast
 import sv.ues.fia.eisi.bt.utils.ThemeToggleHelper
+import sv.ues.fia.eisi.bt.utils.TriggerErrorTranslator
 import sv.ues.fia.eisi.bt.viewmodel.AuthViewModel
 
 class LoginFragment : Fragment() {
@@ -78,7 +79,7 @@ class LoginFragment : Fragment() {
                 }
             }
             result.onFailure { exception ->
-                StyledToast.show(requireContext(), exception.message ?: getString(R.string.error_inicio_sesion))
+                StyledToast.show(requireContext(), TriggerErrorTranslator.translate(exception.message, requireContext()) ?: getString(R.string.error_inicio_sesion))
             }
         }
 

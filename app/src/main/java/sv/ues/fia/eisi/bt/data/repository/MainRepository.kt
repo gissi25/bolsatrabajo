@@ -357,26 +357,26 @@ class MainRepository(private val context: Context) {
             "INSTITUCION" -> listOf("LOWER(NOMBRE_INSTITUCION) = LOWER('{NOMBRE_INSTITUCION}')" to context.getString(R.string.ya_existe_institucion))
             "MUNICIPIO" -> listOf("ID_DEPARTAMENTO = {ID_DEPARTAMENTO} AND LOWER(NOMBRE_MUNICIPIO) = LOWER('{NOMBRE_MUNICIPIO}')" to context.getString(R.string.ya_existe_municipio))
             "DISTRITO" -> listOf("ID_DEPARTAMENTO = {ID_DEPARTAMENTO} AND ID_MUNICIPIO = {ID_MUNICIPIO} AND LOWER(NOMBRE_DISTRITO) = LOWER('{NOMBRE_DISTRITO}')" to context.getString(R.string.ya_existe_distrito))
-            "HABILIDAD" -> listOf("LOWER(NOMBRE_HABILIDAD) = LOWER('{NOMBRE_HABILIDAD}')" to "Ya existe una habilidad con ese nombre")
+            "HABILIDAD" -> listOf("LOWER(NOMBRE_HABILIDAD) = LOWER('{NOMBRE_HABILIDAD}')" to context.getString(R.string.error_duplicado_habilidad))
             "EMPRESA" -> listOf(
-                "NIT = '{NIT}'" to "Ya existe una empresa con ese NIT",
-                "LOWER(NOMBRE_EMPRESA) = LOWER('{NOMBRE_EMPRESA}')" to "Ya existe una empresa con ese nombre"
+                "NIT = '{NIT}'" to context.getString(R.string.error_duplicado_empresa_nit),
+                "LOWER(NOMBRE_EMPRESA) = LOWER('{NOMBRE_EMPRESA}')" to context.getString(R.string.error_duplicado_empresa_nombre)
             )
             "POSTULANTE" -> listOf(
-                "NUM_DOCUMENTO = '{NUM_DOCUMENTO}'" to "Ya existe un postulante con ese documento",
-                "NUP = '{NUP}'" to "Ya existe un postulante con ese NUP",
-                "LOWER(EMAIL) = LOWER('{EMAIL}')" to "Ya existe un postulante con ese email"
+                "NUM_DOCUMENTO = '{NUM_DOCUMENTO}'" to context.getString(R.string.error_duplicado_postulante_doc),
+                "NUP = '{NUP}'" to context.getString(R.string.error_duplicado_postulante_nup),
+                "LOWER(EMAIL) = LOWER('{EMAIL}')" to context.getString(R.string.error_duplicado_postulante_email)
             )
             "USUARIO" -> listOf("LOWER(USERNAME) = LOWER('{USERNAME}')" to context.getString(R.string.ya_existe_usuario))
-            "OFERTA_TRABAJO" -> listOf("NIT = '{NIT}' AND LOWER(TITULO_PUESTO) = LOWER('{TITULO_PUESTO}')" to "Ya existe una oferta con ese titulo en la empresa")
-            "DETALLE_REQUISITO" -> listOf("NIT = '{NIT}' AND ID_OFERTA = '{ID_OFERTA}' AND LOWER(DESCRIPCION_REQUISITO) = LOWER('{DESCRIPCION_REQUISITO}')" to "Ya existe un requisito con esa descripcion en la oferta")
-            "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND NIT = '{NIT}' AND LOWER(PUESTO_TRABAJO) = LOWER('{PUESTO_TRABAJO}')" to "Ya existe una experiencia con ese puesto para el postulante")
-            "FORMACION_ACADEMICA" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND LOWER(TITULO_OBTENIDO) = LOWER('{TITULO_OBTENIDO}') AND FECHA_INICIO = '{FECHA_INICIO}' AND FECHA_FIN = '{FECHA_FIN}'" to "Ya existe una formacion academica con ese titulo en el mismo periodo para el postulante")
-            "CERTIFICACION" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND LOWER(NOMBRE_CERTIFICACION) = LOWER('{NOMBRE_CERTIFICACION}')" to "Ya existe una certificacion con ese nombre para el postulante")
-            "POSTULACION" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND NIT = '{NIT}' AND ID_OFERTA = '{ID_OFERTA}'" to "El postulante ya aplico a esta oferta")
-            "RED_SOCIAL_POSTULANTE" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND ID_RED_SOCIAL = {ID_RED_SOCIAL}" to "La red social ya esta vinculada al postulante")
-            "HABILIDAD_POSTULANTE" -> listOf("ID_CATEGORIA_HABILIDAD = {ID_CATEGORIA_HABILIDAD} AND ID_HABILIDAD = '{ID_HABILIDAD}' AND ID_POSTULANTE = '{ID_POSTULANTE}'" to "La habilidad ya esta asignada al postulante")
-            "OFERTA_ACADEMICA" -> listOf("ID_INSTITUCION = '{ID_INSTITUCION}' AND ID_GRADO_ACADEMICO = {ID_GRADO_ACADEMICO}" to "Ya existe una oferta academica para esa institucion y grado")
+            "OFERTA_TRABAJO" -> listOf("NIT = '{NIT}' AND LOWER(TITULO_PUESTO) = LOWER('{TITULO_PUESTO}')" to context.getString(R.string.error_duplicado_oferta))
+            "DETALLE_REQUISITO" -> listOf("NIT = '{NIT}' AND ID_OFERTA = '{ID_OFERTA}' AND LOWER(DESCRIPCION_REQUISITO) = LOWER('{DESCRIPCION_REQUISITO}')" to context.getString(R.string.error_duplicado_requisito))
+            "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND NIT = '{NIT}' AND LOWER(PUESTO_TRABAJO) = LOWER('{PUESTO_TRABAJO}')" to context.getString(R.string.error_duplicado_experiencia))
+            "FORMACION_ACADEMICA" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND LOWER(TITULO_OBTENIDO) = LOWER('{TITULO_OBTENIDO}') AND FECHA_INICIO = '{FECHA_INICIO}' AND FECHA_FIN = '{FECHA_FIN}'" to context.getString(R.string.error_duplicado_formacion_academica))
+            "CERTIFICACION" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND LOWER(NOMBRE_CERTIFICACION) = LOWER('{NOMBRE_CERTIFICACION}')" to context.getString(R.string.error_duplicado_certificacion_nombre))
+            "POSTULACION" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND NIT = '{NIT}' AND ID_OFERTA = '{ID_OFERTA}'" to context.getString(R.string.error_postulante_ya_aplico))
+            "RED_SOCIAL_POSTULANTE" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND ID_RED_SOCIAL = {ID_RED_SOCIAL}" to context.getString(R.string.error_red_social_vinculada))
+            "HABILIDAD_POSTULANTE" -> listOf("ID_CATEGORIA_HABILIDAD = {ID_CATEGORIA_HABILIDAD} AND ID_HABILIDAD = '{ID_HABILIDAD}' AND ID_POSTULANTE = '{ID_POSTULANTE}'" to context.getString(R.string.error_habilidad_asignada))
+            "OFERTA_ACADEMICA" -> listOf("ID_INSTITUCION = '{ID_INSTITUCION}' AND ID_GRADO_ACADEMICO = {ID_GRADO_ACADEMICO}" to context.getString(R.string.error_oferta_academica_duplicada))
             else -> emptyList()
         }
     }
@@ -554,7 +554,7 @@ class MainRepository(private val context: Context) {
             }
             return null
         } catch (e: Exception) {
-            return context.getString(R.string.error_insertar_datos_con_msg, e.message)
+            return context.getString(R.string.error_insertar_datos_con_msg, TriggerErrorTranslator.translate(e.message, context))
         }
     }
 

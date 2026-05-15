@@ -36,7 +36,7 @@ object ValidationRules {
                 "FECHA_NACIMIENTO" to FieldRule(field = "FECHA_NACIMIENTO", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyNameResId = R.string.friendly_fecha_nacimiento),
                 "ID_GENERO" to FieldRule(field = "ID_GENERO", required = true, friendlyNameResId = R.string.friendly_nombre_genero),
                 "ID_TIPO_DOCUMENTO" to FieldRule(field = "ID_TIPO_DOCUMENTO", required = true, friendlyNameResId = R.string.hint_tipo_documento),
-                "ID_GRADO_ACADEMICO" to FieldRule(field = "ID_GRADO_ACADEMICO", required = true, friendlyNameResId = R.string.friendly_codigo_postulante),
+                "ID_GRADO_ACADEMICO" to FieldRule(field = "ID_GRADO_ACADEMICO", required = true, friendlyNameResId = R.string.friendly_nombre_grado),
                 "NUP" to FieldRule(field = "NUP", required = true, friendlyNameResId = R.string.friendly_nup),
                 "DIRECCION_DETALLE" to FieldRule(field = "DIRECCION_DETALLE", required = true, friendlyNameResId = R.string.friendly_direccion),
                 "TELEFONO_CASA" to FieldRule(field = "TELEFONO_CASA", required = true, friendlyNameResId = R.string.friendly_telefono_casa),
