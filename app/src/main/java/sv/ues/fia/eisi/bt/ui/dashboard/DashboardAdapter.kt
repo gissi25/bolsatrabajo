@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.viewmodel.DashboardItem
+import sv.ues.fia.eisi.bt.viewmodel.DashboardViewModel
 
 class DashboardAdapter(
     private val onItemClick: (DashboardItem.Table) -> Unit,
@@ -50,6 +51,16 @@ class DashboardAdapter(
         }
     }
 
+    private fun sectionKeyToResId(key: String): Int {
+        return when (key) {
+            DashboardViewModel.SECTION_CATALOGOS -> R.string.section_catalogos
+            DashboardViewModel.SECTION_EMPRESA -> R.string.section_empresa
+            DashboardViewModel.SECTION_POSTULANTE -> R.string.section_postulante
+            DashboardViewModel.SECTION_OTRAS -> R.string.section_otras
+            else -> R.string.section_otras
+        }
+    }
+
     inner class SectionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvSectionTitle: TextView = itemView.findViewById(R.id.tvSectionTitle)
         private val tvArrow: TextView = itemView.findViewById(R.id.tvArrow)
@@ -59,13 +70,13 @@ class DashboardAdapter(
                 val pos = bindingAdapterPosition
                 if (pos != RecyclerView.NO_POSITION) {
                     val item = getItem(pos)
-                    if (item is DashboardItem.Section) onSectionClick(item.title)
+                    if (item is DashboardItem.Section) onSectionClick(item.sectionKey)
                 }
             }
         }
 
         fun bind(section: DashboardItem.Section) {
-            tvSectionTitle.text = section.title
+            tvSectionTitle.text = itemView.context.getString(sectionKeyToResId(section.sectionKey))
             tvArrow.text = if (section.isExpanded) "▲" else "▼"
         }
     }
@@ -90,7 +101,7 @@ class DashboardAdapter(
             tvRecordCount.text = "${table.info.count} ${itemView.context.getString(R.string.records)}"
             if (table.isReadOnly) {
                 tvAccessBadge.visibility = View.VISIBLE
-                tvAccessBadge.text = "Solo lectura"
+                tvAccessBadge.text = itemView.context.getString(R.string.solo_lectura)
             } else {
                 tvAccessBadge.visibility = View.GONE
             }
@@ -101,7 +112,7 @@ class DashboardAdapter(
         override fun areItemsTheSame(oldItem: DashboardItem, newItem: DashboardItem): Boolean {
             return when {
                 oldItem is DashboardItem.Section && newItem is DashboardItem.Section ->
-                    oldItem.title == newItem.title
+                    oldItem.sectionKey == newItem.sectionKey
                 oldItem is DashboardItem.Table && newItem is DashboardItem.Table ->
                     oldItem.info.name == newItem.info.name
                 else -> false

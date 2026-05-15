@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Bolsa de Trabalho</string>
+
+    <!-- Auth -->
+    <string name="login">Entrar</string>
+    <string name="register">Cadastrar</string>
+    <string name="username">Usuário</string>
+    <string name="password">Senha</string>
+    <string name="confirm_password">Confirmar Senha</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard">Painel</string>
+    <string name="records">registros</string>
+    <string name="search">Buscar</string>
+
+    <!-- CRUD -->
+    <string name="add">Adicionar</string>
+    <string name="edit">Editar</string>
+    <string name="delete">Excluir</string>
+    <string name="save">Salvar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="yes">Sim</string>
+    <string name="no">Não</string>
+
+    <!-- Dialogs -->
+    <string name="delete_warning">Tem certeza que deseja excluir este registro? Esta ação é irreversível e os registros associados também serão excluídos.</string>
+
+    <!-- Validations -->
+    <string name="field_required">Este campo é obrigatório</string>
+    <string name="password_mismatch">As senhas não coincidem</string>
+    <string name="username_already_exists">O nome de usuário já existe</string>
+    <string name="search_tables">Buscar tabelas...</string>
+    <string name="welcome_user">Bem-vindo(a) %1$s</string>
+    <string name="logout_confirm_message">Tem certeza que deseja sair?</string>
+    <string name="password_too_short">A senha deve ter pelo menos 8 caracteres</string>
+
+    <!-- Navigation -->
+    <string name="logout">Sair</string>
+
+    <!-- Seed -->
+    <string name="seed_confirm_title">Inserir dados de teste</string>
+    <string name="seed_confirm_message">Tem certeza que deseja inserir os dados de teste no banco de dados? Esta ação não pode ser desfeita.</string>
+
+    <!-- CRUD ViewModel -->
+    <string name="eliminado_correctamente">Excluído com sucesso</string>
+    <string name="guardado_correctamente">Salvo com sucesso</string>
+    <string name="actualizado_correctamente">Atualizado com sucesso</string>
+    <string name="error_al_eliminar">Erro ao excluir</string>
+    <string name="error_al_guardar">Erro ao salvar</string>
+    <string name="error_al_actualizar">Erro ao atualizar</string>
+
+    <!-- DeleteConfirmDialog -->
+    <string name="consultando_dependencias">Verificando dependências...</string>
+    <string name="confirmar_eliminar">Tem certeza que deseja excluir este registro?</string>
+    <string name="sin_dependencias">Nenhum registro associado.</string>
+    <string name="no_se_puede_eliminar">Não é possível excluir</string>
+    <string name="dependencias_en_cadena">Possui registros associados.</string>
+    <string name="cerrar">Fechar</string>
+    <string name="sin_permiso_eliminar">Você não tem permissão para excluir registros desta tabela</string>
+    <string name="no_eliminar_propio_usuario">Você não pode excluir seu próprio usuário enquanto ativo</string>
+
+    <!-- EditorDialogFragment -->
+    <string name="solo_empresa_modificar_postulacion">Apenas a empresa pode modificar esta candidatura</string>
+    <string name="solo_empresa_cambiar_estado">Apenas a empresa pode alterar este status</string>
+    <string name="sin_permiso_modificar_tabla">Você não tem permissão para modificar esta tabela</string>
+    <string name="sin_permiso_editar_postulacion">Você não tem permissão para editar esta candidatura</string>
+    <string name="debe_seleccionar_nivel">Você deve selecionar um nível de habilidade</string>
+    <string name="debe_seleccionar_estado">Você deve selecionar um status</string>
+    <string name="no_hay_datos_en">Não há dados em %s. Crie-os primeiro.</string>
+    <string name="debe_seleccionar">Você deve selecionar %s</string>
+    <string name="seleccione_opcion_valida">Selecione uma opção válida de %s: %s</string>
+    <string name="contrasena_bloqueada">Senha (bloqueada)</string>
+    <string name="ver_tabla">Ver %s</string>
+    <string name="editar_tabla">Editar %s</string>
+    <string name="nuevo_tabla">Novo %s</string>
+    <string name="eliminar_tabla">Excluir %s</string>
+    <string name="seleccionar_fecha">Selecionar data</string>
+
+    <!-- Login / Register -->
+    <string name="usuario_o_contrasena_incorrectos">Usuário ou senha incorretos</string>
+    <string name="registro_exitoso">Cadastro realizado. Agora você pode entrar.</string>
+    <string name="contrasena_minimo">A senha deve ter pelo menos 8 caracteres</string>
+
+    <!-- Field validation -->
+    <string name="obligatorio">%s é obrigatório</string>
+    <string name="minimo_caracteres">%s deve ter pelo menos %d caracteres</string>
+    <string name="maximo_caracteres">%s não deve exceder %d caracteres</string>
+    <string name="formato_invalido">%s tem um formato inválido</string>
+    <string name="fecha_futura">%s não pode ser uma data futura</string>
+    <string name="debe_ser_numero">%s deve ser um número</string>
+    <string name="debe_ser_mayor_igual">%s deve ser maior ou igual a %d</string>
+    <string name="debe_ser_menor_igual">%s deve ser menor ou igual a %d</string>
+
+    <!-- Hardcoded strings -->
+    <string name="estado_vigente">VIGENTE</string>
+    <string name="estado_vencida">VENCIDA</string>
+    <string name="estado_vencido">VENCIDO</string>
+    <string name="nivel_basico">Básico</string>
+    <string name="nivel_intermedio">Intermediário</string>
+    <string name="nivel_avanzado">Avançado</string>
+    <string name="estado_activo">Ativo</string>
+    <string name="estado_en_proceso">Em Processo</string>
+    <string name="estado_contratado">Contratado</string>
+    <string name="estado_rechazado">Rejeitado</string>
+    <string name="rol_postulante">candidato</string>
+    <string name="rol_empresa">gerente de empresa</string>
+    <string name="rol_admin">administrador</string>
+    <string name="hint_departamento">Departamento</string>
+    <string name="hint_municipio">Município</string>
+    <string name="id_bloqueado">ID bloqueado: tem registros dependentes</string>
+    <string name="doc_pasaporte">Passaporte</string>
+    <string name="solo_lectura">Somente leitura</string>
+    <string name="pdf_generando_cv">Gerando CV do candidato\ne dados da vaga...</string>
+    <string name="pdf_titulo">Exportando PDFs</string>
+    <string name="pdf_listos">PDFs Prontos!</string>
+    <string name="pdf_descripcion">O CV e os detalhes da vaga foram gerados com sucesso. Compare-os para avaliar o perfil.</string>
+    <string name="pdf_ver_vacante">VER VAGA</string>
+    <string name="pdf_ver_cv">VER CV</string>
+    <string name="error_sin_visor_pdf">Nenhum visualizador de PDF disponível</string>
+    <string name="error_sin_acceso_tabla">Você não tem acesso a esta tabela</string>
+    <string name="error_sin_resultados">Sem resultados</string>
+    <string name="error_datos_incompletos">Erro: dados de candidatura incompletos</string>
+    <string name="error_obtener_datos_pdf">Erro ao obter dados para PDFs</string>
+    <string name="error_generar_pdf">Erro ao gerar PDFs: %s</string>
+    <string name="error_sin_permiso_editar">Você não tem permissão para editar esta tabela</string>
+    <string name="error_sin_permiso_eliminar">Você não tem permissão para excluir registros desta tabela</string>
+
+    <!-- Language selector -->
+    <string name="idiomas">Idiomas</string>
+    <string name="espanol">Espanhol</string>
+    <string name="ingles">Inglês</string>
+    <string name="portugues">Português</string>
+    <string name="section_catalogos">Catálogos</string>
+    <string name="section_empresa">Empresa</string>
+    <string name="section_postulante">Candidato</string>
+    <string name="section_otras">Outras</string>
+</resources>

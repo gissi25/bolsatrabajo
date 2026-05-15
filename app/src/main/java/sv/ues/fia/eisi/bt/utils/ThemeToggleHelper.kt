@@ -1,6 +1,8 @@
 package sv.ues.fia.eisi.bt.utils
 
 import android.app.Activity
+import android.content.Context
+import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import sv.ues.fia.eisi.bt.R
@@ -18,27 +20,23 @@ object ThemeToggleHelper {
         compat.delegate.localNightMode = newMode
     }
 
-    fun getIconRes(): Int {
-        return if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
-            R.drawable.sol
-        } else {
-            R.drawable.luna
-        }
+    fun getIconRes(context: Context): Int {
+        return if (isNightMode(context)) R.drawable.sol else R.drawable.luna
     }
 
-    fun getLogoutIconRes(): Int {
-        return if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
-            R.drawable.cerrar_sesion_c
-        } else {
-            R.drawable.cerrar_sesion_o
-        }
+    fun getLogoutIconRes(context: Context): Int {
+        return if (isNightMode(context)) R.drawable.cerrar_sesion_c else R.drawable.cerrar_sesion_o
     }
 
-    fun getInsertIconRes(): Int {
-        return if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
-            R.drawable.ic_insertar_datos_c
-        } else {
-            R.drawable.ic_insertar_datos_o
-        }
+    fun getInsertIconRes(context: Context): Int {
+        return if (isNightMode(context)) R.drawable.ic_insertar_datos_c else R.drawable.ic_insertar_datos_o
+    }
+
+    fun getWorldIconRes(context: Context): Int {
+        return if (isNightMode(context)) R.drawable.ic_world_b else R.drawable.ic_world_n
+    }
+
+    private fun isNightMode(context: Context): Boolean {
+        return (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
     }
 }

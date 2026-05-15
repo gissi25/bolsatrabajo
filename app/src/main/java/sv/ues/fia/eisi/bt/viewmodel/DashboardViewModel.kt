@@ -13,8 +13,8 @@ import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.removeAccents
 
 sealed class DashboardItem {
-    data class Section(val title: String, val isExpanded: Boolean = false) : DashboardItem()
-    data class Table(val info: MainRepository.TableInfo, val isReadOnly: Boolean = false, val sectionTitle: String = "") : DashboardItem()
+    data class Section(val sectionKey: String, val isExpanded: Boolean = false) : DashboardItem()
+    data class Table(val info: MainRepository.TableInfo, val isReadOnly: Boolean = false, val sectionKey: String = "") : DashboardItem()
 }
 
 class DashboardViewModel(application: Application) : AndroidViewModel(application) {
@@ -57,7 +57,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 val filtered = all.filter { roleTables.containsKey(it.name) }
                 allItemsOriginal = buildSectionedList(filtered)
                 _items.postValue(allItemsOriginal.filter { item ->
-                    item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionTitle in expandedSections
+                    item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionKey in expandedSections
                 })
             } catch (e: Exception) {
             } finally {
@@ -77,6 +77,13 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         "EXPERIENCIA_LABORAL", "HABILIDAD_POSTULANTE", "RED_SOCIAL_POSTULANTE", "POSTULACION"
     )
 
+    companion object {
+        const val SECTION_CATALOGOS = "catalogos"
+        const val SECTION_EMPRESA = "empresa"
+        const val SECTION_POSTULANTE = "postulante"
+        const val SECTION_OTRAS = "otras"
+    }
+
     private fun buildSectionedList(tables: List<MainRepository.TableInfo>): List<DashboardItem> {
         val roleTables = Constants.getRoleTables(currentRole)
         val catalog = tables.filter { it.name in catalogTables }
@@ -90,33 +97,33 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
         val result = mutableListOf<DashboardItem>()
         if (catalog.isNotEmpty()) {
-            result.add(DashboardItem.Section("CATÁLOGOS", "CATÁLOGOS" in expandedSections))
-            result.addAll(sortByOrder(catalog, catalogOrder).map { DashboardItem.Table(it, accessLevel(it.name), "CATÁLOGOS") })
+            result.add(DashboardItem.Section(SECTION_CATALOGOS, SECTION_CATALOGOS in expandedSections))
+            result.addAll(sortByOrder(catalog, catalogOrder).map { DashboardItem.Table(it, accessLevel(it.name), SECTION_CATALOGOS) })
         }
         if (empresa.isNotEmpty()) {
-            result.add(DashboardItem.Section("EMPRESA", "EMPRESA" in expandedSections))
-            result.addAll(sortByOrder(empresa, empresaOrder).map { DashboardItem.Table(it, accessLevel(it.name), "EMPRESA") })
+            result.add(DashboardItem.Section(SECTION_EMPRESA, SECTION_EMPRESA in expandedSections))
+            result.addAll(sortByOrder(empresa, empresaOrder).map { DashboardItem.Table(it, accessLevel(it.name), SECTION_EMPRESA) })
         }
         if (postulante.isNotEmpty()) {
-            result.add(DashboardItem.Section("POSTULANTE", "POSTULANTE" in expandedSections))
-            result.addAll(sortByOrder(postulante, postulanteOrder).map { DashboardItem.Table(it, accessLevel(it.name), "POSTULANTE") })
+            result.add(DashboardItem.Section(SECTION_POSTULANTE, SECTION_POSTULANTE in expandedSections))
+            result.addAll(sortByOrder(postulante, postulanteOrder).map { DashboardItem.Table(it, accessLevel(it.name), SECTION_POSTULANTE) })
         }
         if (otros.isNotEmpty()) {
-            result.add(DashboardItem.Section("OTRAS", "OTRAS" in expandedSections))
-            result.addAll(otros.sortedBy { it.displayName }.map { DashboardItem.Table(it, accessLevel(it.name), "OTRAS") })
+            result.add(DashboardItem.Section(SECTION_OTRAS, SECTION_OTRAS in expandedSections))
+            result.addAll(otros.sortedBy { it.displayName }.map { DashboardItem.Table(it, accessLevel(it.name), SECTION_OTRAS) })
         }
         return result
     }
 
-    fun toggleSection(title: String) {
-        if (title in expandedSections) expandedSections.remove(title) else expandedSections.add(title)
+    fun toggleSection(key: String) {
+        if (key in expandedSections) expandedSections.remove(key) else expandedSections.add(key)
         allItemsOriginal = allItemsOriginal.map { item ->
-            if (item is DashboardItem.Section && item.title == title) item.copy(isExpanded = title in expandedSections) else item
+            if (item is DashboardItem.Section && item.sectionKey == key) item.copy(isExpanded = key in expandedSections) else item
         }
         _items.value = allItemsOriginal.filter { item ->
             when (item) {
                 is DashboardItem.Section -> true
-                is DashboardItem.Table -> item.sectionTitle in expandedSections
+                is DashboardItem.Table -> item.sectionKey in expandedSections
             }
         }
     }
@@ -131,7 +138,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 val filtered = all.filter { roleTables.containsKey(it.name) }
                 allItemsOriginal = buildSectionedList(filtered)
                 _items.postValue(allItemsOriginal.filter { item ->
-                    item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionTitle in expandedSections
+                    item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionKey in expandedSections
                 })
             } catch (e: Exception) {
             }
@@ -142,15 +149,15 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         val q = query.removeAccents()
         if (q.isBlank()) {
             _items.value = allItemsOriginal.filter { item ->
-                item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionTitle in expandedSections
+                item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionKey in expandedSections
             }
         } else {
-            val matchingNames = allItemsOriginal.filterIsInstance<DashboardItem.Table>()
+            val matchingKeys = allItemsOriginal.filterIsInstance<DashboardItem.Table>()
                 .filter { it.info.displayName.removeAccents().contains(q, ignoreCase = true) || it.info.name.removeAccents().contains(q, ignoreCase = true) }
-                .map { it.sectionTitle }.toSet()
+                .map { it.sectionKey }.toSet()
             val filtered = allItemsOriginal.filter { item ->
                 when (item) {
-                    is DashboardItem.Section -> item.title in matchingNames
+                    is DashboardItem.Section -> item.sectionKey in matchingKeys
                     is DashboardItem.Table ->
                         (item.info.displayName.removeAccents().contains(q, ignoreCase = true) || item.info.name.removeAccents().contains(q, ignoreCase = true))
                 }
@@ -161,7 +168,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun loadOriginalTables() {
         _items.value = allItemsOriginal.filter { item ->
-            item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionTitle in expandedSections
+            item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionKey in expandedSections
         }
     }
 
