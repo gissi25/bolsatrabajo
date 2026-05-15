@@ -27,11 +27,12 @@ object SeedData {
     )
 
     val CATEGORIAS_HABILIDAD = listOf(
-        "Desarrollo de Software y Lógica",
+        "Desarrollo de Software y Logica",
         "Infraestructura y Cloud Computing",
         "Redes y Telecomunicaciones",
         "Bases de Datos",
-        "Herramientas de Inteligencia Artificial"
+        "Herramientas de Inteligencia Artificial",
+        "Idiomas"
     )
 
     val GRADOS_ACADEMICOS = listOf(
@@ -49,11 +50,11 @@ object SeedData {
 
     val INSTITUCIONES = listOf(
         listOf("INS001", "Universidad de El Salvador (UES)"),
-        listOf("INS002", "Escuela Nacional de Agricultura(ENA)"),
-        listOf("INS003", "Fundación Gloria de Kriete"),
+        listOf("INS002", "ITCA"),
+        listOf("INS003", "Fundacion Gloria de Kriete"),
         listOf("INS004", "Universidad Don Bosco"),
-        listOf("INS005", "Universidad José Matías Delgado"),
-        listOf("INS006", "Ministerio de Educación, Ciencia y Tecnología (MINED)")
+        listOf("INS005", "Universidad Jose Matias Delgado"),
+        listOf("INS006", "CASATIC")
     )
 
     val MUNICIPIOS = listOf(
@@ -98,8 +99,8 @@ object SeedData {
         listOf(6, 1, 1, "Aguilares"), listOf(6, 1, 2, "El Paisnal"), listOf(6, 1, 3, "Guazapa"),
         listOf(6, 2, 1, "Apopa"), listOf(6, 2, 2, "Nejapa"),
         listOf(6, 3, 1, "Ilopango"), listOf(6, 3, 2, "San Martín"), listOf(6, 3, 3, "Soyapango"), listOf(6, 3, 4, "Tonacatepeque"),
-        listOf(6, 4, 1, "Ayutuxtepeque"), listOf(6, 4, 2, "Mejicanos"), listOf(6, 4, 3, "San Salvador"), listOf(6, 4, 4, "San Marcos"), listOf(6, 4, 5, "Santo Tomás"), listOf(6, 4, 6, "Santiago Texacuangos"), listOf(6, 4, 7, "Cuscatancingo"), listOf(6, 4, 8, "Delgado"),
-        listOf(6, 5, 1, "Panchimalco"), listOf(6, 5, 2, "Rosario de Mora"),
+        listOf(6, 4, 1, "Ayutuxtepeque"), listOf(6, 4, 2, "Mejicanos"), listOf(6, 4, 3, "Cuscatancingo"), listOf(6, 4, 4, "Delgado"), listOf(6, 4, 5, "San Salvador"),
+        listOf(6, 5, 1, "San Marcos"), listOf(6, 5, 2, "Santo Tomás"), listOf(6, 5, 3, "Santiago Texacuangos"), listOf(6, 5, 4, "Panchimalco"), listOf(6, 5, 5, "Rosario de Mora"),
 
         listOf(7, 1, 1, "Quezaltepeque"), listOf(7, 1, 2, "San Matías"), listOf(7, 1, 3, "San Pablo Tacachico"),
         listOf(7, 2, 1, "San Juan Opico"), listOf(7, 2, 2, "Ciudad Arce"),
@@ -116,10 +117,10 @@ object SeedData {
         listOf(9, 2, 1, "Ilobasco"), listOf(9, 2, 2, "Tejutepeque"), listOf(9, 2, 3, "Jutiapa"), listOf(9, 2, 4, "Cinquera"),
 
         listOf(10, 1, 1, "Apastepeque"), listOf(10, 1, 2, "Santa Clara"), listOf(10, 1, 3, "San Ildefonso"), listOf(10, 1, 4, "San Esteban Catarina"), listOf(10, 1, 5, "San Sebastián"), listOf(10, 1, 6, "San Lorenzo"), listOf(10, 1, 7, "Santo Domingo"),
-        listOf(10, 2, 1, "San Vicente"), listOf(10, 2, 2, "Guadalupe"), listOf(10, 2, 3, "Verapaz"), listOf(10, 2, 4, "Nuevo Tepetitán"), listOf(10, 2, 5, "Tecoluca"), listOf(10, 2, 6, "San Cayetano Istepeque"),
+        listOf(10, 2, 1, "San Vicente"), listOf(10, 2, 2, "Guadalupe"), listOf(10, 2, 3, "Verapaz"), listOf(10, 2, 4, "Tepetitán"), listOf(10, 2, 5, "Tecoluca"), listOf(10, 2, 6, "San Cayetano Istepeque"),
 
         listOf(11, 1, 1, "Santiago de María"), listOf(11, 1, 2, "Alegría"), listOf(11, 1, 3, "Berlín"), listOf(11, 1, 4, "Mercedes Umaña"), listOf(11, 1, 5, "Jucuapa"), listOf(11, 1, 6, "El Triunfo"), listOf(11, 1, 7, "Estanzuelas"), listOf(11, 1, 8, "San Buenaventura"), listOf(11, 1, 9, "Nueva Granada"),
-        listOf(11, 2, 1, "Usulután"), listOf(11, 2, 2, "Jucuarán"), listOf(11, 2, 3, "San Dionisio"), listOf(11, 2, 4, "Concepción Batres"), listOf(11, 2, 5, "Santa María"), listOf(11, 2, 6, "Ozatlán"), listOf(11, 2, 7, "Tecapán"), listOf(11, 2, 8, "Santa Elena"), listOf(11, 2, 9, "San California"), listOf(11, 2, 10, "Ereguayquín"),
+        listOf(11, 2, 1, "Usulután"), listOf(11, 2, 2, "Jucuarán"), listOf(11, 2, 3, "San Dionisio"), listOf(11, 2, 4, "Concepción Batres"), listOf(11, 2, 5, "Santa María"), listOf(11, 2, 6, "Ozatlán"), listOf(11, 2, 7, "Tecapán"), listOf(11, 2, 8, "Santa Elena"), listOf(11, 2, 9, "California"), listOf(11, 2, 10, "Ereguayquín"),
         listOf(11, 3, 1, "Jiquilisco"), listOf(11, 3, 2, "Puerto El Triunfo"), listOf(11, 3, 3, "San Agustín"), listOf(11, 3, 4, "San Francisco Javier"),
 
         listOf(12, 1, 1, "Ciudad Barrios"), listOf(12, 1, 2, "Sesori"), listOf(12, 1, 3, "Nuevo Edén de San Juan"), listOf(12, 1, 4, "San Gerardo"), listOf(12, 1, 5, "San Luis de la Reina"), listOf(12, 1, 6, "Carolina"), listOf(12, 1, 7, "San Antonio"), listOf(12, 1, 8, "Chapeltique"),
@@ -146,9 +147,16 @@ object SeedData {
         listOf(4, "H01", "Diseño de modelos relacionales (SQL)"),
         listOf(4, "H02", "Integración y gestión con Supabase"),
         listOf(4, "H03", "Manejo de bases de datos NoSQL"),
-        listOf(5, "H01", "Integración de Gemini API y Google AI Studio"),
-        listOf(5, "H02", "Ingeniería de prompts avanzados"),
-        listOf(5, "H03", "Automatización de procesos con IA")
+        listOf(5, "H01", "Integracion de Gemini API y Google AI Studio"),
+        listOf(5, "H02", "Ingenieria de prompts avanzados"),
+        listOf(5, "H03", "Automatizacion de procesos con IA"),
+        listOf(6, "H01", "Ingles"),
+        listOf(6, "H02", "Frances"),
+        listOf(6, "H03", "Portugues"),
+        listOf(6, "H04", "Aleman"),
+        listOf(6, "H05", "Mandarin"),
+        listOf(6, "H06", "Italiano"),
+        listOf(6, "H07", "Japones")
     )
 
     val USUARIOS = listOf(
@@ -157,15 +165,15 @@ object SeedData {
     )
 
     val EMPRESAS = listOf(
-        listOf("06141234560101", 6, 4, 3, "Banco Agrícola", "2200-0001"),
-        listOf("06141234560102", 6, 4, 3, "Nequi El Salvador", "2200-0002"),
-        listOf("06141234560103", 6, 4, 3, "Súper Selectos Sede Central", "2200-0003"),
-        listOf("06141234560104", 7, 6, 2, "Holcim El Salvador", "2200-0004"),
-        listOf("06141234560105", 2, 2, 1, "AES CLESA", "2200-0005"),
-        listOf("06141234560106", 12, 2, 1, "Grupo Campestre", "2200-0006"),
-        listOf("06141234560107", 3, 2, 1, "Compañía Azucarera Salvadoreña - CASSA", "2200-0007"),
-        listOf("06141234560108", 11, 1, 3, "La Geo Planta Geotérmica", "2200-0008"),
-        listOf("06141234560109", 1, 2, 1, "Cooperativa Los Ausoles", "2200-0009"),
-        listOf("06141234560110", 5, 2, 1, "Embutidos La Única", "2200-0010")
+        listOf("06141234560101", 7, 4, 1, "Applaudo Studios", "2200-0001"),
+        listOf("06141234560102", 7, 6, 2, "Elaniin", "2200-0002"),
+        listOf("06141234560103", 6, 4, 5, "Creativa Consultores", "2200-0003"),
+        listOf("06141234560104", 6, 4, 1, "TELUS International El Salvador", "2200-0004"),
+        listOf("06141234560105", 6, 4, 3, "Accedo Technologies", "2200-0005"),
+        listOf("06141234560106", 14, 2, 4, "INNOVATEC", "2200-0006"),
+        listOf("06141234560107", 6, 3, 3, "Gravity 4", "2200-0007"),
+        listOf("06141234560108", 6, 5, 1, "Sysdatec", "2200-0008"),
+        listOf("06141234560109", 6, 2, 1, "SAGACI", "2200-0009"),
+        listOf("06141234560110", 2, 2, 1, "Tech Americas", "2200-0010")
     )
 }
