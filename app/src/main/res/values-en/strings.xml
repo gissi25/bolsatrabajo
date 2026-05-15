@@ -167,6 +167,7 @@
     <string name="hint_titulo_puesto">Job title</string>
     <string name="hint_oferta_academica">Academic offer</string>
     <string name="hint_oferta_trabajo">Job offer</string>
+    <string name="hint_puesto_aplica">Position applied for</string>
     <string name="hint_grado_academico">Academic degree</string>
     <string name="hint_tipo_certificacion">Certification type</string>
     <string name="hint_periodo_fecha_inicio">Period - Start date</string>
@@ -175,7 +176,7 @@
     <string name="hint_genero">Gender</string>
     <string name="hint_tipo_documento">Document type</string>
     <string name="hint_numero_documento">Document number</string>
-    <string name="hint_id_distrito">District ID</string>
+    <string name="hint_id_distrito">District</string>
     <string name="hint_nombre">Name</string>
     <string name="hint_apellido">Surname</string>
     <string name="hint_fecha_nacimiento">Date of birth</string>

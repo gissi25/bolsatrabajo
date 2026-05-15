@@ -167,6 +167,7 @@
     <string name="hint_titulo_puesto">Título do cargo</string>
     <string name="hint_oferta_academica">Oferta acadêmica</string>
     <string name="hint_oferta_trabajo">Oferta de trabalho</string>
+    <string name="hint_puesto_aplica">Cargo ao qual se candidata</string>
     <string name="hint_grado_academico">Grau acadêmico</string>
     <string name="hint_tipo_certificacion">Tipo de certificação</string>
     <string name="hint_periodo_fecha_inicio">Período - Data início</string>
@@ -175,7 +176,7 @@
     <string name="hint_genero">Gênero</string>
     <string name="hint_tipo_documento">Tipo de documento</string>
     <string name="hint_numero_documento">Número do documento</string>
-    <string name="hint_id_distrito">ID Distrito</string>
+    <string name="hint_id_distrito">Distrito</string>
     <string name="hint_nombre">Nome</string>
     <string name="hint_apellido">Sobrenome</string>
     <string name="hint_fecha_nacimiento">Data de nascimento</string>
