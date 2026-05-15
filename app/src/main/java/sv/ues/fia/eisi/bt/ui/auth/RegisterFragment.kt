@@ -19,6 +19,7 @@ import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.LocaleHelper
 import sv.ues.fia.eisi.bt.utils.StyledToast
 import sv.ues.fia.eisi.bt.utils.ThemeToggleHelper
+import sv.ues.fia.eisi.bt.utils.TriggerErrorTranslator
 import sv.ues.fia.eisi.bt.viewmodel.AuthViewModel
 
 class RegisterFragment : Fragment() {
@@ -65,15 +66,6 @@ class RegisterFragment : Fragment() {
         btnLanguage.setImageResource(ThemeToggleHelper.getWorldIconRes(requireContext()))
         btnLanguage.setOnClickListener { showLanguageMenu() }
 
-        val roles = arrayOf(
-            getString(R.string.rol_postulante),
-            getString(R.string.rol_empresa),
-            getString(R.string.rol_admin)
-        )
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, roles)
-        actvRol.setAdapter(adapter)
-        actvRol.setText(getString(R.string.rol_postulante), false)
-
         btnRegister.setOnClickListener {
             val username = etUsername.text.toString().trim()
             val password = etPassword.text.toString().trim()
@@ -110,7 +102,7 @@ class RegisterFragment : Fragment() {
                 }
             }
             result.onFailure { exception ->
-                StyledToast.show(requireContext(), exception.message ?: getString(R.string.error_registro))
+                StyledToast.show(requireContext(), TriggerErrorTranslator.translate(exception.message, requireContext()) ?: getString(R.string.error_registro))
             }
         }
 
@@ -118,6 +110,17 @@ class RegisterFragment : Fragment() {
             btnRegister.isEnabled = !isLoading
             btnLogin.isEnabled = !isLoading
         }
+    }
+
+    override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        super.onViewStateRestored(savedInstanceState)
+        val roles = arrayOf(
+            getString(R.string.rol_postulante),
+            getString(R.string.rol_empresa),
+            getString(R.string.rol_admin)
+        )
+        actvRol.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, roles))
+        actvRol.setText(getString(R.string.rol_postulante), false)
     }
 
     private fun showLanguageMenu() {

@@ -26,7 +26,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun login(username: String, password: String) {
         if (username.isBlank() || password.isBlank()) {
-            _loginResult.value = Result.failure(Exception("Por favor complete todos los campos"))
+            _loginResult.value = Result.failure(Exception(getApplication<Application>().getString(R.string.error_campos_vacios)))
             return
         }
 
@@ -47,7 +47,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun register(username: String, password: String, rol: String = "postulante") {
         if (username.isBlank() || password.isBlank()) {
-            _registerResult.value = Result.failure(Exception("Por favor complete todos los campos"))
+            _registerResult.value = Result.failure(Exception(getApplication<Application>().getString(R.string.error_campos_vacios)))
             return
         }
 

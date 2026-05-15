@@ -78,7 +78,7 @@ class DashboardAdapter(
 
         fun bind(section: DashboardItem.Section) {
             tvSectionTitle.text = itemView.context.getString(sectionKeyToResId(section.sectionKey))
-            tvArrow.text = if (section.isExpanded) "▲" else "▼"
+            tvArrow.text = if (section.isExpanded) itemView.context.getString(R.string.arrow_up) else itemView.context.getString(R.string.arrow_down)
         }
     }
 

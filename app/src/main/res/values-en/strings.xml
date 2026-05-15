@@ -501,4 +501,16 @@
     <string name="error_eliminar_oferta_postulaciones">Delete the applications to this job offer first</string>
     <string name="error_eliminar_oferta_academica">Delete the associated academic education records first</string>
     <string name="error_eliminar_tipo_certificacion">Delete the certifications with this type first</string>
+
+    <!-- Auth hardcoded fix -->
+    <string name="error_campos_vacios">Please fill in all fields</string>
+
+    <!-- Document type hints for EditorDialog -->
+    <string name="hint_dui">DUI</string>
+    <string name="hint_nit_doc">NIT</string>
+
+    <!-- Missing duplicate check error messages -->
+    <string name="error_duplicado_postulante_nup">An applicant with that NUP already exists</string>
+    <string name="error_duplicado_formacion_academica">An academic education with that title already exists in the same period for the applicant</string>
+    <string name="error_duplicado_certificacion_nombre">A certification with that name already exists for the applicant</string>
 </resources>
