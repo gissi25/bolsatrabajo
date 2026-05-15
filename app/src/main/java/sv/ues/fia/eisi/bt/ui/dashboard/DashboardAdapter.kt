@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
 import sv.ues.fia.eisi.bt.R
+import sv.ues.fia.eisi.bt.utils.getTableDisplayName
 import sv.ues.fia.eisi.bt.viewmodel.DashboardItem
 import sv.ues.fia.eisi.bt.viewmodel.DashboardViewModel
 
@@ -97,7 +98,7 @@ class DashboardAdapter(
         }
 
         fun bind(table: DashboardItem.Table) {
-            tvTableName.text = table.info.displayName
+            tvTableName.text = itemView.context.getTableDisplayName(table.info.name)
             tvRecordCount.text = "${table.info.count} ${itemView.context.getString(R.string.records)}"
             if (table.isReadOnly) {
                 tvAccessBadge.visibility = View.VISIBLE

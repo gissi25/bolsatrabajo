@@ -78,7 +78,7 @@ class LoginFragment : Fragment() {
                 }
             }
             result.onFailure { exception ->
-                StyledToast.show(requireContext(), exception.message ?: "Error en el inicio de sesión")
+                StyledToast.show(requireContext(), exception.message ?: getString(R.string.error_inicio_sesion))
             }
         }
 

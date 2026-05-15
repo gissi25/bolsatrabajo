@@ -1,5 +1,8 @@
 package sv.ues.fia.eisi.bt.utils
 
+import android.content.Context
+import sv.ues.fia.eisi.bt.R
+
 object Constants {
     const val DATABASE_NAME = "bolsadetabajo.db"
     const val DATABASE_VERSION = 10
@@ -157,4 +160,35 @@ object Constants {
             else -> emptyMap()
         }
     }
+}
+
+fun Context.getTableDisplayName(tableName: String): String {
+    val resId = when (tableName) {
+        "CATEGORIA_HABILIDAD" -> R.string.tabla_categoria_habilidad
+        "GENERO" -> R.string.tabla_genero
+        "TIPO_DOCUMENTO" -> R.string.tabla_tipo_documento
+        "DEPARTAMENTO" -> R.string.tabla_departamento
+        "MUNICIPIO" -> R.string.tabla_municipio
+        "DISTRITO" -> R.string.tabla_distrito
+        "INSTITUCION" -> R.string.tabla_institucion
+        "GRADO_ACADEMICO" -> R.string.tabla_grado_academico
+        "RED_SOCIAL" -> R.string.tabla_red_social
+        "TIPO_CERTIFICACION" -> R.string.tabla_tipo_certificacion
+        "HABILIDAD" -> R.string.tabla_habilidad
+        "OFERTA_ACADEMICA" -> R.string.tabla_oferta_academica
+        "USUARIO" -> R.string.tabla_usuario
+        "EMPRESA" -> R.string.tabla_empresa
+        "OFERTA_TRABAJO" -> R.string.tabla_oferta_trabajo
+        "DETALLE_REQUISITO" -> R.string.tabla_detalle_requisito
+        "POSTULANTE" -> R.string.tabla_postulante
+        "FORMACION_ACADEMICA" -> R.string.tabla_formacion_academica
+        "CERTIFICACION" -> R.string.tabla_certificacion
+        "EXPERIENCIA_LABORAL" -> R.string.tabla_experiencia_laboral
+        "HABILIDAD_POSTULANTE" -> R.string.tabla_habilidad_postulante
+        "RED_SOCIAL_POSTULANTE" -> R.string.tabla_red_social_postulante
+        "POSTULACION" -> R.string.tabla_postulacion
+        else -> null
+    }
+    return resId?.let { getString(it) }
+        ?: tableName.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
 }

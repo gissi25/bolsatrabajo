@@ -16,6 +16,7 @@ import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
 import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.StyledToast
+import sv.ues.fia.eisi.bt.utils.getTableDisplayName
 import sv.ues.fia.eisi.bt.viewmodel.CrudViewModel
 import sv.ues.fia.eisi.bt.viewmodel.Resource
 
@@ -53,7 +54,7 @@ class DeleteConfirmDialog : DialogFragment() {
         }
 
         val titleTv = TextView(context).apply {
-            text = getString(R.string.eliminar_tabla, tableName.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() })
+            text = getString(R.string.eliminar_tabla, context.getTableDisplayName(tableName))
             setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Headline6)
             setTextColor(context.getColor(R.color.text_primary))
             setPadding(0, 0, 0, 32)

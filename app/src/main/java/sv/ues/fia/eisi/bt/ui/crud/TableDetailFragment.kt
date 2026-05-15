@@ -18,6 +18,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import sv.ues.fia.eisi.bt.utils.getTableDisplayName
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
@@ -50,7 +51,6 @@ class TableDetailFragment : Fragment() {
     private lateinit var adapter: TableAdapter
 
     private var tableName: String = ""
-    private var tableDisplayName: String = ""
     private var allItems: List<List<Any>> = emptyList()
     private var canEdit: Boolean = false
     private var canDelete: Boolean = false
@@ -61,7 +61,6 @@ class TableDetailFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         tableName = arguments?.getString(Constants.BUNDLE_TABLE_NAME) ?: ""
-        tableDisplayName = arguments?.getString(Constants.BUNDLE_TABLE_DISPLAY_NAME) ?: ""
         canEdit = arguments?.getBoolean(Constants.BUNDLE_CAN_EDIT) ?: false
         canDelete = arguments?.getBoolean(Constants.BUNDLE_CAN_DELETE) ?: false
     }
@@ -138,7 +137,7 @@ class TableDetailFragment : Fragment() {
     }
 
     private fun setupToolbar() {
-        toolbar.title = tableDisplayName
+        toolbar.title = requireContext().getTableDisplayName(tableName)
         toolbar.setNavigationOnClickListener {
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
@@ -325,7 +324,7 @@ class TableDetailFragment : Fragment() {
             }
 
             Handler(Looper.getMainLooper()).postDelayed({
-                tvMsg.text = "Generando archivos PDF..."
+                tvMsg.text = getString(R.string.generando_pdfs)
             }, 1500)
 
             try {

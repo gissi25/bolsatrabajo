@@ -8,6 +8,7 @@ import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import androidx.core.content.FileProvider
+import sv.ues.fia.eisi.bt.R
 import java.io.File
 import java.io.FileOutputStream
 
@@ -73,7 +74,7 @@ object CVExportUtil {
     fun generateCVPdf(context: Context, data: PostulantFullData, fileName: String): File {
         val document = PdfDocument()
         val mgr = PageManager(document)
-        drawCVDocument(mgr, data)
+        drawCVDocument(mgr, data, context)
         mgr.finish()
         return savePdf(document, context, fileName)
     }
@@ -81,7 +82,7 @@ object CVExportUtil {
     fun generateOfertaPdf(context: Context, data: OfertaFullData, fileName: String): File {
         val document = PdfDocument()
         val mgr = PageManager(document)
-        drawOfertaDocument(mgr, data)
+        drawOfertaDocument(mgr, data, context)
         mgr.finish()
         return savePdf(document, context, fileName)
     }
@@ -128,9 +129,9 @@ object CVExportUtil {
         canvas.drawRect(0f, 0f, PAGE_WIDTH.toFloat(), 60f, bgPaint)
     }
 
-    private fun drawCVDocument(mgr: PageManager, data: PostulantFullData) {
+    private fun drawCVDocument(mgr: PageManager, data: PostulantFullData, context: Context) {
         with(mgr) {
-            drawPageTitle(canvas, "CURRICULUM VITAE")
+            drawPageTitle(canvas, context.getString(R.string.pdf_curriculum_vitae))
             y = drawSectionHeader(canvas, "Datos Personales", y)
 
             val fullDir = buildString {
@@ -145,8 +146,8 @@ object CVExportUtil {
                 if (data.numDocumento.isNotBlank()) { if (isNotEmpty()) append(" "); append(data.numDocumento) }
             }
 
-            y = drawField2Col(canvas, "Codigo", data.idPostulante, "Grado", data.gradoAcademico, y)
-            y = drawField2Col(canvas, "Nombre", "${data.nombre} ${data.apellido}", "Genero", data.genero, y)
+            y = drawField2Col(canvas, context.getString(R.string.pdf_codigo), data.idPostulante, context.getString(R.string.pdf_grado), data.gradoAcademico, y)
+            y = drawField2Col(canvas, context.getString(R.string.hint_nombre), "${data.nombre} ${data.apellido}", "Genero", data.genero, y)
             y = drawField2Col(canvas, "Nacimiento", data.fechaNacimiento, "Documento", docInfo, y)
             y = drawField2Col(canvas, "NUP", data.nup, "Email", data.email, y)
             y = drawField2Col(canvas, "Telefono", data.telefonoCelular, "Tel. Casa", data.telefonoCasa, y)
@@ -248,9 +249,9 @@ object CVExportUtil {
         }
     }
 
-    private fun drawOfertaDocument(mgr: PageManager, data: OfertaFullData) {
+    private fun drawOfertaDocument(mgr: PageManager, data: OfertaFullData, context: Context) {
         with(mgr) {
-            drawPageTitle(canvas, "DETALLE DE LA VACANTE")
+            drawPageTitle(canvas, context.getString(R.string.pdf_detalle_vacante))
 
             val dirEmpresa = buildString {
                 if (data.empresaDistrito.isNotBlank()) append(data.empresaDistrito)
@@ -259,8 +260,8 @@ object CVExportUtil {
             }
 
             y = drawSectionHeader(canvas, "Empresa", y)
-            y = drawField2Col(canvas, "Nombre", data.nombreEmpresa, "NIT", data.nit, y)
-            y = drawField2Col(canvas, "Contacto", data.contactoEmpresa, "Ubicacion", dirEmpresa, y)
+            y = drawField2Col(canvas, context.getString(R.string.hint_nombre), data.nombreEmpresa, context.getString(R.string.pdf_nit), data.nit, y)
+            y = drawField2Col(canvas, context.getString(R.string.pdf_contacto), data.contactoEmpresa, context.getString(R.string.pdf_ubicacion), dirEmpresa, y)
 
             y += SECTION_SPACE; checkPage()
             y = drawSectionHeader(canvas, "Puesto", y)

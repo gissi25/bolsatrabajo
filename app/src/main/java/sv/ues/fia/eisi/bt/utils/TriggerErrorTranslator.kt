@@ -1,5 +1,7 @@
 package sv.ues.fia.eisi.bt.utils
 
+import sv.ues.fia.eisi.bt.R
+
 object TriggerErrorTranslator {
 
     private val ERROR_MAP = mapOf(
@@ -100,8 +102,8 @@ object TriggerErrorTranslator {
         "No se puede eliminar: el tipo de certificacion tiene certificaciones asociadas" to "Elimine primero las certificaciones con este tipo"
     )
 
-    fun translate(errorMessage: String?): String {
-        if (errorMessage.isNullOrBlank()) return "Error desconocido"
+    fun translate(errorMessage: String?, context: android.content.Context? = null): String {
+        if (errorMessage.isNullOrBlank()) return context?.getString(R.string.error_desconocido) ?: "Error desconocido"
         ERROR_MAP.entries.forEach { (key, value) ->
             if (errorMessage.contains(key, ignoreCase = true)) {
                 return value
