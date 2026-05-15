@@ -85,7 +85,7 @@ class MainRepository(private val context: Context) {
             }
             true
         } catch (e: android.database.sqlite.SQLiteException) {
-            throw Exception(TriggerErrorTranslator.translate(e.message))
+            throw Exception(TriggerErrorTranslator.translate(e.message, context))
         }
     }
 
@@ -101,7 +101,7 @@ class MainRepository(private val context: Context) {
             getDb().execSQL("DELETE FROM $tableName WHERE $whereClause")
             true
         } catch (e: android.database.sqlite.SQLiteException) {
-            throw Exception(TriggerErrorTranslator.translate(e.message))
+            throw Exception(TriggerErrorTranslator.translate(e.message, context))
         }
     }
 
@@ -298,7 +298,7 @@ class MainRepository(private val context: Context) {
             } else 1L
         } catch (e: Exception) {
             getDb().endTransaction()
-            throw Exception(TriggerErrorTranslator.translate(e.message))
+            throw Exception(TriggerErrorTranslator.translate(e.message, context))
         }
     }
 
@@ -454,7 +454,7 @@ class MainRepository(private val context: Context) {
             getDb().execSQL("UPDATE $tableName SET $setClause WHERE $whereClause")
             return 1
         } catch (e: Exception) {
-            throw Exception(TriggerErrorTranslator.translate(e.message))
+            throw Exception(TriggerErrorTranslator.translate(e.message, context))
         }
     }
 

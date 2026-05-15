@@ -76,7 +76,7 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
                 loadItems()
                 _operationResult.value = Resource.Success(getApplication<Application>().getString(R.string.eliminado_correctamente))
             } catch (e: Exception) {
-                val translated = TriggerErrorTranslator.translate(e.message)
+                val translated = TriggerErrorTranslator.translate(e.message, getApplication())
                 _operationResult.value = Resource.Error(e.message ?: getApplication<Application>().getString(R.string.error_al_eliminar), translated)
                 e.printStackTrace()
             }
@@ -95,7 +95,7 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
                 loadItems()
                 _operationResult.value = Resource.Success(getApplication<Application>().getString(R.string.eliminado_correctamente))
             } catch (e: Exception) {
-                val translated = TriggerErrorTranslator.translate(e.message)
+                val translated = TriggerErrorTranslator.translate(e.message, getApplication())
                 _operationResult.value = Resource.Error(e.message ?: getApplication<Application>().getString(R.string.error_al_eliminar), translated)
                 e.printStackTrace()
             }
@@ -124,7 +124,7 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
                 loadItems()
                 _operationResult.value = Resource.Success(getApplication<Application>().getString(R.string.guardado_correctamente))
             } catch (e: Exception) {
-                val translated = TriggerErrorTranslator.translate(e.message)
+                val translated = TriggerErrorTranslator.translate(e.message, getApplication())
                 _operationResult.value = Resource.Error(e.message ?: getApplication<Application>().getString(R.string.error_al_guardar), translated)
                 e.printStackTrace()
             }
@@ -142,7 +142,7 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
                 loadItems()
                 _operationResult.value = Resource.Success(getApplication<Application>().getString(R.string.actualizado_correctamente))
             } catch (e: Exception) {
-                val translated = TriggerErrorTranslator.translate(e.message)
+                val translated = TriggerErrorTranslator.translate(e.message, getApplication())
                 _operationResult.value = Resource.Error(e.message ?: getApplication<Application>().getString(R.string.error_al_actualizar), translated)
                 e.printStackTrace()
             }

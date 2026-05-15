@@ -1563,9 +1563,9 @@ class EditorDialogFragment : DialogFragment() {
     private fun getFieldValidationError(column: String, value: String): String? {
         if (value.isBlank()) return null
         return when {
-            column.contains("EMAIL") -> InputMaskUtils.validateEmail(value)
-            column.contains("PASSWORD") || column.contains("CONTRA") -> InputMaskUtils.validatePassword(value)
-            column.contains("FECHA") -> InputMaskUtils.validateFecha(value)
+            column.contains("EMAIL") -> InputMaskUtils.validateEmail(requireContext(), value)
+            column.contains("PASSWORD") || column.contains("CONTRA") -> InputMaskUtils.validatePassword(requireContext(), value)
+            column.contains("FECHA") -> InputMaskUtils.validateFecha(requireContext(), value)
             else -> null
         }
     }
@@ -1681,10 +1681,10 @@ class EditorDialogFragment : DialogFragment() {
                             getString(R.string.estado_en_proceso) -> "en proceso"
                             getString(R.string.estado_contratado) -> "contratado"
                             getString(R.string.estado_rechazado) -> "rechazado"
-                            "Activo" -> "activo"
-                            "En Proceso" -> "en proceso"
-                            "Contratado" -> "contratado"
-                            "Rechazado" -> "rechazado"
+                            getString(R.string.estado_activo) -> "activo"
+                            getString(R.string.estado_en_proceso) -> "en proceso"
+                            getString(R.string.estado_contratado) -> "contratado"
+                            getString(R.string.estado_rechazado) -> "rechazado"
                             else -> ""
                         }
                         values.add(estadoValue)

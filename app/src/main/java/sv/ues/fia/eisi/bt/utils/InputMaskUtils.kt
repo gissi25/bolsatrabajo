@@ -1,5 +1,8 @@
 package sv.ues.fia.eisi.bt.utils
 
+import android.content.Context
+import sv.ues.fia.eisi.bt.R
+
 object InputMaskUtils {
 
     const val DUI_LENGTH = 9
@@ -45,18 +48,18 @@ object InputMaskUtils {
         return if (digits.length > 14) digits.substring(0, 14) else digits
     }
 
-    fun validatePassword(value: String): String? {
-        return if (value.length < MIN_PASSWORD) "Mínimo $MIN_PASSWORD caracteres" else null
+    fun validatePassword(context: Context, value: String): String? {
+        return if (value.length < MIN_PASSWORD) context.getString(R.string.validation_password_min, MIN_PASSWORD) else null
     }
 
-    fun validateEmail(value: String): String? {
+    fun validateEmail(context: Context, value: String): String? {
         return if (!android.util.Patterns.EMAIL_ADDRESS.matcher(value).matches())
-            "Correo electrónico inválido" else null
+            context.getString(R.string.validation_email_invalid) else null
     }
 
-    fun validateFecha(value: String): String? {
+    fun validateFecha(context: Context, value: String): String? {
         return if (!value.matches(Regex("""\d{4}-\d{2}-\d{2}""")))
-            "Formato: AAAA-MM-DD" else null
+            context.getString(R.string.validation_date_format) else null
     }
 }
 
