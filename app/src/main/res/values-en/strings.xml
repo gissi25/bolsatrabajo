@@ -172,7 +172,7 @@
     <string name="hint_tipo_certificacion">Certification type</string>
     <string name="hint_periodo_fecha_inicio">Period - Start date</string>
     <string name="hint_periodo_fecha_fin">Period - End date</string>
-    <string name="hint_habilidad_postulante">Applicant skill</string>
+    <string name="hint_habilidad_postulante">Skill</string>
     <string name="hint_genero">Gender</string>
     <string name="hint_tipo_documento">Document type</string>
     <string name="hint_numero_documento">Document number</string>
