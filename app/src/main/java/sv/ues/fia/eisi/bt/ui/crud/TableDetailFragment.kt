@@ -85,7 +85,7 @@ class TableDetailFragment : Fragment() {
         setupSearchView()
         setupFab()
 
-        btnThemeToggle.setImageResource(ThemeToggleHelper.getIconRes())
+        btnThemeToggle.setImageResource(ThemeToggleHelper.getIconRes(requireContext()))
         btnThemeToggle.setOnClickListener {
             ThemeToggleHelper.toggle(requireActivity())
         }
@@ -104,7 +104,7 @@ class TableDetailFragment : Fragment() {
             ?: Constants.ROLE_POSTULANTE
         val access = Constants.getRoleTables(role)[tableName] ?: Constants.AccessLevel.NONE
         if (access == Constants.AccessLevel.NONE) {
-            StyledToast.show(requireContext(), "No tienes acceso a esta tabla")
+            StyledToast.show(requireContext(), getString(R.string.error_sin_acceso_tabla))
             requireActivity().onBackPressedDispatcher.onBackPressed()
             return
         }
@@ -258,7 +258,7 @@ class TableDetailFragment : Fragment() {
 
         val currentQ = query.trim()
         if (filtered.isEmpty() && currentQ.isNotBlank() && currentQ != lastTableQuery) {
-            StyledToast.show(requireContext(), "Sin resultados")
+            StyledToast.show(requireContext(), getString(R.string.error_sin_resultados))
         }
         lastTableQuery = if (filtered.isNotEmpty()) null else currentQ
     }
@@ -280,7 +280,7 @@ class TableDetailFragment : Fragment() {
         val idOferta = item.getOrNull(2)?.toString()?.trim() ?: ""
 
         if (idPostulante.isBlank() || nit.isBlank() || idOferta.isBlank()) {
-            StyledToast.show(requireContext(), "Error: datos de postulacion incompletos")
+            StyledToast.show(requireContext(), getString(R.string.error_datos_incompletos))
             return
         }
 
@@ -297,7 +297,7 @@ class TableDetailFragment : Fragment() {
             })
         }
         val tvMsg = TextView(requireContext()).apply {
-            text = "Generando CV del postulante\ny datos de la vacante..."
+            text = getString(R.string.pdf_generando_cv)
             textSize = 16f
             gravity = Gravity.CENTER
             layoutParams = LinearLayout.LayoutParams(
@@ -307,7 +307,7 @@ class TableDetailFragment : Fragment() {
         }
         progressLayout.addView(tvMsg)
         val loadingDialog = MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Exportando PDFs")
+            .setTitle(getString(R.string.pdf_titulo))
             .setView(progressLayout)
             .setCancelable(false)
             .show()
@@ -319,7 +319,7 @@ class TableDetailFragment : Fragment() {
             if (postulantData == null || ofertaData == null) {
                 Handler(Looper.getMainLooper()).post {
                     loadingDialog.dismiss()
-                    StyledToast.show(requireContext(), "Error al obtener datos para los PDFs")
+                    StyledToast.show(requireContext(), getString(R.string.error_obtener_datos_pdf))
                 }
                 return@Thread
             }
@@ -351,7 +351,7 @@ class TableDetailFragment : Fragment() {
 
                         // Título llamativo
                         addView(TextView(requireContext()).apply {
-                            text = "¡PDFs Listos!"
+                            text = getString(R.string.pdf_listos)
                             textSize = 22f
                             typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
                             setTextColor(requireContext().getColor(R.color.text_primary))
@@ -364,7 +364,7 @@ class TableDetailFragment : Fragment() {
 
                         // Cuerpo descriptivo
                         addView(TextView(requireContext()).apply {
-                            text = "El CV y el detalle de la vacante se han generado correctamente. Compáralos para evaluar el perfil."
+                            text = getString(R.string.pdf_descripcion)
                             textSize = 15f
                             gravity = Gravity.CENTER
                             setLineSpacing(0f, 1.2f)
@@ -377,7 +377,7 @@ class TableDetailFragment : Fragment() {
 
                         // Botón principal: VER VACANTE (Relleno)
                         val btnVacante = MaterialButton(requireContext()).apply {
-                            text = "VER VACANTE"
+                            text = getString(R.string.pdf_ver_vacante)
                             backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary))
                             setTextColor(requireContext().getColor(R.color.on_primary))
                             cornerRadius = 28
@@ -391,7 +391,7 @@ class TableDetailFragment : Fragment() {
 
                         // Botón secundario: VER CV (Relleno)
                         val btnCV = MaterialButton(requireContext()).apply {
-                            text = "VER CV"
+                            text = getString(R.string.pdf_ver_cv)
                             backgroundTintList = ColorStateList.valueOf(requireContext().getColor(R.color.primary))
                             setTextColor(requireContext().getColor(R.color.on_primary))
                             cornerRadius = 28
@@ -405,7 +405,7 @@ class TableDetailFragment : Fragment() {
 
                         // Botón Cerrar: Estilo Texto/Chip (Más pequeño)
                         val btnCerrar = MaterialButton(requireContext(), null).apply {
-                            text = "Cerrar"
+                            text = getString(R.string.cerrar)
                             isAllCaps = false
                             textSize = 14f
                             setTextColor(requireContext().getColor(R.color.text_secondary))
@@ -430,7 +430,7 @@ class TableDetailFragment : Fragment() {
                                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 })
                             } catch (e: Exception) {
-                                StyledToast.show(requireContext(), "Sin visor PDF disponible")
+                                StyledToast.show(requireContext(), getString(R.string.error_sin_visor_pdf))
                             }
                         }
 
@@ -442,7 +442,7 @@ class TableDetailFragment : Fragment() {
                                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 })
                             } catch (e: Exception) {
-                                StyledToast.show(requireContext(), "Sin visor PDF disponible")
+                                StyledToast.show(requireContext(), getString(R.string.error_sin_visor_pdf))
                             }
                         }
 
@@ -461,7 +461,7 @@ class TableDetailFragment : Fragment() {
             } catch (e: Exception) {
                 Handler(Looper.getMainLooper()).post {
                     loadingDialog.dismiss()
-                    StyledToast.show(requireContext(), "Error al generar PDFs: ${e.message}")
+                    StyledToast.show(requireContext(), getString(R.string.error_generar_pdf, e.message ?: ""))
                 }
             }
         }.start()
@@ -469,7 +469,7 @@ class TableDetailFragment : Fragment() {
 
     private fun showEditDialog(itemData: List<Any>, isEditMode: Boolean) {
         if (!canEdit) {
-            StyledToast.show(requireContext(), "No tienes permiso para editar esta tabla")
+            StyledToast.show(requireContext(), getString(R.string.error_sin_permiso_editar))
             return
         }
         val dialog = EditorDialogFragment()
@@ -486,7 +486,7 @@ class TableDetailFragment : Fragment() {
         if (!canDelete) {
             StyledToast.show(
                 requireContext(),
-                "No tienes permiso para eliminar registros de esta tabla"
+                getString(R.string.error_sin_permiso_eliminar)
             )
             return
         }

@@ -7,6 +7,19 @@
     android:padding="24dp">
 
     <ImageButton
+        android:id="@+id/btnLanguage"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="40dp"
+        android:layout_marginEnd="8dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Seleccionar idioma"
+        app:layout_constraintEnd_toStartOf="@id/btnThemeToggle"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="?attr/colorOnSurface"
+        app:srcCompat="@drawable/ic_world_n" />
+
+    <ImageButton
         android:id="@+id/btnThemeToggle"
         android:layout_width="48dp"
         android:layout_height="48dp"

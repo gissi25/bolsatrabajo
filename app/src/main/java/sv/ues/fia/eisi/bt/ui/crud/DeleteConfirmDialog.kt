@@ -53,7 +53,7 @@ class DeleteConfirmDialog : DialogFragment() {
         }
 
         val titleTv = TextView(context).apply {
-            text = "Eliminar ${tableName.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }}"
+            text = getString(R.string.eliminar_tabla, tableName.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() })
             setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Headline6)
             setTextColor(context.getColor(R.color.text_primary))
             setPadding(0, 0, 0, 32)

@@ -74,6 +74,7 @@
     <string name="ver_tabla">Ver %s</string>
     <string name="editar_tabla">Editar %s</string>
     <string name="nuevo_tabla">Nuevo %s</string>
+    <string name="eliminar_tabla">Eliminar %s</string>
     <string name="seleccionar_fecha">Seleccionar fecha</string>
 
     <!-- Login / Register -->
@@ -90,4 +91,48 @@
     <string name="debe_ser_numero">%s debe ser un numero</string>
     <string name="debe_ser_mayor_igual" formatted="false">%s debe ser mayor o igual a %d</string>
     <string name="debe_ser_menor_igual" formatted="false">%s debe ser menor o igual a %d</string>
+
+    <!-- Hardcoded strings from code -->
+    <string name="estado_vigente">VIGENTE</string>
+    <string name="estado_vencida">VENCIDA</string>
+    <string name="estado_vencido">VENCIDO</string>
+    <string name="nivel_basico">Básico</string>
+    <string name="nivel_intermedio">Intermedio</string>
+    <string name="nivel_avanzado">Avanzado</string>
+    <string name="estado_activo">Activo</string>
+    <string name="estado_en_proceso">En Proceso</string>
+    <string name="estado_contratado">Contratado</string>
+    <string name="estado_rechazado">Rechazado</string>
+    <string name="rol_postulante">postulante</string>
+    <string name="rol_empresa">gerente de empresa</string>
+    <string name="rol_admin">administrador</string>
+    <string name="hint_departamento">Departamento</string>
+    <string name="hint_municipio">Municipio</string>
+    <string name="id_bloqueado">ID bloqueado: tiene registros dependientes</string>
+    <string name="doc_pasaporte">Pasaporte</string>
+    <string name="solo_lectura">Solo lectura</string>
+    <string name="pdf_generando_cv">Generando CV del postulante\ny datos de la vacante...</string>
+    <string name="pdf_titulo">Exportando PDFs</string>
+    <string name="pdf_listos">¡PDFs Listos!</string>
+    <string name="pdf_descripcion">El CV y el detalle de la vacante se han generado correctamente. Compáralos para evaluar el perfil.</string>
+    <string name="pdf_ver_vacante">VER VACANTE</string>
+    <string name="pdf_ver_cv">VER CV</string>
+    <string name="error_sin_visor_pdf">Sin visor PDF disponible</string>
+    <string name="error_sin_acceso_tabla">No tienes acceso a esta tabla</string>
+    <string name="error_sin_resultados">Sin resultados</string>
+    <string name="error_datos_incompletos">Error: datos de postulacion incompletos</string>
+    <string name="error_obtener_datos_pdf">Error al obtener datos para los PDFs</string>
+    <string name="error_generar_pdf">Error al generar PDFs: %s</string>
+    <string name="error_sin_permiso_editar">No tienes permiso para editar esta tabla</string>
+    <string name="error_sin_permiso_eliminar">No tienes permiso para eliminar registros de esta tabla</string>
+
+    <!-- Language selector -->
+    <string name="idiomas">Idiomas</string>
+    <string name="espanol">Español</string>
+    <string name="ingles">Inglés</string>
+    <string name="portugues">Portugués</string>
+    <string name="section_catalogos">Catálogos</string>
+    <string name="section_empresa">Empresa</string>
+    <string name="section_postulante">Postulante</string>
+    <string name="section_otras">Otras</string>
 </resources>
