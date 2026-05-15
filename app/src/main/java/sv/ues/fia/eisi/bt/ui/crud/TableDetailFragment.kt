@@ -18,6 +18,8 @@ import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import sv.ues.fia.eisi.bt.utils.getTableDisplayName
+import sv.ues.fia.eisi.bt.utils.LocaleHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
@@ -47,10 +49,10 @@ class TableDetailFragment : Fragment() {
     private lateinit var fabExport: FloatingActionButton
     private lateinit var progressBar: ProgressBar
     private lateinit var btnThemeToggle: ImageButton
+    private lateinit var btnLanguage: ImageButton
     private lateinit var adapter: TableAdapter
 
     private var tableName: String = ""
-    private var tableDisplayName: String = ""
     private var allItems: List<List<Any>> = emptyList()
     private var canEdit: Boolean = false
     private var canDelete: Boolean = false
@@ -61,7 +63,6 @@ class TableDetailFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         tableName = arguments?.getString(Constants.BUNDLE_TABLE_NAME) ?: ""
-        tableDisplayName = arguments?.getString(Constants.BUNDLE_TABLE_DISPLAY_NAME) ?: ""
         canEdit = arguments?.getBoolean(Constants.BUNDLE_CAN_EDIT) ?: false
         canDelete = arguments?.getBoolean(Constants.BUNDLE_CAN_DELETE) ?: false
     }
@@ -80,6 +81,7 @@ class TableDetailFragment : Fragment() {
         fabExport = view.findViewById(R.id.fabExport)
         progressBar = view.findViewById(R.id.progressBar)
         btnThemeToggle = view.findViewById(R.id.btnThemeToggle)
+        btnLanguage = view.findViewById(R.id.btnLanguage)
 
         setupToolbar()
         setupSearchView()
@@ -89,6 +91,8 @@ class TableDetailFragment : Fragment() {
         btnThemeToggle.setOnClickListener {
             ThemeToggleHelper.toggle(requireActivity())
         }
+        btnLanguage.setImageResource(ThemeToggleHelper.getWorldIconRes(requireContext()))
+        btnLanguage.setOnClickListener { showLanguageMenu() }
 
         return view
     }
@@ -138,7 +142,7 @@ class TableDetailFragment : Fragment() {
     }
 
     private fun setupToolbar() {
-        toolbar.title = tableDisplayName
+        toolbar.title = requireContext().getTableDisplayName(tableName)
         toolbar.setNavigationOnClickListener {
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
@@ -325,7 +329,7 @@ class TableDetailFragment : Fragment() {
             }
 
             Handler(Looper.getMainLooper()).postDelayed({
-                tvMsg.text = "Generando archivos PDF..."
+                tvMsg.text = getString(R.string.generando_pdfs)
             }, 1500)
 
             try {
@@ -509,5 +513,26 @@ class TableDetailFragment : Fragment() {
         }
         dialog.arguments = bundle
         dialog.show(childFragmentManager, "editor")
+    }
+
+    private fun showLanguageMenu() {
+        val languages = arrayOf(
+            getString(R.string.espanol) to "es",
+            getString(R.string.ingles) to "en",
+            getString(R.string.portugues) to "pt"
+        )
+        val labels = languages.map { it.first }.toTypedArray()
+        val currentLang = LocaleHelper.getLanguage(requireContext())
+
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+            .setTitle(getString(R.string.idiomas))
+            .setItems(labels) { _, which ->
+                val lang = languages[which].second
+                if (lang != currentLang) {
+                    LocaleHelper.setLocale(requireContext(), lang)
+                    requireActivity().recreate()
+                }
+            }
+            .show()
     }
 }

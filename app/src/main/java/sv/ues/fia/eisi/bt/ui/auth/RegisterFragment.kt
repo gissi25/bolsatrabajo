@@ -104,13 +104,13 @@ class RegisterFragment : Fragment() {
                     findNavController().navigate(R.id.action_register_to_login)
                 } else if (userId == -2L) {
                     tilUsername.error = getString(R.string.username_already_exists)
-                    StyledToast.show(requireContext(), "El nombre de usuario ya existe")
+                    StyledToast.show(requireContext(), getString(R.string.username_already_exists))
                 } else {
-                    StyledToast.show(requireContext(), "Error en el registro. Intenta de nuevo.")
+                    StyledToast.show(requireContext(), getString(R.string.error_registro))
                 }
             }
             result.onFailure { exception ->
-                StyledToast.show(requireContext(), exception.message ?: "Error en el registro")
+                StyledToast.show(requireContext(), exception.message ?: getString(R.string.error_registro))
             }
         }
 

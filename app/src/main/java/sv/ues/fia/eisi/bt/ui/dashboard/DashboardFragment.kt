@@ -65,6 +65,18 @@ class DashboardFragment : Fragment() {
         val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
         val username = prefs.getString(Constants.KEY_USERNAME, "")
         toolbar.title = getString(R.string.welcome_user, username)
+        toolbar.post {
+            for (i in 0 until toolbar.childCount) {
+                val child = toolbar.getChildAt(i)
+                if (child is TextView && child.text == toolbar.title) {
+                    child.ellipsize = android.text.TextUtils.TruncateAt.MARQUEE
+                    child.marqueeRepeatLimit = -1
+                    child.isSingleLine = true
+                    child.isSelected = true
+                    break
+                }
+            }
+        }
 
         btnThemeToggle.setImageResource(ThemeToggleHelper.getIconRes(requireContext()))
         btnThemeToggle.setOnClickListener {
@@ -183,7 +195,6 @@ class DashboardFragment : Fragment() {
             onItemClick = { tableItem ->
                 val bundle = Bundle().apply {
                     putString(Constants.BUNDLE_TABLE_NAME, tableItem.info.name)
-                    putString(Constants.BUNDLE_TABLE_DISPLAY_NAME, tableItem.info.displayName)
                 }
                 findNavController().navigate(R.id.action_dashboard_to_tableDetail, bundle)
             },
