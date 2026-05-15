@@ -27,11 +27,12 @@ object SeedData {
     )
 
     val CATEGORIAS_HABILIDAD = listOf(
-        "Desarrollo de Software y Lógica",
+        "Desarrollo de Software y Logica",
         "Infraestructura y Cloud Computing",
         "Redes y Telecomunicaciones",
         "Bases de Datos",
-        "Herramientas de Inteligencia Artificial"
+        "Herramientas de Inteligencia Artificial",
+        "Idiomas"
     )
 
     val GRADOS_ACADEMICOS = listOf(
@@ -49,11 +50,11 @@ object SeedData {
 
     val INSTITUCIONES = listOf(
         listOf("INS001", "Universidad de El Salvador (UES)"),
-        listOf("INS002", "Escuela Nacional de Agricultura(ENA)"),
-        listOf("INS003", "Fundación Gloria de Kriete"),
+        listOf("INS002", "ITCA"),
+        listOf("INS003", "Fundacion Gloria de Kriete"),
         listOf("INS004", "Universidad Don Bosco"),
-        listOf("INS005", "Universidad José Matías Delgado"),
-        listOf("INS006", "Ministerio de Educación, Ciencia y Tecnología (MINED)")
+        listOf("INS005", "Universidad Jose Matias Delgado"),
+        listOf("INS006", "CASATIC")
     )
 
     val MUNICIPIOS = listOf(
@@ -146,9 +147,16 @@ object SeedData {
         listOf(4, "H01", "Diseño de modelos relacionales (SQL)"),
         listOf(4, "H02", "Integración y gestión con Supabase"),
         listOf(4, "H03", "Manejo de bases de datos NoSQL"),
-        listOf(5, "H01", "Integración de Gemini API y Google AI Studio"),
-        listOf(5, "H02", "Ingeniería de prompts avanzados"),
-        listOf(5, "H03", "Automatización de procesos con IA")
+        listOf(5, "H01", "Integracion de Gemini API y Google AI Studio"),
+        listOf(5, "H02", "Ingenieria de prompts avanzados"),
+        listOf(5, "H03", "Automatizacion de procesos con IA"),
+        listOf(6, "H01", "Ingles"),
+        listOf(6, "H02", "Frances"),
+        listOf(6, "H03", "Portugues"),
+        listOf(6, "H04", "Aleman"),
+        listOf(6, "H05", "Mandarin"),
+        listOf(6, "H06", "Italiano"),
+        listOf(6, "H07", "Japones")
     )
 
     val USUARIOS = listOf(
@@ -157,15 +165,15 @@ object SeedData {
     )
 
     val EMPRESAS = listOf(
-        listOf("06141234560101", 6, 4, 3, "Banco Agrícola", "2200-0001"),
-        listOf("06141234560102", 6, 4, 3, "Nequi El Salvador", "2200-0002"),
-        listOf("06141234560103", 6, 4, 3, "Súper Selectos Sede Central", "2200-0003"),
-        listOf("06141234560104", 7, 6, 2, "Holcim El Salvador", "2200-0004"),
-        listOf("06141234560105", 2, 2, 1, "AES CLESA", "2200-0005"),
-        listOf("06141234560106", 12, 2, 1, "Grupo Campestre", "2200-0006"),
-        listOf("06141234560107", 3, 2, 1, "Compañía Azucarera Salvadoreña - CASSA", "2200-0007"),
-        listOf("06141234560108", 11, 1, 3, "La Geo Planta Geotérmica", "2200-0008"),
-        listOf("06141234560109", 1, 2, 1, "Cooperativa Los Ausoles", "2200-0009"),
-        listOf("06141234560110", 5, 2, 1, "Embutidos La Única", "2200-0010")
+        listOf("06141234560101", 7, 4, 1, "Applaudo Studios", "2200-0001"),
+        listOf("06141234560102", 7, 6, 2, "Elaniin", "2200-0002"),
+        listOf("06141234560103", 6, 4, 5, "Creativa Consultores", "2200-0003"),
+        listOf("06141234560104", 6, 4, 1, "TELUS International El Salvador", "2200-0004"),
+        listOf("06141234560105", 6, 4, 3, "Accedo Technologies", "2200-0005"),
+        listOf("06141234560106", 14, 2, 4, "INNOVATEC", "2200-0006"),
+        listOf("06141234560107", 6, 3, 3, "Gravity 4", "2200-0007"),
+        listOf("06141234560108", 6, 5, 1, "Sysdatec", "2200-0008"),
+        listOf("06141234560109", 6, 2, 1, "SAGACI", "2200-0009"),
+        listOf("06141234560110", 2, 2, 1, "Tech Americas", "2200-0010")
     )
 }
