@@ -162,7 +162,7 @@ class TableAdapter(
                 val hoy = df.format(Date())
                 val vencida = fechaCad.isNotBlank() && fechaCad <= hoy
                 chipEstado.visibility = View.VISIBLE
-                chipEstado.text = if (vencida) "VENCIDA" else "VIGENTE"
+                chipEstado.text = if (vencida) itemView.context.getString(R.string.estado_vencida) else itemView.context.getString(R.string.estado_vigente)
                 chipEstado.background = GradientDrawable().apply {
                     shape = GradientDrawable.RECTANGLE
                     cornerRadius = 48f
@@ -181,7 +181,7 @@ class TableAdapter(
                 val hoy = df.format(Date())
                 val vencido = fechaCad.isNotBlank() && fechaCad <= hoy
                 chipEstado.visibility = View.VISIBLE
-                chipEstado.text = if (vencido) "VENCIDO" else "VIGENTE"
+                chipEstado.text = if (vencido) itemView.context.getString(R.string.estado_vencido) else itemView.context.getString(R.string.estado_vigente)
                 chipEstado.background = GradientDrawable().apply {
                     shape = GradientDrawable.RECTANGLE
                     cornerRadius = 48f

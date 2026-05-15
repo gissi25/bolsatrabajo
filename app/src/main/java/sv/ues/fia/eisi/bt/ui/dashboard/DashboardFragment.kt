@@ -3,11 +3,13 @@ package sv.ues.fia.eisi.bt.ui.dashboard
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.content.Context
+import android.widget.ArrayAdapter
 import android.widget.ImageButton
+import android.widget.TextView
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -19,6 +21,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.utils.Constants
+import sv.ues.fia.eisi.bt.utils.LocaleHelper
 import sv.ues.fia.eisi.bt.utils.StyledToast
 import sv.ues.fia.eisi.bt.utils.ThemeToggleHelper
 import sv.ues.fia.eisi.bt.viewmodel.DashboardItem
@@ -34,7 +37,7 @@ class DashboardFragment : Fragment() {
     private lateinit var etSearch: TextInputEditText
     private lateinit var btnThemeToggle: ImageButton
     private lateinit var btnInsertScript: ImageButton
-    private lateinit var btnLogout: ImageButton
+    private lateinit var btnOverflow: ImageButton
     private val searchHandler = Handler(Looper.getMainLooper())
     private var searchRunnable: Runnable? = null
     private var lastSearchQuery: String? = null
@@ -57,18 +60,18 @@ class DashboardFragment : Fragment() {
         etSearch = view.findViewById(R.id.etSearch)
         btnThemeToggle = view.findViewById(R.id.btnThemeToggle)
         btnInsertScript = view.findViewById(R.id.btnInsertScript)
-        btnLogout = view.findViewById(R.id.btnLogout)
+        btnOverflow = view.findViewById(R.id.btnOverflow)
 
         val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
         val username = prefs.getString(Constants.KEY_USERNAME, "")
         toolbar.title = getString(R.string.welcome_user, username)
 
-        btnThemeToggle.setImageResource(ThemeToggleHelper.getIconRes())
+        btnThemeToggle.setImageResource(ThemeToggleHelper.getIconRes(requireContext()))
         btnThemeToggle.setOnClickListener {
             ThemeToggleHelper.toggle(requireActivity())
         }
 
-        btnInsertScript.setImageResource(ThemeToggleHelper.getInsertIconRes())
+        btnInsertScript.setImageResource(ThemeToggleHelper.getInsertIconRes(requireContext()))
         val role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
         if (role != Constants.ROLE_ADMIN) {
             btnInsertScript.visibility = View.GONE
@@ -76,6 +79,8 @@ class DashboardFragment : Fragment() {
         btnInsertScript.setOnClickListener {
             showSeedConfirm()
         }
+
+        btnOverflow.setOnClickListener { showOverflowMenu() }
 
         viewModel.seedResult.observe(viewLifecycleOwner) { result ->
             when (result) {
@@ -91,11 +96,6 @@ class DashboardFragment : Fragment() {
             }
         }
 
-        btnLogout.setImageResource(ThemeToggleHelper.getLogoutIconRes())
-        btnLogout.setOnClickListener {
-            showLogoutConfirm()
-        }
-
         setupSearch()
         setupRecyclerView()
 
@@ -103,7 +103,7 @@ class DashboardFragment : Fragment() {
             adapter.submitList(items)
             val currentQuery = etSearch.text?.toString()
             if (items.isEmpty() && currentQuery?.isNotBlank() == true && currentQuery != lastSearchQuery) {
-                StyledToast.show(requireContext(), "Sin resultados")
+                StyledToast.show(requireContext(), getString(R.string.error_sin_resultados))
             }
             lastSearchQuery = if (items.isNotEmpty()) null else currentQuery
         }
@@ -117,6 +117,50 @@ class DashboardFragment : Fragment() {
         val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
         val role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
         viewModel.loadTables(role)
+    }
+
+    private fun showOverflowMenu() {
+        val labels = arrayOf(getString(R.string.idiomas), getString(R.string.logout))
+        val icons = intArrayOf(ThemeToggleHelper.getWorldIconRes(requireContext()), ThemeToggleHelper.getLogoutIconRes(requireContext()))
+
+        val adapter = object : ArrayAdapter<String>(requireContext(), android.R.layout.simple_list_item_1, labels) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                val view = super.getView(position, convertView, parent) as TextView
+                view.setCompoundDrawablesRelativeWithIntrinsicBounds(icons[position], 0, 0, 0)
+                view.compoundDrawablePadding = 24
+                view.setPadding(32, 20, 32, 20)
+                return view
+            }
+        }
+        MaterialAlertDialogBuilder(requireContext())
+            .setAdapter(adapter) { _, which ->
+                when (which) {
+                    0 -> showLanguageMenu()
+                    1 -> showLogoutConfirm()
+                }
+            }
+            .show()
+    }
+
+    private fun showLanguageMenu() {
+        val languages = arrayOf(
+            getString(R.string.espanol) to "es",
+            getString(R.string.ingles) to "en",
+            getString(R.string.portugues) to "pt"
+        )
+        val labels = languages.map { it.first }.toTypedArray()
+        val currentLang = LocaleHelper.getLanguage(requireContext())
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(getString(R.string.idiomas))
+            .setItems(labels) { _, which ->
+                val lang = languages[which].second
+                if (lang != currentLang) {
+                    LocaleHelper.setLocale(requireContext(), lang)
+                    requireActivity().recreate()
+                }
+            }
+            .show()
     }
 
     private fun setupSearch() {
