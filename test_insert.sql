@@ -1,1 +1,0 @@
-INSERT INTO POSTULANTE VALUES (1, 1, 1, 1, 1, 'Juan', 'Perez', 'juan@test.com', '0123456789');

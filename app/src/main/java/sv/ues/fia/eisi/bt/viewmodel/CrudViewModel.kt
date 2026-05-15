@@ -6,10 +6,12 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
+import sv.ues.fia.eisi.bt.utils.OfertaFullData
+import sv.ues.fia.eisi.bt.utils.PostulantFullData
 import sv.ues.fia.eisi.bt.utils.TriggerErrorTranslator
 
 sealed class Resource {
@@ -50,7 +52,6 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
         _isLoading.value = true
         viewModelScope.launch {
             try {
-                delay(300)
                 val result = withContext(Dispatchers.IO) {
                     repository.searchTable(currentTable, "")
                 }
@@ -72,12 +73,11 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
                 withContext(Dispatchers.IO) {
                     repository.deleteRecord(currentTable, id)
                 }
-                delay(300)
                 loadItems()
-                _operationResult.value = Resource.Success("Eliminado correctamente")
+                _operationResult.value = Resource.Success(getApplication<Application>().getString(R.string.eliminado_correctamente))
             } catch (e: Exception) {
-                val translated = TriggerErrorTranslator.translate(e.message)
-                _operationResult.value = Resource.Error(e.message ?: "Error al eliminar", translated)
+                val translated = TriggerErrorTranslator.translate(e.message, getApplication())
+                _operationResult.value = Resource.Error(e.message ?: getApplication<Application>().getString(R.string.error_al_eliminar), translated)
                 e.printStackTrace()
             }
         }
@@ -92,12 +92,11 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
                 withContext(Dispatchers.IO) {
                     repository.deleteRecordByRow(currentTable, rowData)
                 }
-                delay(300)
                 loadItems()
-                _operationResult.value = Resource.Success("Eliminado correctamente")
+                _operationResult.value = Resource.Success(getApplication<Application>().getString(R.string.eliminado_correctamente))
             } catch (e: Exception) {
-                val translated = TriggerErrorTranslator.translate(e.message)
-                _operationResult.value = Resource.Error(e.message ?: "Error al eliminar", translated)
+                val translated = TriggerErrorTranslator.translate(e.message, getApplication())
+                _operationResult.value = Resource.Error(e.message ?: getApplication<Application>().getString(R.string.error_al_eliminar), translated)
                 e.printStackTrace()
             }
         }
@@ -113,12 +112,6 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private val _errorMessage = MutableLiveData<String?>()
-    val errorMessage: LiveData<String?> get() = _errorMessage
-
-    fun clearError() {
-        _errorMessage.value = null
-    }
 
     fun insertRecord(tableName: String, values: List<String>) {
         _operationResult.value = null
@@ -127,13 +120,12 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
                 withContext(Dispatchers.IO) {
                     repository.insertRecord(tableName, values)
                 }
-                delay(300)
                 currentTable = tableName
                 loadItems()
-                _operationResult.value = Resource.Success("Guardado correctamente")
+                _operationResult.value = Resource.Success(getApplication<Application>().getString(R.string.guardado_correctamente))
             } catch (e: Exception) {
-                val translated = TriggerErrorTranslator.translate(e.message)
-                _operationResult.value = Resource.Error(e.message ?: "Error al guardar", translated)
+                val translated = TriggerErrorTranslator.translate(e.message, getApplication())
+                _operationResult.value = Resource.Error(e.message ?: getApplication<Application>().getString(R.string.error_al_guardar), translated)
                 e.printStackTrace()
             }
         }
@@ -146,13 +138,12 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
                 withContext(Dispatchers.IO) {
                     repository.updateRecord(tableName, id, values)
                 }
-                delay(300)
                 currentTable = tableName
                 loadItems()
-                _operationResult.value = Resource.Success("Actualizado correctamente")
+                _operationResult.value = Resource.Success(getApplication<Application>().getString(R.string.actualizado_correctamente))
             } catch (e: Exception) {
-                val translated = TriggerErrorTranslator.translate(e.message)
-                _operationResult.value = Resource.Error(e.message ?: "Error al actualizar", translated)
+                val translated = TriggerErrorTranslator.translate(e.message, getApplication())
+                _operationResult.value = Resource.Error(e.message ?: getApplication<Application>().getString(R.string.error_al_actualizar), translated)
                 e.printStackTrace()
             }
         }
@@ -166,15 +157,27 @@ class CrudViewModel(application: Application) : AndroidViewModel(application) {
         return repository.getDropdownOptions(refTable, displayColumn)
     }
 
-    fun getFilteredOptions(childTable: String, childFkColumn: String, parentId: String, displayColumn: String? = null): List<Pair<String, String>> {
-        return repository.getFilteredOptions(childTable, childFkColumn, parentId, displayColumn)
+    fun getFilteredOptions(childTable: String, childFkColumn: String, parentId: String, displayColumn: String? = null, includeExpired: Boolean = false): List<Pair<String, String>> {
+        return repository.getFilteredOptions(childTable, childFkColumn, parentId, displayColumn, includeExpired)
     }
 
-    fun getDepartamentoByMunicipio(idMunicipio: String): String? {
-        return repository.getDepartamentoByMunicipio(idMunicipio)
+    fun getDepartamentoByMunicipio(deptoId: String, munId: String): String? {
+        return repository.getDepartamentoByMunicipio(deptoId, munId)
     }
 
-    fun getMunicipioByDistrito(idDistrito: String): String? {
-        return repository.getMunicipioByDistrito(idDistrito)
+    fun getMunicipioByDistrito(deptoId: String, munId: String, distritoId: String): String? {
+        return repository.getMunicipioByDistrito(deptoId, munId, distritoId)
+    }
+
+    fun hasChildRecords(tableName: String, pkValues: List<String>): Boolean {
+        return repository.hasChildRecords(tableName, pkValues)
+    }
+
+    fun getPostulantFullData(idPostulante: String): PostulantFullData? {
+        return repository.getPostulantFullData(idPostulante)
+    }
+
+    fun getOfertaFullData(nit: String, idOferta: String): OfertaFullData? {
+        return repository.getOfertaFullData(nit, idOferta)
     }
 }

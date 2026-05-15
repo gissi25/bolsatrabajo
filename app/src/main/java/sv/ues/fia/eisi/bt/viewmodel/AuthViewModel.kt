@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
@@ -50,8 +51,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
-        if (password.length < 6) {
-            _registerResult.value = Result.failure(Exception("La contraseña debe tener al menos 6 caracteres"))
+        if (password.length < 8) {
+            _registerResult.value = Result.failure(Exception(getApplication<Application>().getString(R.string.contrasena_minimo)))
             return
         }
 

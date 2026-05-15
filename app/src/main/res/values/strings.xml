@@ -33,8 +33,472 @@
     <string name="search_tables">Buscar tablas...</string>
     <string name="welcome_user">Bienvenido/a %1$s</string>
     <string name="logout_confirm_message">¿Estás seguro que deseas cerrar sesión?</string>
-    <string name="password_too_short">La contraseña debe tener al menos 6 caracteres</string>
+    <string name="password_too_short">La contraseña debe tener al menos 8 caracteres</string>
 
     <!-- Navegacion -->
     <string name="logout">Cerrar Sesión</string>
+
+    <!-- Seed -->
+    <string name="seed_confirm_title">Insertar datos de prueba</string>
+    <string name="seed_confirm_message">¿Estás seguro que deseas insertar los datos de prueba en la base de datos? Esta acción no se puede deshacer.</string>
+
+    <!-- CRUD ViewModel -->
+    <string name="eliminado_correctamente">Eliminado correctamente</string>
+    <string name="guardado_correctamente">Guardado correctamente</string>
+    <string name="actualizado_correctamente">Actualizado correctamente</string>
+    <string name="error_al_eliminar">Error al eliminar</string>
+    <string name="error_al_guardar">Error al guardar</string>
+    <string name="error_al_actualizar">Error al actualizar</string>
+
+    <!-- DeleteConfirmDialog -->
+    <string name="consultando_dependencias">Consultando dependencias...</string>
+    <string name="confirmar_eliminar">¿Está seguro que quiere eliminar este registro?</string>
+    <string name="sin_dependencias">No posee registros asociados.</string>
+    <string name="no_se_puede_eliminar">No se puede eliminar</string>
+    <string name="dependencias_en_cadena">Posee registros asociados.</string>
+    <string name="cerrar">Cerrar</string>
+    <string name="sin_permiso_eliminar">No tienes permiso para eliminar registros de esta tabla</string>
+    <string name="no_eliminar_propio_usuario">No puedes eliminar tu propio usuario mientras está activo</string>
+
+    <!-- EditorDialogFragment -->
+    <string name="solo_empresa_modificar_postulacion">Solo la empresa puede modificar esta postulación</string>
+    <string name="solo_empresa_cambiar_estado">Solo la empresa puede cambiar este estado</string>
+    <string name="sin_permiso_modificar_tabla">No tienes permiso para modificar esta tabla</string>
+    <string name="sin_permiso_editar_postulacion">No tienes permiso para editar esta postulación</string>
+    <string name="debe_seleccionar_nivel">Debe seleccionar un nivel de destreza</string>
+    <string name="debe_seleccionar_estado">Debe seleccionar un estado</string>
+    <string name="no_hay_datos_en">No hay datos en %s. Créelos primero.</string>
+    <string name="debe_seleccionar">Debe seleccionar %s</string>
+    <string name="seleccione_opcion_valida" formatted="false">Seleccione una opción válida de %s: %s</string>
+    <string name="contrasena_bloqueada">Contraseña (bloqueada)</string>
+    <string name="ver_tabla">Ver %s</string>
+    <string name="editar_tabla">Editar %s</string>
+    <string name="nuevo_tabla">Nuevo %s</string>
+    <string name="eliminar_tabla">Eliminar %s</string>
+    <string name="seleccionar_fecha">Seleccionar fecha</string>
+
+    <!-- Login / Register -->
+    <string name="usuario_o_contrasena_incorrectos">Usuario o contraseña incorrectos</string>
+    <string name="registro_exitoso">Registro exitoso. Ahora puedes iniciar sesión.</string>
+    <string name="contrasena_minimo">La contraseña debe tener al menos 8 caracteres</string>
+
+    <!-- Validacion campos -->
+    <string name="obligatorio">%s es obligatorio</string>
+    <string name="minimo_caracteres" formatted="false">%s debe tener al menos %d caracteres</string>
+    <string name="maximo_caracteres" formatted="false">%s no debe exceder %d caracteres</string>
+    <string name="formato_invalido">%s no tiene un formato valido</string>
+    <string name="fecha_futura">%s no puede ser una fecha futura</string>
+    <string name="debe_ser_numero">%s debe ser un numero</string>
+    <string name="debe_ser_mayor_igual" formatted="false">%s debe ser mayor o igual a %d</string>
+    <string name="debe_ser_menor_igual" formatted="false">%s debe ser menor o igual a %d</string>
+
+    <!-- Hardcoded strings from code -->
+    <string name="estado_vigente">VIGENTE</string>
+    <string name="estado_vencida">VENCIDA</string>
+    <string name="estado_vencido">VENCIDO</string>
+    <string name="nivel_basico">Básico</string>
+    <string name="nivel_intermedio">Intermedio</string>
+    <string name="nivel_avanzado">Avanzado</string>
+    <string name="estado_activo">Activo</string>
+    <string name="estado_en_proceso">En Proceso</string>
+    <string name="estado_contratado">Contratado</string>
+    <string name="estado_rechazado">Rechazado</string>
+    <string name="rol_postulante">postulante</string>
+    <string name="rol_empresa">gerente de empresa</string>
+    <string name="rol_admin">administrador</string>
+    <string name="hint_departamento">Departamento</string>
+    <string name="hint_municipio">Municipio</string>
+    <string name="id_bloqueado">ID bloqueado: tiene registros dependientes</string>
+    <string name="doc_pasaporte">Pasaporte</string>
+    <string name="solo_lectura">Solo lectura</string>
+    <string name="pdf_generando_cv">Generando CV del postulante\ny datos de la vacante...</string>
+    <string name="pdf_titulo">Exportando PDFs</string>
+    <string name="pdf_listos">¡PDFs Listos!</string>
+    <string name="pdf_descripcion">El CV y el detalle de la vacante se han generado correctamente. Compáralos para evaluar el perfil.</string>
+    <string name="pdf_ver_vacante">VER VACANTE</string>
+    <string name="pdf_ver_cv">VER CV</string>
+    <string name="error_sin_visor_pdf">Sin visor PDF disponible</string>
+    <string name="error_sin_acceso_tabla">No tienes acceso a esta tabla</string>
+    <string name="error_sin_resultados">Sin resultados</string>
+    <string name="error_datos_incompletos">Error: datos de postulacion incompletos</string>
+    <string name="error_obtener_datos_pdf">Error al obtener datos para los PDFs</string>
+    <string name="error_generar_pdf">Error al generar PDFs: %s</string>
+    <string name="error_sin_permiso_editar">No tienes permiso para editar esta tabla</string>
+    <string name="error_sin_permiso_eliminar">No tienes permiso para eliminar registros de esta tabla</string>
+
+    <!-- Table names for dashboard/cards/toolbar -->
+    <string name="tabla_categoria_habilidad">Categoría habilidad</string>
+    <string name="tabla_genero">Género</string>
+    <string name="tabla_tipo_documento">Tipo documento</string>
+    <string name="tabla_departamento">Departamento</string>
+    <string name="tabla_municipio">Municipio</string>
+    <string name="tabla_distrito">Distrito</string>
+    <string name="tabla_institucion">Institución</string>
+    <string name="tabla_grado_academico">Grado académico</string>
+    <string name="tabla_red_social">Red social</string>
+    <string name="tabla_tipo_certificacion">Tipo certificación</string>
+    <string name="tabla_habilidad">Habilidad</string>
+    <string name="tabla_oferta_academica">Oferta académica</string>
+    <string name="tabla_usuario">Usuario</string>
+    <string name="tabla_empresa">Empresa</string>
+    <string name="tabla_oferta_trabajo">Oferta trabajo</string>
+    <string name="tabla_detalle_requisito">Detalle requisito</string>
+    <string name="tabla_postulante">Postulante</string>
+    <string name="tabla_formacion_academica">Formación académica</string>
+    <string name="tabla_certificacion">Certificación</string>
+    <string name="tabla_experiencia_laboral">Experiencia laboral</string>
+    <string name="tabla_habilidad_postulante">Habilidad postulante</string>
+    <string name="tabla_red_social_postulante">Red social postulante</string>
+    <string name="tabla_postulacion">Postulación</string>
+
+    <!-- Language selector -->
+    <string name="idiomas">Idiomas</string>
+    <string name="espanol">Español</string>
+    <string name="ingles">Inglés</string>
+    <string name="portugues">Portugués</string>
+    <string name="section_catalogos">Catálogos</string>
+    <string name="section_empresa">Empresa</string>
+    <string name="section_postulante">Postulante</string>
+    <string name="section_otras">Otras</string>
+
+    <!-- Field hints for editor dialog -->
+    <string name="hint_nit_empresa">NIT EMPRESA</string>
+    <string name="hint_empresa">Empresa</string>
+    <string name="hint_titulo_puesto">Título puesto</string>
+    <string name="hint_oferta_academica">Oferta académica</string>
+    <string name="hint_oferta_trabajo">Oferta de trabajo</string>
+    <string name="hint_grado_academico">Grado académico</string>
+    <string name="hint_tipo_certificacion">Tipo de certificación</string>
+    <string name="hint_periodo_fecha_inicio">Periodo - Fecha inicio</string>
+    <string name="hint_periodo_fecha_fin">Periodo - Fecha fin</string>
+    <string name="hint_habilidad_postulante">Habilidad del postulante</string>
+    <string name="hint_genero">Género</string>
+    <string name="hint_tipo_documento">Tipo de documento</string>
+    <string name="hint_numero_documento">Número de documento</string>
+    <string name="hint_id_distrito">Id Distrito</string>
+    <string name="hint_nombre">Nombre</string>
+    <string name="hint_apellido">Apellido</string>
+    <string name="hint_fecha_nacimiento">Fecha de nacimiento</string>
+    <string name="hint_nup">NUP</string>
+    <string name="hint_direccion">Dirección</string>
+    <string name="hint_telefono_casa">Teléfono casa</string>
+    <string name="hint_telefono_celular">Teléfono celular</string>
+    <string name="hint_correo_electronico">Correo electrónico</string>
+    <string name="hint_id_municipio">Id Municipio</string>
+    <string name="hint_nombre_categoria">Nombre de categoría</string>
+    <string name="hint_nombre_genero">Nombre de género</string>
+    <string name="hint_nombre_tipo">Nombre de tipo</string>
+    <string name="hint_nombre_departamento">Nombre de departamento</string>
+    <string name="hint_nombre_municipio">Nombre de municipio</string>
+    <string name="hint_nombre_distrito">Nombre de distrito</string>
+    <string name="hint_nombre_habilidad">Nombre de habilidad</string>
+    <string name="hint_categoria_habilidad">Categoría de habilidad</string>
+    <string name="hint_nombre_empresa">Nombre de empresa</string>
+    <string name="hint_contacto_directo">Contacto directo</string>
+    <string name="hint_nombre_institucion">Nombre de institución</string>
+    <string name="hint_nombre_grado">Nombre de grado</string>
+    <string name="hint_nombre_red_social">Nombre de red social</string>
+    <string name="hint_institucion">Institución</string>
+    <string name="hint_fecha_publicacion">Fecha de publicación</string>
+    <string name="hint_fecha_caducidad">Fecha de caducidad</string>
+    <string name="hint_anios_experiencia">Años de experiencia</string>
+    <string name="hint_edad_minima">Edad mínima</string>
+    <string name="hint_edad_maxima">Edad máxima</string>
+    <string name="hint_descripcion">Descripción</string>
+    <string name="hint_descripcion_requisito">Descripción del requisito</string>
+    <string name="hint_codigo_oferta">Código de oferta</string>
+    <string name="hint_codigo_postulante">Código postulante</string>
+    <string name="hint_codigo_certificacion">Código certificación</string>
+    <string name="hint_nombre_certificacion">Nombre de certificación</string>
+    <string name="hint_fecha_certificacion">Fecha de certificación</string>
+    <string name="hint_codigo_experiencia">Código experiencia</string>
+    <string name="hint_puesto_trabajo">Puesto de trabajo</string>
+    <string name="hint_fecha_inicio">Fecha de inicio</string>
+    <string name="hint_fecha_fin">Fecha de fin</string>
+    <string name="hint_descripcion_experiencia">Descripción de experiencia</string>
+    <string name="hint_contacto_referencia">Contacto de referencia</string>
+    <string name="hint_codigo_formacion">Código formación</string>
+    <string name="hint_codigo_oferta_academica">Código oferta académica</string>
+    <string name="hint_titulo_obtenido">Título obtenido</string>
+    <string name="hint_fecha_obtencion">Fecha de obtención</string>
+    <string name="hint_codigo_habilidad">Código habilidad</string>
+    <string name="hint_nivel_destreza">Nivel de destreza</string>
+    <string name="hint_codigo_postulacion">Código postulación</string>
+    <string name="hint_fecha_aplicacion">Fecha de aplicación</string>
+    <string name="hint_estado_proceso">Estado del proceso</string>
+    <string name="hint_codigo_detalle">Código detalle</string>
+    <string name="hint_red_social">Red social</string>
+    <string name="hint_url_perfil">URL del perfil</string>
+    <string name="hint_nombre_usuario">Nombre de usuario</string>
+    <string name="hint_contrasena">Contraseña</string>
+    <string name="hint_rol">Rol</string>
+
+    <!-- Helper texts -->
+    <string name="helper_format">Ej: %s</string>
+    <string name="helper_ej_ab12345">AB12345</string>
+    <string name="helper_ej_of001">OF001</string>
+    <string name="helper_ej_c001">C001</string>
+    <string name="helper_ej_el01">EL01</string>
+    <string name="helper_ej_foa001">FOA001</string>
+    <string name="helper_ej_ofa01">OFA01</string>
+    <string name="helper_ej_pos001">POS001</string>
+    <string name="helper_ej_d1">D1</string>
+    <string name="helper_ej_ins001">INS001</string>
+    <string name="helper_ej_h01">H01</string>
+    <string name="helper_14_digitos">14 dígitos</string>
+    <string name="helper_ej_5">5</string>
+    <string name="helper_ej_1">1</string>
+    <string name="helper_ej_https">https://</string>
+
+    <!-- TableAdapter fallbacks -->
+    <string name="fallback_sin_nombre">(sin nombre)</string>
+    <string name="fallback_sin_apellido">(sin apellido)</string>
+    <string name="fallback_sin_puesto">(sin puesto)</string>
+    <string name="fallback_sin_habilidad">(sin habilidad)</string>
+    <string name="fallback_sin_categoria">(sin categoría)</string>
+    <string name="fallback_sin_titulo">(sin título)</string>
+    <string name="fallback_sin_empresa">(sin empresa)</string>
+    <string name="fallback_sin_contacto">(sin contacto)</string>
+    <string name="fallback_sin_usuario">(sin usuario)</string>
+    <string name="fallback_sin_rol">(sin rol)</string>
+    <string name="fallback_sin_certificacion">(sin certificación)</string>
+    <string name="fallback_sin_periodo">(sin periodo)</string>
+    <string name="fallback_sin_municipio">(sin municipio)</string>
+    <string name="fallback_sin_distrito">(sin distrito)</string>
+    <string name="fallback_sin_departamento">(sin departamento)</string>
+    <string name="fallback_sin_red_social">(sin red social)</string>
+    <string name="fallback_sin_descripcion">(sin descripción)</string>
+    <string name="fallback_sin_institucion">(sin institución)</string>
+    <string name="fallback_sin_grado">(sin grado)</string>
+    <string name="fallback_vacio">(vacío)</string>
+
+    <!-- Validation friendly names -->
+    <string name="friendly_usuario">Usuario</string>
+    <string name="friendly_contrasena">Contraseña</string>
+    <string name="friendly_rol">Rol</string>
+    <string name="friendly_codigo_postulante">Código postulante</string>
+    <string name="friendly_nombre">Nombre</string>
+    <string name="friendly_apellido">Apellido</string>
+    <string name="friendly_numero_documento">Número de documento</string>
+    <string name="friendly_correo_electronico">Correo electrónico</string>
+    <string name="friendly_fecha_nacimiento">Fecha de nacimiento</string>
+    <string name="friendly_nup">NUP</string>
+    <string name="friendly_direccion">Dirección</string>
+    <string name="friendly_telefono_casa">Teléfono casa</string>
+    <string name="friendly_telefono_celular">Teléfono celular</string>
+    <string name="friendly_nit">NIT</string>
+    <string name="friendly_nombre_empresa">Nombre de empresa</string>
+    <string name="friendly_contacto_directo">Contacto directo</string>
+    <string name="friendly_codigo_oferta">Código oferta</string>
+    <string name="friendly_titulo_puesto">Título del puesto</string>
+    <string name="friendly_fecha_publicacion">Fecha de publicación</string>
+    <string name="friendly_fecha_caducidad">Fecha de caducidad</string>
+    <string name="friendly_anios_experiencia">Años de experiencia</string>
+    <string name="friendly_edad_minima">Edad mínima</string>
+    <string name="friendly_edad_maxima">Edad máxima</string>
+    <string name="friendly_descripcion_oferta">Descripción de la oferta</string>
+    <string name="friendly_nombre_categoria">Nombre de categoría</string>
+    <string name="friendly_nombre_genero">Nombre de género</string>
+    <string name="friendly_nombre_tipo">Nombre de tipo</string>
+    <string name="friendly_nombre_departamento">Nombre de departamento</string>
+    <string name="friendly_codigo_municipio">Código municipio</string>
+    <string name="friendly_nombre_municipio">Nombre de municipio</string>
+    <string name="friendly_codigo_distrito">Código distrito</string>
+    <string name="friendly_nombre_distrito">Nombre de distrito</string>
+    <string name="friendly_codigo_institucion">Código institución</string>
+    <string name="friendly_nombre_institucion">Nombre de institución</string>
+    <string name="friendly_nombre_grado">Nombre de grado</string>
+    <string name="friendly_nombre_red_social">Nombre de red social</string>
+    <string name="friendly_categoria">Categoría</string>
+    <string name="friendly_codigo_habilidad">Código habilidad</string>
+    <string name="friendly_nombre_habilidad">Nombre de habilidad</string>
+    <string name="friendly_nivel_destreza">Nivel de destreza</string>
+    <string name="friendly_codigo_certificacion">Código certificación</string>
+    <string name="friendly_nombre_certificacion">Nombre de certificación</string>
+    <string name="friendly_fecha_certificacion">Fecha de certificación</string>
+    <string name="friendly_fecha_inicio">Fecha inicio</string>
+    <string name="friendly_fecha_fin">Fecha fin</string>
+    <string name="friendly_codigo_experiencia">Código experiencia</string>
+    <string name="friendly_puesto_trabajo">Puesto de trabajo</string>
+    <string name="friendly_descripcion_experiencia">Descripción de experiencia</string>
+    <string name="friendly_contacto_referencia">Contacto de referencia</string>
+    <string name="friendly_codigo_formacion">Código formación</string>
+    <string name="friendly_titulo_obtenido">Título obtenido</string>
+    <string name="friendly_fecha_obtencion">Fecha de obtención</string>
+    <string name="friendly_codigo_oferta_academica">Código oferta académica</string>
+    <string name="friendly_codigo_postulacion">Código postulación</string>
+    <string name="friendly_fecha_aplicacion">Fecha de aplicación</string>
+    <string name="friendly_estado_proceso">Estado del proceso</string>
+    <string name="friendly_codigo_detalle">Código detalle</string>
+    <string name="friendly_descripcion_requisito">Descripción del requisito</string>
+    <string name="friendly_url_perfil">URL del perfil</string>
+
+    <!-- Misc -->
+    <string name="datos_insertados_correctamente">Datos insertados correctamente</string>
+    <string name="error_desconocido">Error desconocido</string>
+    <string name="error_insertar_datos">Error al insertar datos</string>
+    <string name="error_registro">Error en el registro. Intenta de nuevo.</string>
+    <string name="error_inicio_sesion">Error en el inicio de sesión</string>
+    <string name="generando_pdfs">Generando archivos PDF…</string>
+    <string name="fecha_inicio_menor_fin">Fecha inicio debe ser menor a fecha fin</string>
+    <string name="fecha_ref_menor_periodo">%1$s no puede ser menor a la fecha fin del periodo</string>
+    <string name="fecha_ref_excede_anio">%1$s no puede exceder un año después de la fecha fin del periodo</string>
+    <string name="ya_existe_genero">Ya existe un género con ese nombre</string>
+    <string name="ya_existe_usuario">Ya existe un usuario con ese nombre</string>
+    <string name="ya_existe_departamento">Ya existe un departamento con ese nombre</string>
+    <string name="ya_existe_municipio">Ya existe un municipio con ese nombre</string>
+    <string name="ya_existe_distrito">Ya existe un distrito con ese nombre</string>
+    <string name="ya_existe_institucion">Ya existe una institución con ese nombre</string>
+    <string name="ya_existe_red_social">Ya existe una red social con ese nombre</string>
+    <string name="ya_existe_categoria">Ya existe una categoría con ese nombre</string>
+    <string name="ya_existe_tipo_documento">Ya existe un tipo de documento con ese nombre</string>
+    <string name="ya_existe_grado_academico">Ya existe un grado académico con ese nombre</string>
+    <string name="ya_existe_tipo_certificacion">Ya existe un tipo de certificación con ese nombre</string>
+
+    <!-- New resources added for hardcoded string fixes -->
+    <string name="database_already_seeded">La base de datos ya fue llenada</string>
+    <string name="error_insertar_datos_con_msg">Error al insertar datos: %1$s</string>
+    <string name="content_desc_theme_toggle">Cambiar tema</string>
+    <string name="content_desc_insert_data">Insertar datos de prueba</string>
+    <string name="content_desc_more_options">Más opciones</string>
+    <string name="content_desc_select_language">Seleccionar idioma</string>
+    <string name="arrow_up">▲</string>
+    <string name="arrow_down">▼</string>
+    <string name="hint_seleccione_rol">Seleccione el rol</string>
+    <string name="pdf_curriculum_vitae">CURRICULUM VITAE</string>
+    <string name="pdf_detalle_vacante">DETALLE DE LA VACANTE</string>
+    <string name="pdf_codigo">Código</string>
+    <string name="pdf_grado">Grado</string>
+    <string name="pdf_nit">NIT</string>
+    <string name="pdf_contacto">Contacto</string>
+    <string name="pdf_ubicacion">Ubicación</string>
+    <string name="fecha_ref_name_certificacion">Fecha de certificacion</string>
+    <string name="fecha_ref_name_obtencion">Fecha de obtencion</string>
+
+    <!-- PDF CV labels -->
+    <string name="pdf_datos_personales">Datos Personales</string>
+    <string name="pdf_genero">Género</string>
+    <string name="pdf_nacimiento">Nacimiento</string>
+    <string name="pdf_documento">Documento</string>
+    <string name="pdf_email">Email</string>
+    <string name="pdf_nup">NUP</string>
+    <string name="pdf_telefono">Teléfono</string>
+    <string name="pdf_tel_casa">Tel. Casa</string>
+    <string name="pdf_formacion_academica">Formación Académica</string>
+    <string name="pdf_obtencion">Obtención: </string>
+    <string name="pdf_certificaciones">Certificaciones</string>
+    <string name="pdf_certificado">Certificado: </string>
+    <string name="pdf_habilidades">Habilidades</string>
+    <string name="pdf_experiencia_laboral">Experiencia Laboral</string>
+    <string name="pdf_redes_sociales">Redes Sociales</string>
+    <string name="pdf_empresa_section">Empresa</string>
+    <string name="pdf_puesto">Puesto</string>
+    <string name="pdf_grado_requerido">Grado requerido</string>
+    <string name="pdf_experiencia">Experiencia</string>
+    <string name="pdf_edad">Edad</string>
+    <string name="pdf_anios">años</string>
+    <string name="pdf_publicacion">Publicación</string>
+    <string name="pdf_caducidad">Caducidad</string>
+    <string name="pdf_requisitos">Requisitos</string>
+    <string name="pdf_contacto_prefix">Contacto: </string>
+    <string name="pdf_direccion">Dirección</string>
+    <string name="pdf_section_descripcion">Descripción</string>
+
+    <!-- Validation messages -->
+    <string name="validation_password_min" formatted="false">Mínimo %1$d caracteres</string>
+    <string name="validation_email_invalid">Correo electrónico inválido</string>
+    <string name="validation_date_format">Formato: AAAA-MM-DD</string>
+
+    <!-- Seed data messages -->
+    <string name="seed_inserted">Datos insertados correctamente</string>
+    <string name="seed_error">Error al insertar datos</string>
+
+    <!-- Trigger error messages -->
+    <string name="error_unique_constraint">Ya existe un registro con esos datos</string>
+    <string name="error_foreign_key">No se puede modificar: tiene registros asociados. Elimine primero los registros dependientes</string>
+    <string name="error_not_null">Un campo obligatorio esta vacío</string>
+    <string name="error_constraint">Operación no permitida por las reglas de validación</string>
+    <string name="error_duplicado_clave">Ya existe un registro con esa combinación de valores</string>
+    <string name="error_duplicado_genero">Ya existe un género con ese nombre</string>
+    <string name="error_duplicado_categoria_habilidad">Ya existe una categoría con ese nombre</string>
+    <string name="error_duplicado_tipo_documento">Ya existe un tipo de documento con ese nombre</string>
+    <string name="error_duplicado_departamento">Ya existe un departamento con ese nombre</string>
+    <string name="error_duplicado_grado_academico">Ya existe un grado académico con ese nombre</string>
+    <string name="error_duplicado_red_social">Ya existe una red social con ese nombre</string>
+    <string name="error_duplicado_institucion">Ya existe una institución con ese nombre</string>
+    <string name="error_duplicado_municipio">Ya existe un municipio con ese nombre</string>
+    <string name="error_duplicado_distrito">Ya existe un distrito con ese nombre en el municipio</string>
+    <string name="error_duplicado_habilidad">Ya existe una habilidad con ese nombre</string>
+    <string name="error_duplicado_empresa_nit">Ya existe una empresa con ese NIT</string>
+    <string name="error_duplicado_empresa_nombre">Ya existe una empresa con ese nombre</string>
+    <string name="error_duplicado_postulante_doc">Ya existe un postulante con ese documento</string>
+    <string name="error_duplicado_postulante_email">Ya existe un postulante con ese email</string>
+    <string name="error_duplicado_usuario">Ya existe un usuario con ese nombre</string>
+    <string name="error_duplicado_oferta">Ya existe una oferta con ese título en la empresa</string>
+    <string name="error_duplicado_requisito">Ya existe un requisito con esa descripción en la oferta</string>
+    <string name="error_duplicado_experiencia">Ya existe una experiencia con ese puesto para el postulante</string>
+    <string name="error_duplicado_certificacion">Ya existe una certificación con ese código para el postulante</string>
+    <string name="error_postulante_ya_aplico">El postulante ya aplicó a esta oferta</string>
+    <string name="error_oferta_vencida">La oferta de trabajo ha vencido</string>
+    <string name="error_grado_academico_insuficiente">El postulante debe tener un grado académico superior a Bachiller</string>
+    <string name="error_red_social_vinculada">La red social ya está vinculada al postulante</string>
+    <string name="error_habilidad_asignada">La habilidad ya está asignada al postulante</string>
+    <string name="error_oferta_academica_duplicada">Ya existe una oferta académica para esa institución y grado</string>
+    <string name="error_nivel_bachillerato">No se permiten niveles de bachillerato o inferior</string>
+    <string name="error_fecha_inicio_fin">La fecha de inicio debe ser anterior a la fecha de finalización</string>
+    <string name="error_edad_minima_18">La edad mínima debe ser mayor o igual a 18</string>
+    <string name="error_edad_minima_maxima">La edad mínima no puede ser mayor a la edad máxima</string>
+    <string name="error_fecha_caducidad">La fecha de caducidad debe ser posterior a la fecha de publicación</string>
+    <string name="error_departamento_no_existe">El departamento seleccionado no existe</string>
+    <string name="error_comb_valores">Ya existe un registro con esa combinación de valores</string>
+    <string name="error_municipio_no_existe">El municipio seleccionado no existe</string>
+    <string name="error_municipio_no_valido">El municipio seleccionado no es válido</string>
+    <string name="error_categoria_no_existe">La categoría seleccionada no existe</string>
+    <string name="error_categoria_no_valida">La categoría seleccionada no es válida</string>
+    <string name="error_distrito_no_existe">El distrito seleccionado no existe</string>
+    <string name="error_distrito_no_valido">El distrito seleccionado no es válido</string>
+    <string name="error_genero_no_existe">El género seleccionado no existe</string>
+    <string name="error_genero_no_valido">El género seleccionado no es válido</string>
+    <string name="error_tipo_doc_no_existe">El tipo de documento seleccionado no existe</string>
+    <string name="error_tipo_doc_no_valido">El tipo de documento seleccionado no es válido</string>
+    <string name="error_password_minimo">La contraseña debe tener al menos 8 caracteres</string>
+    <string name="error_nivel_destreza">El nivel de destreza debe ser 1 (Básico), 2 (Intermedio) o 3 (Avanzado)</string>
+    <string name="error_nivel_destreza_simple">El nivel de destreza debe ser 1, 2 o 3</string>
+    <string name="error_mayor_edad">El postulante debe ser mayor de 18 años</string>
+    <string name="error_correo_invalido">El formato del correo electrónico no es válido</string>
+    <string name="error_fecha_nacimiento">La fecha de nacimiento no es válida</string>
+    <string name="error_fecha_cert_menor_fin">La fecha de certificación no puede ser menor a la fecha fin del periodo</string>
+    <string name="error_fecha_cert_excede_anio">La fecha de certificación no puede exceder un año después de la fecha fin del periodo</string>
+    <string name="error_fecha_cert_futura">La fecha de certificación no puede ser una fecha futura</string>
+    <string name="error_fecha_obt_menor_fin">La fecha de obtención no puede ser menor a la fecha fin del periodo</string>
+    <string name="error_fecha_obt_excede_anio">La fecha de obtención no puede exceder un año después de la fecha fin del periodo</string>
+    <string name="error_fecha_obt_futura">La fecha de obtención no puede ser una fecha futura</string>
+    <string name="error_fecha_inicio_futura">La fecha de inicio no puede ser una fecha futura</string>
+    <string name="error_fecha_fin_futura">La fecha fin no puede ser una fecha futura</string>
+    <string name="error_eliminar_departamento">Elimine primero los municipios asociados a este departamento</string>
+    <string name="error_eliminar_municipio">Elimine primero los distritos asociados a este municipio</string>
+    <string name="error_eliminar_distrito_postulante">Elimine primero los postulantes asociados a este distrito</string>
+    <string name="error_eliminar_distrito_empresa">Elimine primero las empresas asociadas a este distrito</string>
+    <string name="error_eliminar_categoria">Elimine primero las habilidades asociadas a esta categoría</string>
+    <string name="error_eliminar_habilidad">Elimine primero las relaciones de esta habilidad con postulantes</string>
+    <string name="error_eliminar_postulante_postulaciones">Elimine primero las postulaciones de este postulante</string>
+    <string name="error_eliminar_postulante_experiencias">Elimine primero las experiencias laborales de este postulante</string>
+    <string name="error_eliminar_postulante_formaciones">Elimine primero las formaciones académicas de este postulante</string>
+    <string name="error_eliminar_postulante_certificaciones">Elimine primero las certificaciones de este postulante</string>
+    <string name="error_eliminar_postulante_habilidades">Elimine primero las habilidades asignadas a este postulante</string>
+    <string name="error_eliminar_postulante_redes">Elimine primero las redes sociales vinculadas a este postulante</string>
+    <string name="error_eliminar_tipo_doc">Elimine primero los postulantes que usan este tipo de documento</string>
+    <string name="error_eliminar_genero">Elimine primero los postulantes con este género</string>
+    <string name="error_eliminar_red_social">Elimine primero los postulantes vinculados a esta red social</string>
+    <string name="error_eliminar_institucion_certificaciones">Elimine primero las certificaciones de esta institución</string>
+    <string name="error_eliminar_institucion_ofertas">Elimine primero las ofertas académicas de esta institución</string>
+    <string name="error_eliminar_grado_ofertas">Elimine primero las ofertas de trabajo con este grado académico</string>
+    <string name="error_eliminar_grado_ofertas_academicas">Elimine primero las ofertas académicas con este grado académico</string>
+    <string name="error_eliminar_grado_postulantes">Elimine primero los postulantes con este grado académico</string>
+    <string name="error_eliminar_empresa_ofertas">Elimine primero las ofertas de trabajo de esta empresa</string>
+    <string name="error_eliminar_empresa_experiencias">Elimine primero las experiencias laborales de esta empresa</string>
+    <string name="error_eliminar_oferta_requisitos">Elimine primero los requisitos de esta oferta de trabajo</string>
+    <string name="error_eliminar_oferta_postulaciones">Elimine primero las postulaciones a esta oferta de trabajo</string>
+    <string name="error_eliminar_oferta_academica">Elimine primero las formaciones académicas asociadas</string>
+    <string name="error_eliminar_tipo_certificacion">Elimine primero las certificaciones con este tipo</string>
 </resources>

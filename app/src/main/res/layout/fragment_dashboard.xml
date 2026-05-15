@@ -33,18 +33,27 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Cambiar tema"
+                android:contentDescription="@string/content_desc_theme_toggle"
                 app:tint="?attr/colorOnPrimary"
                 app:srcCompat="@drawable/luna" />
 
             <ImageButton
-                android:id="@+id/btnLogout"
+                android:id="@+id/btnInsertScript"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Cerrar sesión"
+                android:contentDescription="@string/content_desc_insert_data"
                 app:tint="?attr/colorOnPrimary"
-                app:srcCompat="@drawable/cerrar_sesion_o" />
+                app:srcCompat="@drawable/ic_insertar_datos_o" />
+
+            <ImageButton
+                android:id="@+id/btnOverflow"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/content_desc_more_options"
+                app:tint="?attr/colorOnPrimary"
+                app:srcCompat="@drawable/ic_more_vert" />
         </LinearLayout>
 
     </com.google.android.material.appbar.MaterialToolbar>

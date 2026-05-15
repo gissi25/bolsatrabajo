@@ -16,6 +16,7 @@ import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
 import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.StyledToast
+import sv.ues.fia.eisi.bt.utils.getTableDisplayName
 import sv.ues.fia.eisi.bt.viewmodel.CrudViewModel
 import sv.ues.fia.eisi.bt.viewmodel.Resource
 
@@ -35,6 +36,11 @@ class DeleteConfirmDialog : DialogFragment() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        dialog?.setCanceledOnTouchOutside(false)
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val context = requireContext()
         val layout = LinearLayout(context).apply {
@@ -48,7 +54,7 @@ class DeleteConfirmDialog : DialogFragment() {
         }
 
         val titleTv = TextView(context).apply {
-            text = "Eliminar ${tableName.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }}"
+            text = getString(R.string.eliminar_tabla, context.getTableDisplayName(tableName))
             setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Headline6)
             setTextColor(context.getColor(R.color.text_primary))
             setPadding(0, 0, 0, 32)
@@ -64,7 +70,7 @@ class DeleteConfirmDialog : DialogFragment() {
         layout.addView(progressBar)
 
         val loadingText = TextView(context).apply {
-            text = "Consultando dependencias..."
+            text = context.getString(R.string.consultando_dependencias)
             setTextColor(context.getColor(R.color.text_secondary))
             setPadding(0, 0, 0, 32)
             gravity = android.view.Gravity.CENTER
@@ -84,7 +90,7 @@ class DeleteConfirmDialog : DialogFragment() {
         }
 
         val btnCancel = MaterialButton(context, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
-            text = "Cancelar"
+            text = context.getString(R.string.cancel)
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
                 marginEnd = 16
             }
@@ -93,7 +99,7 @@ class DeleteConfirmDialog : DialogFragment() {
         buttonsLayout.addView(btnCancel)
 
         val btnDelete = MaterialButton(context).apply {
-            text = "Eliminar"
+            text = context.getString(R.string.delete)
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             setBackgroundColor(android.graphics.Color.parseColor("#D32F2F"))
             setTextColor(android.graphics.Color.WHITE)
@@ -110,7 +116,7 @@ class DeleteConfirmDialog : DialogFragment() {
             if (deps.isEmpty()) {
                 showSimpleConfirm(titleTv, depsLayout, buttonsLayout)
             } else {
-                showDependenciesConfirm(deps, titleTv, depsLayout, buttonsLayout)
+                showCannotDeleteDialog(deps, titleTv, depsLayout, buttonsLayout)
             }
         })
 
@@ -135,7 +141,27 @@ class DeleteConfirmDialog : DialogFragment() {
 
         val dataList = itemData.split(",")
         if (dataList.isNotEmpty()) {
-            viewModel.checkDeleteDependencies(dataList.first().trim())
+            val needsComposite = tableName in listOf(
+                "MUNICIPIO", "DISTRITO",
+                "OFERTA_TRABAJO", "DETALLE_REQUISITO",
+                "EXPERIENCIA_LABORAL", "CERTIFICACION",
+                "FORMACION_ACADEMICA", "HABILIDAD_POSTULANTE",
+                "RED_SOCIAL_POSTULANTE", "HABILIDAD", "OFERTA_ACADEMICA"
+            )
+            if (needsComposite) {
+                val pkChunks = when (tableName) {
+                    "MUNICIPIO" -> 2; "DISTRITO" -> 3; "OFERTA_TRABAJO" -> 2
+                    "DETALLE_REQUISITO" -> 3; "EXPERIENCIA_LABORAL" -> 3
+                    "CERTIFICACION" -> 3; "FORMACION_ACADEMICA" -> 2
+                    "HABILIDAD_POSTULANTE" -> 3; "RED_SOCIAL_POSTULANTE" -> 2
+                    "HABILIDAD" -> 2; "OFERTA_ACADEMICA" -> 1
+                    else -> 1
+                }
+                val pkString = (0 until pkChunks).joinToString("|") { dataList.getOrElse(it) { "" }.trim() }
+                viewModel.checkDeleteDependencies(pkString)
+            } else {
+                viewModel.checkDeleteDependencies(dataList.first().trim())
+            }
         }
 
         return layout
@@ -146,61 +172,78 @@ class DeleteConfirmDialog : DialogFragment() {
         depsLayout: LinearLayout,
         buttonsLayout: LinearLayout
     ) {
-        titleTv.text = "¿Eliminar este registro?"
+        titleTv.text = getString(R.string.confirmar_eliminar)
         depsLayout.removeAllViews()
         val noDepsText = TextView(requireContext()).apply {
-            text = "Este registro no tiene dependencias."
+            text = getString(R.string.sin_dependencias)
             setTextColor(requireContext().getColor(R.color.text_secondary))
             setPadding(0, 0, 0, 32)
             gravity = android.view.Gravity.CENTER
         }
         depsLayout.addView(noDepsText)
         depsLayout.visibility = View.VISIBLE
+
+        buttonsLayout.removeAllViews()
+        val btnCancel = MaterialButton(requireContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = getString(R.string.cerrar)
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginEnd = 16
+            }
+            setOnClickListener { dismiss() }
+        }
+        buttonsLayout.addView(btnCancel)
+        val btnDelete = MaterialButton(requireContext()).apply {
+            text = getString(R.string.delete)
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            setBackgroundColor(android.graphics.Color.parseColor("#D32F2F"))
+            setTextColor(android.graphics.Color.WHITE)
+            setOnClickListener { performDelete() }
+        }
+        buttonsLayout.addView(btnDelete)
         buttonsLayout.visibility = View.VISIBLE
     }
 
-    private fun showDependenciesConfirm(
+    private fun showCannotDeleteDialog(
         deps: List<MainRepository.DependencyInfo>,
         titleTv: TextView,
         depsLayout: LinearLayout,
         buttonsLayout: LinearLayout
     ) {
-        titleTv.text = "¡Atención!"
+        titleTv.text = getString(R.string.no_se_puede_eliminar)
         depsLayout.removeAllViews()
-        val warningText = TextView(requireContext()).apply {
-            text = "Este registro tiene datos asociados que también se eliminarán:"
-            setPadding(0, 0, 0, 16)
-            setTextColor(requireContext().getColor(R.color.text_primary))
-            setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Body1)
-        }
-        depsLayout.addView(warningText)
-
-        val totalRecords = deps.sumOf { it.count }
-        for (dep in deps) {
-            val depText = TextView(requireContext()).apply {
-                text = "• ${dep.count} ${dep.displayName}"
-                setPadding(16, 0, 0, 8)
-                setTextColor(requireContext().getColor(R.color.text_secondary))
-                setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Body2)
-            }
-            depsLayout.addView(depText)
-        }
-
-        val totalText = TextView(requireContext()).apply {
-            text = "\nTotal: $totalRecords registros vinculados"
+        val msgText = TextView(requireContext()).apply {
+            text = getString(R.string.dependencias_en_cadena)
             setPadding(0, 0, 0, 32)
+            setTextColor(requireContext().getColor(R.color.text_secondary))
             gravity = android.view.Gravity.CENTER
-            setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Body1)
-            setTextColor(android.graphics.Color.parseColor("#D32F2F"))
         }
-        depsLayout.addView(totalText)
-
+        depsLayout.addView(msgText)
         depsLayout.visibility = View.VISIBLE
+
+        buttonsLayout.removeAllViews()
+        val btnClose = MaterialButton(requireContext(), null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = getString(R.string.cerrar)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setOnClickListener { dismiss() }
+        }
+        buttonsLayout.addView(btnClose)
         buttonsLayout.visibility = View.VISIBLE
     }
 
     private fun performDelete() {
         if (isLoading) return
+
+        val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        val role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
+        val access = Constants.getRoleTables(role)[tableName] ?: Constants.AccessLevel.NONE
+        if (access != Constants.AccessLevel.FULL) {
+            StyledToast.show(requireContext(), getString(R.string.sin_permiso_eliminar))
+            dismiss()
+            return
+        }
 
         val dataList = itemData.split(",").map { it.trim() }
         val idToDelete = dataList.firstOrNull()
@@ -209,16 +252,20 @@ class DeleteConfirmDialog : DialogFragment() {
             val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
             val activeUserId = prefs.getInt(Constants.KEY_USER_ID, -1)
             if (idToDelete == activeUserId.toString()) {
-                StyledToast.show(requireContext(), "No puedes eliminar tu propio usuario mientras está activo")
+                StyledToast.show(requireContext(), getString(R.string.no_eliminar_propio_usuario))
                 dismiss()
                 return
             }
         }
 
         isLoading = true
+
         val needsComposite = tableName in listOf(
-            "OFERTA_TRABAJO", "EXPERIENCIA_LABORAL", "CERTIFICACION",
-            "HABILIDAD_POSTULANTE", "POSTULACION", "DETALLE_REQUISITO"
+            "MUNICIPIO", "DISTRITO",
+            "OFERTA_TRABAJO", "DETALLE_REQUISITO",
+            "EXPERIENCIA_LABORAL", "CERTIFICACION",
+            "FORMACION_ACADEMICA", "HABILIDAD_POSTULANTE",
+            "RED_SOCIAL_POSTULANTE", "HABILIDAD"
         )
 
         if (needsComposite && dataList.size > 1) {

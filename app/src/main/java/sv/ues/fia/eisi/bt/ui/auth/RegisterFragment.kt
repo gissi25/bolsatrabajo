@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ImageButton
 import androidx.fragment.app.Fragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.button.MaterialButton
@@ -15,6 +16,7 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.utils.Constants
+import sv.ues.fia.eisi.bt.utils.LocaleHelper
 import sv.ues.fia.eisi.bt.utils.StyledToast
 import sv.ues.fia.eisi.bt.utils.ThemeToggleHelper
 import sv.ues.fia.eisi.bt.viewmodel.AuthViewModel
@@ -33,6 +35,7 @@ class RegisterFragment : Fragment() {
     private lateinit var btnRegister: MaterialButton
     private lateinit var btnLogin: MaterialButton
     private lateinit var btnThemeToggle: ImageButton
+    private lateinit var btnLanguage: ImageButton
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_register, container, false)
@@ -52,23 +55,38 @@ class RegisterFragment : Fragment() {
         btnRegister = view.findViewById(R.id.btnRegister)
         btnLogin = view.findViewById(R.id.btnLogin)
         btnThemeToggle = view.findViewById(R.id.btnThemeToggle)
+        btnLanguage = view.findViewById(R.id.btnLanguage)
 
-        btnThemeToggle.setImageResource(ThemeToggleHelper.getIconRes())
+        btnThemeToggle.setImageResource(ThemeToggleHelper.getIconRes(requireContext()))
         btnThemeToggle.setOnClickListener {
             ThemeToggleHelper.toggle(requireActivity())
         }
 
-        // Setup rol dropdown
-        val roles = arrayOf("postulante", "empresa", "admin")
+        btnLanguage.setImageResource(ThemeToggleHelper.getWorldIconRes(requireContext()))
+        btnLanguage.setOnClickListener { showLanguageMenu() }
+
+        val roles = arrayOf(
+            getString(R.string.rol_postulante),
+            getString(R.string.rol_empresa),
+            getString(R.string.rol_admin)
+        )
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, roles)
         actvRol.setAdapter(adapter)
-        actvRol.setText("postulante", false)
+        actvRol.setText(getString(R.string.rol_postulante), false)
 
         btnRegister.setOnClickListener {
             val username = etUsername.text.toString().trim()
             val password = etPassword.text.toString().trim()
             val confirmPassword = etConfirmPassword.text.toString().trim()
-            val rol = actvRol.text.toString().trim().ifBlank { "postulante" }
+            val rol = if (actvRol.text?.isNotBlank() == true) {
+                val selected = actvRol.text.toString().trim()
+                when {
+                    selected == getString(R.string.rol_postulante) -> "postulante"
+                    selected == getString(R.string.rol_empresa) -> "gerente de empresa"
+                    selected == getString(R.string.rol_admin) -> "administrador"
+                    else -> "postulante"
+                }
+            } else "postulante"
 
             if (validateInput(username, password, confirmPassword)) {
                 viewModel.register(username, password, rol)
@@ -82,17 +100,17 @@ class RegisterFragment : Fragment() {
         viewModel.registerResult.observe(viewLifecycleOwner) { result ->
             result.onSuccess { userId ->
                 if (userId > 0) {
-                    StyledToast.show(requireContext(), "Registro exitoso. Ahora puedes iniciar sesión.")
+                    StyledToast.show(requireContext(), getString(R.string.registro_exitoso))
                     findNavController().navigate(R.id.action_register_to_login)
                 } else if (userId == -2L) {
                     tilUsername.error = getString(R.string.username_already_exists)
-                    StyledToast.show(requireContext(), "El nombre de usuario ya existe")
+                    StyledToast.show(requireContext(), getString(R.string.username_already_exists))
                 } else {
-                    StyledToast.show(requireContext(), "Error en el registro. Intenta de nuevo.")
+                    StyledToast.show(requireContext(), getString(R.string.error_registro))
                 }
             }
             result.onFailure { exception ->
-                StyledToast.show(requireContext(), exception.message ?: "Error en el registro")
+                StyledToast.show(requireContext(), exception.message ?: getString(R.string.error_registro))
             }
         }
 
@@ -100,6 +118,26 @@ class RegisterFragment : Fragment() {
             btnRegister.isEnabled = !isLoading
             btnLogin.isEnabled = !isLoading
         }
+    }
+
+    private fun showLanguageMenu() {
+        val languages = arrayOf(
+            getString(R.string.espanol) to "es",
+            getString(R.string.ingles) to "en",
+            getString(R.string.portugues) to "pt"
+        )
+        val labels = languages.map { it.first }.toTypedArray()
+        val currentLang = LocaleHelper.getLanguage(requireContext())
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(getString(R.string.idiomas))
+            .setItems(labels) { _, which ->
+                val lang = languages[which].second
+                if (lang != currentLang) {
+                    LocaleHelper.setLocale(requireContext(), lang)
+                    requireActivity().recreate()
+                }
+            }
+            .show()
     }
 
     private fun validateInput(username: String, password: String, confirmPassword: String): Boolean {
@@ -115,7 +153,7 @@ class RegisterFragment : Fragment() {
         if (password.isBlank()) {
             tilPassword.error = getString(R.string.field_required)
             isValid = false
-        } else if (password.length < 6) {
+        } else if (password.length < 8) {
             tilPassword.error = getString(R.string.password_too_short)
             isValid = false
         } else {

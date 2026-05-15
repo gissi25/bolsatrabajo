@@ -1,15 +1,13 @@
 package sv.ues.fia.eisi.bt.utils
 
+import android.content.Context
+import sv.ues.fia.eisi.bt.R
+
 object InputMaskUtils {
 
     const val DUI_LENGTH = 9
     const val NUP_LENGTH = 12
-    const val PASAPORTE_LENGTH = 9
     const val MIN_PASSWORD = 8
-    const val EXPERIENCIA_MIN = 0
-    const val EXPERIENCIA_MAX = 50
-    const val EDAD_MIN = 16
-    const val EDAD_MAX = 100
     const val TELEFONO_LENGTH = 8
     const val NIT_LENGTH_SIMPLE = 14
 
@@ -50,31 +48,22 @@ object InputMaskUtils {
         return if (digits.length > 14) digits.substring(0, 14) else digits
     }
 
-    fun validateRango(value: String, min: Int, max: Int, nombre: String): String? {
-        val n = value.toIntOrNull()
-        return when {
-            n == null -> "$nombre debe ser un número"
-            n < min || n > max -> "$nombre debe estar entre $min y $max"
-            else -> null
-        }
+    fun validatePassword(context: Context, value: String): String? {
+        return if (value.length < MIN_PASSWORD) context.getString(R.string.validation_password_min, MIN_PASSWORD) else null
     }
 
-    fun validatePassword(value: String): String? {
-        return if (value.length < MIN_PASSWORD) "Mínimo $MIN_PASSWORD caracteres" else null
-    }
-
-    fun validateEmail(value: String): String? {
+    fun validateEmail(context: Context, value: String): String? {
         return if (!android.util.Patterns.EMAIL_ADDRESS.matcher(value).matches())
-            "Correo electrónico inválido" else null
+            context.getString(R.string.validation_email_invalid) else null
     }
 
-    fun validateURL(value: String): String? {
-        return if (!value.startsWith("http://") && !value.startsWith("https://"))
-            "URL debe comenzar con http:// o https://" else null
-    }
-
-    fun validateFecha(value: String): String? {
+    fun validateFecha(context: Context, value: String): String? {
         return if (!value.matches(Regex("""\d{4}-\d{2}-\d{2}""")))
-            "Formato: AAAA-MM-DD" else null
+            context.getString(R.string.validation_date_format) else null
     }
+}
+
+fun String.removeAccents(): String {
+    return java.text.Normalizer.normalize(this, java.text.Normalizer.Form.NFD)
+        .replace(Regex("[\\u0300-\\u036f]"), "")
 }

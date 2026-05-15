@@ -4,146 +4,116 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
+
+//  Es la capa de base de datos local usando SQLite. Extiende SQLiteOpenHelper y se encarga de:
+//     - Crear las 22 tablas del esquema (CATEGORIA_HABILIDAD, GENERO, POSTULANTE, EMPRESA, etc.) con sus PKs, FKs, UNIQUEs.
+//     - Crear índices (22) para optimizar búsquedas.
+
+//  Básicamente es toda la lógica DDL de la BD en una sola clase.
+
 class ConnectionHelper(context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
         private const val DATABASE_NAME = "bolsadetabajo.db"
-        private const val DATABASE_VERSION = 9
+        private const val DATABASE_VERSION = 16
         private const val TAG = "ConnectionHelper"
     }
 
     override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL("PRAGMA foreign_keys = ON;")
+        // ================================================================
+        // CREATE TABLES (22 tablas con PKs naturales/compuestas/manuales)
+        // ================================================================
 
-        // ================================================================
-        // CREATE TABLES (orden respetando Foreign Keys)
-        // ================================================================
+        // --- Tablas AUTOINCREMENTALES (7) ---
 
         db.execSQL("""
             CREATE TABLE CATEGORIA_HABILIDAD (
-                ID_CATEGORIA_HABILIDAD INTEGER NOT NULL,
-                NOMBRE_CATEGORIA VARCHAR(50),
-                PRIMARY KEY (ID_CATEGORIA_HABILIDAD)
+                ID_CATEGORIA_HABILIDAD INTEGER PRIMARY KEY AUTOINCREMENT,
+                NOMBRE_CATEGORIA VARCHAR(50) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE GENERO (
-                ID_GENERO INTEGER NOT NULL,
-                NOMBRE_GENERO VARCHAR(20),
-                PRIMARY KEY (ID_GENERO)
+                ID_GENERO INTEGER PRIMARY KEY AUTOINCREMENT,
+                NOMBRE_GENERO VARCHAR(20) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE TIPO_DOCUMENTO (
-                ID_TIPO_DOCUMENTO INTEGER NOT NULL,
-                NOMBRE_TIPO VARCHAR(25),
-                PRIMARY KEY (ID_TIPO_DOCUMENTO)
+                ID_TIPO_DOCUMENTO INTEGER PRIMARY KEY AUTOINCREMENT,
+                NOMBRE_TIPO VARCHAR(25) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE DEPARTAMENTO (
-                ID_DEPARTAMENTO INTEGER NOT NULL,
-                NOMBRE_DEPARTAMENTO VARCHAR(50),
-                PRIMARY KEY (ID_DEPARTAMENTO)
-            )
-        """)
-
-        db.execSQL("""
-            CREATE TABLE MUNICIPIO (
-                ID_MUNICIPIO INTEGER NOT NULL,
-                ID_DEPARTAMENTO INTEGER NOT NULL,
-                NOMBRE_MUNICIPIO VARCHAR(50),
-                PRIMARY KEY (ID_MUNICIPIO),
-                FOREIGN KEY (ID_DEPARTAMENTO) REFERENCES DEPARTAMENTO (ID_DEPARTAMENTO)
-            )
-        """)
-
-        db.execSQL("""
-            CREATE TABLE DISTRITO (
-                ID_DISTRITO INTEGER NOT NULL,
-                ID_MUNICIPIO INTEGER NOT NULL,
-                NOMBRE_DISTRITO VARCHAR(50),
-                PRIMARY KEY (ID_DISTRITO),
-                FOREIGN KEY (ID_MUNICIPIO) REFERENCES MUNICIPIO (ID_MUNICIPIO)
-            )
-        """)
-
-        db.execSQL("""
-            CREATE TABLE INSTITUCION (
-                ID_INSTITUCION INTEGER NOT NULL,
-                NOMBRE_INSTITUCION VARCHAR(150),
-                PRIMARY KEY (ID_INSTITUCION)
+                ID_DEPARTAMENTO INTEGER PRIMARY KEY AUTOINCREMENT,
+                NOMBRE_DEPARTAMENTO VARCHAR(50) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE GRADO_ACADEMICO (
-                ID_GRADO_ACADEMICO INTEGER NOT NULL,
-                NOMBRE_GRADO VARCHAR(50),
-                PRIMARY KEY (ID_GRADO_ACADEMICO)
+                ID_GRADO_ACADEMICO INTEGER PRIMARY KEY AUTOINCREMENT,
+                NOMBRE_GRADO VARCHAR(50) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE RED_SOCIAL (
-                ID_RED_SOCIAL INTEGER NOT NULL,
-                NOMBRE_RED VARCHAR(50),
-                PRIMARY KEY (ID_RED_SOCIAL)
+                ID_RED_SOCIAL INTEGER PRIMARY KEY AUTOINCREMENT,
+                NOMBRE_RED VARCHAR(50) UNIQUE
             )
         """)
 
         db.execSQL("""
-            CREATE TABLE POSTULANTE (
-                ID_POSTULANTE INTEGER NOT NULL,
-                ID_GENERO INTEGER NOT NULL,
-                ID_TIPO_DOCUMENTO INTEGER NOT NULL,
-                ID_DISTRITO INTEGER,
-                NOMBRE VARCHAR(100),
-                APELLIDO VARCHAR(100),
-                FECHA_NACIMIENTO DATE,
-                NUM_DOCUMENTO VARCHAR(20),
-                NUP VARCHAR(20),
-                DIRECCION_DETALLE VARCHAR(250),
-                TELEFONO_CASA VARCHAR(15),
-                TELEFONO_CELULAR VARCHAR(15),
-                EMAIL VARCHAR(100),
-                PRIMARY KEY (ID_POSTULANTE),
-                FOREIGN KEY (ID_GENERO) REFERENCES GENERO (ID_GENERO),
-                FOREIGN KEY (ID_TIPO_DOCUMENTO) REFERENCES TIPO_DOCUMENTO (ID_TIPO_DOCUMENTO),
-                FOREIGN KEY (ID_DISTRITO) REFERENCES DISTRITO (ID_DISTRITO)
+            CREATE TABLE TIPO_CERTIFICACION (
+                ID_TIPO_CERTIFICACION INTEGER PRIMARY KEY AUTOINCREMENT,
+                NOMBRE_TIPO VARCHAR(100) UNIQUE
             )
         """)
 
         db.execSQL("""
             CREATE TABLE USUARIO (
-                ID_USUARIO INTEGER NOT NULL,
-                USERNAME VARCHAR(30),
-                PASSWORD VARCHAR(10),
-                ROL VARCHAR(20),
-                PRIMARY KEY (ID_USUARIO)
+                ID_USUARIO INTEGER PRIMARY KEY AUTOINCREMENT,
+                USERNAME VARCHAR(30) UNIQUE COLLATE NOCASE,
+                PASSWORD VARCHAR(128),
+                ROL VARCHAR(20)
+            )
+        """)
+
+        // --- Tablas con PK Compuesta ---
+
+        db.execSQL("""
+            CREATE TABLE MUNICIPIO (
+                ID_DEPARTAMENTO INTEGER NOT NULL,
+                ID_MUNICIPIO INTEGER NOT NULL,
+                NOMBRE_MUNICIPIO VARCHAR(50),
+                PRIMARY KEY (ID_DEPARTAMENTO, ID_MUNICIPIO),
+                FOREIGN KEY (ID_DEPARTAMENTO) REFERENCES DEPARTAMENTO (ID_DEPARTAMENTO),
+                UNIQUE (ID_DEPARTAMENTO, NOMBRE_MUNICIPIO)
             )
         """)
 
         db.execSQL("""
-            CREATE TABLE EMPRESA (
-                ID_EMPRESA INTEGER NOT NULL,
+            CREATE TABLE DISTRITO (
+                ID_DEPARTAMENTO INTEGER NOT NULL,
+                ID_MUNICIPIO INTEGER NOT NULL,
                 ID_DISTRITO INTEGER NOT NULL,
-                NOMBRE_EMPRESA VARCHAR(150),
-                CONTACTO_DIRECTO VARCHAR(100),
-                NIT VARCHAR(20),
-                PRIMARY KEY (ID_EMPRESA),
-                FOREIGN KEY (ID_DISTRITO) REFERENCES DISTRITO (ID_DISTRITO)
+                NOMBRE_DISTRITO VARCHAR(50),
+                PRIMARY KEY (ID_DEPARTAMENTO, ID_MUNICIPIO, ID_DISTRITO),
+                FOREIGN KEY (ID_DEPARTAMENTO, ID_MUNICIPIO) REFERENCES MUNICIPIO (ID_DEPARTAMENTO, ID_MUNICIPIO),
+                UNIQUE (ID_DEPARTAMENTO, ID_MUNICIPIO, NOMBRE_DISTRITO)
             )
         """)
 
         db.execSQL("""
             CREATE TABLE OFERTA_TRABAJO (
-                ID_EMPRESA INTEGER NOT NULL,
-                ID_OFERTA INTEGER NOT NULL,
+                NIT VARCHAR(20) NOT NULL,
+                ID_OFERTA VARCHAR(10) NOT NULL,
                 ID_GRADO_ACADEMICO INTEGER,
                 TITULO_PUESTO VARCHAR(150),
                 FECHA_PUBLICACION DATE,
@@ -152,149 +122,296 @@ class ConnectionHelper(context: Context) :
                 EDAD_MINIMA INTEGER,
                 EDAD_MAXIMA INTEGER,
                 DESCRIPCION_OFERTA_TRABAJO VARCHAR(5000),
-                PRIMARY KEY (ID_EMPRESA, ID_OFERTA),
-                FOREIGN KEY (ID_EMPRESA) REFERENCES EMPRESA (ID_EMPRESA),
-                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO)
+                PRIMARY KEY (NIT, ID_OFERTA),
+                FOREIGN KEY (NIT) REFERENCES EMPRESA (NIT),
+                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO),
+                UNIQUE (NIT, TITULO_PUESTO)
             )
         """)
 
         db.execSQL("""
             CREATE TABLE DETALLE_REQUISITO (
-                ID_DETALLE INTEGER NOT NULL,
-                ID_EMPRESA INTEGER,
-                ID_OFERTA INTEGER,
-                DESCRIPCION_REQUISITO VARCHAR(50),
-                PRIMARY KEY (ID_DETALLE),
-                FOREIGN KEY (ID_EMPRESA, ID_OFERTA) REFERENCES OFERTA_TRABAJO (ID_EMPRESA, ID_OFERTA)
+                NIT VARCHAR(20) NOT NULL,
+                ID_OFERTA VARCHAR(10) NOT NULL,
+                ID_DETALLE VARCHAR(10) NOT NULL,
+                DESCRIPCION_REQUISITO VARCHAR(100),
+                PRIMARY KEY (NIT, ID_OFERTA, ID_DETALLE),
+                FOREIGN KEY (NIT, ID_OFERTA) REFERENCES OFERTA_TRABAJO (NIT, ID_OFERTA),
+                UNIQUE (NIT, ID_OFERTA, DESCRIPCION_REQUISITO)
             )
         """)
 
         db.execSQL("""
-            CREATE TABLE OFERTA_ACADEMICA (
-                ID_OFERTA_ACADEMICA INTEGER NOT NULL,
-                ID_GRADO_ACADEMICO INTEGER,
-                ID_INSTITUCION INTEGER,
-                PRIMARY KEY (ID_OFERTA_ACADEMICA),
+            CREATE TABLE EXPERIENCIA_LABORAL (
+                ID_POSTULANTE VARCHAR(20) NOT NULL,
+                NIT VARCHAR(20) NOT NULL,
+                ID_EXPERIENCIA VARCHAR(10) NOT NULL,
+                PUESTO_TRABAJO VARCHAR(100),
+                FECHA_INICIO DATE,
+                FECHA_FIN DATE,
+                DESCP_EXPERIENCIA_LABORAL VARCHAR(500),
+                CONTACTO_REFERENCIA VARCHAR(100),
+                PRIMARY KEY (ID_POSTULANTE, NIT, ID_EXPERIENCIA),
+                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
+                FOREIGN KEY (NIT) REFERENCES EMPRESA (NIT),
+                UNIQUE (ID_POSTULANTE, NIT, PUESTO_TRABAJO)
+            )
+        """)
+
+        db.execSQL("""
+            CREATE TABLE CERTIFICACION (
+                ID_CERTIFICACION VARCHAR(10) NOT NULL,
+                ID_INSTITUCION VARCHAR(20) NOT NULL,
+                ID_POSTULANTE VARCHAR(20) NOT NULL,
+                ID_TIPO_CERTIFICACION INTEGER,
+                NOMBRE_CERTIFICACION VARCHAR(150),
+                FECHA_CERTIFICACION DATE,
+                FECHA_INICIO DATE NOT NULL,
+                FECHA_FIN DATE NOT NULL,
+                PRIMARY KEY (ID_CERTIFICACION, ID_INSTITUCION, ID_POSTULANTE),
                 FOREIGN KEY (ID_INSTITUCION) REFERENCES INSTITUCION (ID_INSTITUCION),
-                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO)
+                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
+                FOREIGN KEY (ID_TIPO_CERTIFICACION) REFERENCES TIPO_CERTIFICACION (ID_TIPO_CERTIFICACION),
+                UNIQUE (ID_POSTULANTE, NOMBRE_CERTIFICACION)
             )
         """)
 
         db.execSQL("""
             CREATE TABLE FORMACION_ACADEMICA (
-                ID_FORMACION INTEGER NOT NULL,
-                ID_POSTULANTE INTEGER NOT NULL,
-                ID_OFERTA_ACADEMICA INTEGER,
+                ID_FORMACION VARCHAR(10) NOT NULL,
+                ID_POSTULANTE VARCHAR(20) NOT NULL,
+                ID_OFERTA_ACADEMICA VARCHAR(10),
                 TITULO_OBTENIDO VARCHAR(150),
+                FECHA_INICIO DATE NOT NULL,
+                FECHA_FIN DATE NOT NULL,
                 FECHA_OBTENCION DATE,
-                PRIMARY KEY (ID_FORMACION),
+                PRIMARY KEY (ID_FORMACION, ID_POSTULANTE),
                 FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
                 FOREIGN KEY (ID_OFERTA_ACADEMICA) REFERENCES OFERTA_ACADEMICA (ID_OFERTA_ACADEMICA)
             )
         """)
 
         db.execSQL("""
-            CREATE TABLE EXPERIENCIA_LABORAL (
-                ID_POSTULANTE INTEGER NOT NULL,
-                ID_EXPERIENCIA INTEGER NOT NULL,
-                ID_EMPRESA INTEGER,
-                PUESTO_TRABAJO VARCHAR(100),
-                FECHA_INICIO DATE,
-                FECHA_FIN DATE,
-                DESCP_EXPERIENCIA_LABORAL VARCHAR(500),
-                CONTACTO_REFERENCIA VARCHAR(100),
-                PRIMARY KEY (ID_POSTULANTE, ID_EXPERIENCIA),
-                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
-                FOREIGN KEY (ID_EMPRESA) REFERENCES EMPRESA (ID_EMPRESA)
-            )
-        """)
-
-        db.execSQL("""
-            CREATE TABLE CERTIFICACION (
-                ID_POSTULANTE INTEGER NOT NULL,
-                ID_CERTIFICACION INTEGER NOT NULL,
-                ID_INSTITUCION INTEGER NOT NULL,
-                NOMBRE_CERTIFICACION VARCHAR(150),
-                CODIGO_CERTIFICACION VARCHAR(50),
-                FECHA_CERTIFICACION DATE,
-                PRIMARY KEY (ID_POSTULANTE, ID_CERTIFICACION),
-                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
-                FOREIGN KEY (ID_INSTITUCION) REFERENCES INSTITUCION (ID_INSTITUCION)
-            )
-        """)
-
-        db.execSQL("""
-            CREATE TABLE HABILIDAD (
-                ID_HABILIDAD INTEGER NOT NULL,
-                ID_CATEGORIA_HABILIDAD INTEGER NOT NULL,
-                NOMBRE_HABILIDAD VARCHAR(100),
-                PRIMARY KEY (ID_HABILIDAD),
-                FOREIGN KEY (ID_CATEGORIA_HABILIDAD) REFERENCES CATEGORIA_HABILIDAD (ID_CATEGORIA_HABILIDAD)
-            )
-        """)
-
-        db.execSQL("""
             CREATE TABLE HABILIDAD_POSTULANTE (
-                ID_HABILIDAD INTEGER NOT NULL,
-                ID_POSTULANTE INTEGER NOT NULL,
-                ID_HABILIDAD_POSTULANTE INTEGER NOT NULL,
-                NIVEL_DESTREZA VARCHAR(20),
-                PRIMARY KEY (ID_HABILIDAD, ID_POSTULANTE, ID_HABILIDAD_POSTULANTE),
-                FOREIGN KEY (ID_HABILIDAD) REFERENCES HABILIDAD (ID_HABILIDAD),
+                ID_CATEGORIA_HABILIDAD INTEGER NOT NULL,
+                ID_HABILIDAD VARCHAR(10) NOT NULL,
+                ID_POSTULANTE VARCHAR(20) NOT NULL,
+                NIVEL_DESTREZA VARCHAR(12),
+                PRIMARY KEY (ID_CATEGORIA_HABILIDAD, ID_HABILIDAD, ID_POSTULANTE),
+                FOREIGN KEY (ID_CATEGORIA_HABILIDAD, ID_HABILIDAD) REFERENCES HABILIDAD (ID_CATEGORIA_HABILIDAD, ID_HABILIDAD),
                 FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE)
             )
         """)
 
         db.execSQL("""
             CREATE TABLE POSTULACION (
-                ID_EMPRESA INTEGER NOT NULL,
-                ID_OFERTA INTEGER NOT NULL,
-                ID_POSTULANTE INTEGER NOT NULL,
-                ID_POSTULACION INTEGER NOT NULL,
+                ID_POSTULACION VARCHAR(10) NOT NULL,
+                NIT VARCHAR(20) NOT NULL,
+                ID_OFERTA VARCHAR(10) NOT NULL,
+                ID_POSTULANTE VARCHAR(20) NOT NULL,
                 FECHA_APLICACION DATE,
                 ESTADO_PROCESO VARCHAR(50),
-                PRIMARY KEY (ID_EMPRESA, ID_OFERTA, ID_POSTULANTE, ID_POSTULACION),
-                FOREIGN KEY (ID_EMPRESA, ID_OFERTA) REFERENCES OFERTA_TRABAJO (ID_EMPRESA, ID_OFERTA),
-                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE)
+                PRIMARY KEY (ID_POSTULACION),
+                FOREIGN KEY (NIT, ID_OFERTA) REFERENCES OFERTA_TRABAJO (NIT, ID_OFERTA),
+                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
+                UNIQUE (ID_POSTULANTE, NIT, ID_OFERTA)
             )
         """)
 
         db.execSQL("""
             CREATE TABLE RED_SOCIAL_POSTULANTE (
-                ID_RED_POSTUALNTE INTEGER NOT NULL,
-                ID_POSTULANTE INTEGER,
-                ID_RED_SOCIAL INTEGER,
-                URL_PERFIL VARCHAR(30),
-                PRIMARY KEY (ID_RED_POSTUALNTE),
-                FOREIGN KEY (ID_RED_SOCIAL) REFERENCES RED_SOCIAL (ID_RED_SOCIAL),
-                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE)
+                ID_POSTULANTE VARCHAR(20) NOT NULL,
+                ID_RED_SOCIAL INTEGER NOT NULL,
+                URL_PERFIL VARCHAR(100),
+                PRIMARY KEY (ID_POSTULANTE, ID_RED_SOCIAL),
+                FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE (ID_POSTULANTE),
+                FOREIGN KEY (ID_RED_SOCIAL) REFERENCES RED_SOCIAL (ID_RED_SOCIAL)
+            )
+        """)
+
+        // --- Tablas con PK Manual (VARCHAR) ---
+
+        db.execSQL("""
+            CREATE TABLE INSTITUCION (
+                ID_INSTITUCION VARCHAR(20) PRIMARY KEY,
+                NOMBRE_INSTITUCION VARCHAR(150) UNIQUE
+            )
+        """)
+
+        db.execSQL("""
+            CREATE TABLE HABILIDAD (
+                ID_CATEGORIA_HABILIDAD INTEGER NOT NULL,
+                ID_HABILIDAD VARCHAR(10) NOT NULL,
+                NOMBRE_HABILIDAD VARCHAR(100) UNIQUE,
+                PRIMARY KEY (ID_CATEGORIA_HABILIDAD, ID_HABILIDAD),
+                FOREIGN KEY (ID_CATEGORIA_HABILIDAD) REFERENCES CATEGORIA_HABILIDAD (ID_CATEGORIA_HABILIDAD)
+            )
+        """)
+
+        db.execSQL("""
+            CREATE TABLE EMPRESA (
+                NIT VARCHAR(20) PRIMARY KEY,
+                ID_DISTRITO_DEPTO INTEGER NOT NULL,
+                ID_DISTRITO_MUNICIPIO INTEGER NOT NULL,
+                ID_DISTRITO_ID INTEGER NOT NULL,
+                NOMBRE_EMPRESA VARCHAR(150) UNIQUE,
+                CONTACTO_DIRECTO VARCHAR(100),
+                FOREIGN KEY (ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID) REFERENCES DISTRITO (ID_DEPARTAMENTO, ID_MUNICIPIO, ID_DISTRITO)
+            )
+        """)
+
+        db.execSQL("""
+            CREATE TABLE POSTULANTE (
+                ID_POSTULANTE VARCHAR(20) PRIMARY KEY,
+                ID_GENERO INTEGER NOT NULL,
+                ID_TIPO_DOCUMENTO INTEGER NOT NULL,
+                NUM_DOCUMENTO VARCHAR(20) UNIQUE,
+                ID_GRADO_ACADEMICO INTEGER NOT NULL,
+                ID_DISTRITO_DEPTO INTEGER,
+                ID_DISTRITO_MUNICIPIO INTEGER,
+                ID_DISTRITO_ID INTEGER,
+                NOMBRE VARCHAR(100),
+                APELLIDO VARCHAR(100),
+                FECHA_NACIMIENTO DATE,
+                NUP VARCHAR(20) UNIQUE,
+                DIRECCION_DETALLE VARCHAR(250),
+                TELEFONO_CASA VARCHAR(15),
+                TELEFONO_CELULAR VARCHAR(15),
+                EMAIL VARCHAR(100) UNIQUE COLLATE NOCASE,
+                FOREIGN KEY (ID_GENERO) REFERENCES GENERO (ID_GENERO),
+                FOREIGN KEY (ID_TIPO_DOCUMENTO) REFERENCES TIPO_DOCUMENTO (ID_TIPO_DOCUMENTO),
+                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO),
+                FOREIGN KEY (ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID) REFERENCES DISTRITO (ID_DEPARTAMENTO, ID_MUNICIPIO, ID_DISTRITO)
+            )
+        """)
+
+        db.execSQL("""
+            CREATE TABLE OFERTA_ACADEMICA (
+                ID_OFERTA_ACADEMICA VARCHAR(10) PRIMARY KEY,
+                ID_GRADO_ACADEMICO INTEGER,
+                ID_INSTITUCION VARCHAR(20),
+                FOREIGN KEY (ID_INSTITUCION) REFERENCES INSTITUCION (ID_INSTITUCION),
+                FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO (ID_GRADO_ACADEMICO),
+                UNIQUE (ID_INSTITUCION, ID_GRADO_ACADEMICO)
             )
         """)
 
         // ================================================================
-        // ÍNDICES
+        // INDICES
         // ================================================================
 
-        db.execSQL("CREATE INDEX RELATIONSHIP_1_FK ON MUNICIPIO (ID_DEPARTAMENTO)")
-        db.execSQL("CREATE INDEX RELATIONSHIP_20_FK ON DISTRITO (ID_MUNICIPIO)")
-        db.execSQL("CREATE INDEX RELATIONSHIP_25_FK ON EMPRESA (ID_DISTRITO)")
-        db.execSQL("CREATE INDEX RELATIONSHIP_24_FK ON EXPERIENCIA_LABORAL (ID_EMPRESA)")
-        db.execSQL("CREATE INDEX RELATIONSHIP_23_FK ON FORMACION_ACADEMICA (ID_OFERTA_ACADEMICA)")
-        db.execSQL("CREATE INDEX RELATIONSHIP_11_FK ON HABILIDAD (ID_CATEGORIA_HABILIDAD)")
-        db.execSQL("CREATE INDEX RELATIONSHIP_21_FK ON OFERTA_ACADEMICA (ID_INSTITUCION)")
-        db.execSQL("CREATE INDEX RELATIONSHIP_22_FK ON OFERTA_ACADEMICA (ID_GRADO_ACADEMICO)")
-        db.execSQL("CREATE INDEX RELATIONSHIP_30_FK ON OFERTA_TRABAJO (ID_GRADO_ACADEMICO)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_MUNICIPIO_DEPTO ON MUNICIPIO (ID_DEPARTAMENTO)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_DISTRITO_MUNICIPIO ON DISTRITO (ID_DEPARTAMENTO, ID_MUNICIPIO)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_HABILIDAD_CATEGORIA ON HABILIDAD (ID_CATEGORIA_HABILIDAD)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_EMPRESA_DISTRITO ON EMPRESA (ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_POSTULANTE_GENERO ON POSTULANTE (ID_GENERO)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_POSTULANTE_TIPO_DOC ON POSTULANTE (ID_TIPO_DOCUMENTO)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_POSTULANTE_DISTRITO ON POSTULANTE (ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_OFERTA_GRADO ON OFERTA_TRABAJO (ID_GRADO_ACADEMICO)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_DETALLE_OFERTA ON DETALLE_REQUISITO (NIT, ID_OFERTA)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_EXP_POSTULANTE ON EXPERIENCIA_LABORAL (ID_POSTULANTE)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_EXP_EMPRESA ON EXPERIENCIA_LABORAL (NIT)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_CERT_POSTULANTE ON CERTIFICACION (ID_POSTULANTE)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_CERT_INSTITUCION ON CERTIFICACION (ID_INSTITUCION)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_FORM_POSTULANTE ON FORMACION_ACADEMICA (ID_POSTULANTE)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_HAB_POST_POSTULANTE ON HABILIDAD_POSTULANTE (ID_POSTULANTE)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_HAB_POST_HABILIDAD ON HABILIDAD_POSTULANTE (ID_HABILIDAD)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_POSTULACION_POSTULANTE ON POSTULACION (ID_POSTULANTE)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_POSTULACION_OFERTA ON POSTULACION (NIT, ID_OFERTA)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_RED_POST_POSTULANTE ON RED_SOCIAL_POSTULANTE (ID_POSTULANTE)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_OA_INSTITUCION ON OFERTA_ACADEMICA (ID_INSTITUCION)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS IDX_OA_GRADO ON OFERTA_ACADEMICA (ID_GRADO_ACADEMICO)")
 
         // ================================================================
-        // BLOQUE 1: VALIDACIONES DE NEGOCIO (10 triggers)
+        // TRIGGERS SEMANTICOS (6)
         // ================================================================
 
-        db.execSQL("DROP TRIGGER IF EXISTS TR_NIVEL_EDUCATIVO")
+        db.execSQL("DROP TRIGGER IF EXISTS TR_POSTULANTE_EDAD")
         db.execSQL("""
-            CREATE TRIGGER TR_NIVEL_EDUCATIVO BEFORE INSERT ON FORMACION_ACADEMICA
+            CREATE TRIGGER TR_POSTULANTE_EDAD BEFORE INSERT ON POSTULANTE
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN UPPER(NEW.TITULO_OBTENIDO) IN ('BACHILLERATO', 'EDUCACION BASICA', 'PRIMARIA')
-                THEN RAISE(ABORT, 'Nivel académico insuficiente para el perfil profesional') END;
+                SELECT CASE WHEN NEW.FECHA_NACIMIENTO > date('now')
+                THEN RAISE(ABORT, 'La fecha de nacimiento no puede ser futura') END;
+                SELECT CASE WHEN (strftime('%Y', 'now') - strftime('%Y', NEW.FECHA_NACIMIENTO)) < 18
+                THEN RAISE(ABORT, 'El postulante debe ser mayor de edad') END;
+            END
+        """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_POSTULANTE_EDAD_UPD BEFORE UPDATE ON POSTULANTE
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.FECHA_NACIMIENTO > date('now')
+                THEN RAISE(ABORT, 'La fecha de nacimiento no puede ser futura') END;
+                SELECT CASE WHEN (strftime('%Y', 'now') - strftime('%Y', NEW.FECHA_NACIMIENTO)) < 18
+                THEN RAISE(ABORT, 'El postulante debe ser mayor de edad') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_POSTULANTE_GRADO")
+        db.execSQL("""
+            CREATE TRIGGER TR_POSTULANTE_GRADO BEFORE INSERT ON POSTULANTE
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (
+                    SELECT LOWER(NOMBRE_GRADO) FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO
+                ) IN ('bachiller')
+                THEN RAISE(ABORT, 'El postulante debe tener un grado academico superior a Bachiller') END;
+            END
+        """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_POSTULANTE_GRADO_UPD BEFORE UPDATE ON POSTULANTE
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (
+                    SELECT LOWER(NOMBRE_GRADO) FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO
+                ) IN ('bachiller')
+                THEN RAISE(ABORT, 'El postulante debe tener un grado academico superior a Bachiller') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_OFERTA_RANGO_EDAD")
+        db.execSQL("""
+            CREATE TRIGGER TR_OFERTA_RANGO_EDAD BEFORE INSERT ON OFERTA_TRABAJO
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.EDAD_MINIMA < 18
+                THEN RAISE(ABORT, 'Edad minima debe ser mayor o igual a 18') END;
+                SELECT CASE WHEN NEW.EDAD_MINIMA > NEW.EDAD_MAXIMA
+                THEN RAISE(ABORT, 'Edad minima no puede ser mayor a la maxima') END;
+            END
+        """)
+        db.execSQL("DROP TRIGGER IF EXISTS TR_OFERTA_RANGO_EDAD_UPD")
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_OFERTA_RANGO_EDAD_UPD BEFORE UPDATE ON OFERTA_TRABAJO
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.EDAD_MINIMA < 18
+                THEN RAISE(ABORT, 'Edad minima debe ser mayor o igual a 18') END;
+                SELECT CASE WHEN NEW.EDAD_MINIMA > NEW.EDAD_MAXIMA
+                THEN RAISE(ABORT, 'Edad minima no puede ser mayor a la maxima') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_OFERTA_VIGENCIA")
+        db.execSQL("""
+            CREATE TRIGGER TR_OFERTA_VIGENCIA BEFORE INSERT ON OFERTA_TRABAJO
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.FECHA_CADUCIDAD <= NEW.FECHA_PUBLICACION
+                THEN RAISE(ABORT, 'La oferta ya caduco o fecha invalida') END;
+            END
+        """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_OFERTA_VIGENCIA_UPD BEFORE UPDATE ON OFERTA_TRABAJO
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.FECHA_CADUCIDAD <= NEW.FECHA_PUBLICACION
+                THEN RAISE(ABORT, 'La oferta ya caduco o fecha invalida') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_POSTULACION_VIGENCIA")
+        db.execSQL("""
+            CREATE TRIGGER TR_POSTULACION_VIGENCIA BEFORE INSERT ON POSTULACION
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (
+                    SELECT FECHA_CADUCIDAD FROM OFERTA_TRABAJO
+                    WHERE NIT = NEW.NIT AND ID_OFERTA = NEW.ID_OFERTA
+                ) < date('now')
+                THEN RAISE(ABORT, 'La oferta de trabajo ha vencido') END;
             END
         """)
 
@@ -306,24 +423,109 @@ class ConnectionHelper(context: Context) :
                 THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin') END;
             END
         """)
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_OFERTA_RANGO_EDAD")
         db.execSQL("""
-            CREATE TRIGGER TR_OFERTA_RANGO_EDAD BEFORE INSERT ON OFERTA_TRABAJO
+            CREATE TRIGGER IF NOT EXISTS TR_EXP_LABORAL_FECHAS_UPD BEFORE UPDATE ON EXPERIENCIA_LABORAL
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN NEW.EDAD_MINIMA > NEW.EDAD_MAXIMA
-                THEN RAISE(ABORT, 'Edad mínima no puede ser mayor a la máxima') END;
+                SELECT CASE WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
+                THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin') END;
             END
         """)
 
-        db.execSQL("DROP TRIGGER IF EXISTS TR_OFERTA_VIGENCIA")
+        db.execSQL("DROP TRIGGER IF EXISTS TR_CERTIFICACION_FECHAS")
         db.execSQL("""
-            CREATE TRIGGER TR_OFERTA_VIGENCIA BEFORE INSERT ON OFERTA_TRABAJO
+            CREATE TRIGGER TR_CERTIFICACION_FECHAS BEFORE INSERT ON CERTIFICACION
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN NEW.FECHA_CADUCIDAD <= NEW.FECHA_PUBLICACION
-                THEN RAISE(ABORT, 'La oferta ya caducó o fecha inválida') END;
+                SELECT CASE WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
+                THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin') END;
+                SELECT CASE WHEN NEW.FECHA_INICIO > date('now')
+                THEN RAISE(ABORT, 'Fecha inicio no puede ser una fecha futura') END;
+                SELECT CASE WHEN NEW.FECHA_FIN > date('now')
+                THEN RAISE(ABORT, 'Fecha fin no puede ser una fecha futura') END;
+                SELECT CASE WHEN NEW.FECHA_CERTIFICACION < NEW.FECHA_FIN
+                THEN RAISE(ABORT, 'Fecha de certificacion no puede ser menor a la fecha fin del periodo') END;
+                SELECT CASE WHEN NEW.FECHA_CERTIFICACION > date(NEW.FECHA_FIN, '+1 years')
+                THEN RAISE(ABORT, 'Fecha de certificacion no puede exceder un año despues de la fecha fin del periodo') END;
+                SELECT CASE WHEN NEW.FECHA_CERTIFICACION > date('now')
+                THEN RAISE(ABORT, 'Fecha de certificacion no puede ser una fecha futura') END;
             END
         """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_CERTIFICACION_FECHAS_UPD BEFORE UPDATE ON CERTIFICACION
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
+                THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin') END;
+                SELECT CASE WHEN NEW.FECHA_INICIO > date('now')
+                THEN RAISE(ABORT, 'Fecha inicio no puede ser una fecha futura') END;
+                SELECT CASE WHEN NEW.FECHA_FIN > date('now')
+                THEN RAISE(ABORT, 'Fecha fin no puede ser una fecha futura') END;
+                SELECT CASE WHEN NEW.FECHA_CERTIFICACION < NEW.FECHA_FIN
+                THEN RAISE(ABORT, 'Fecha de certificacion no puede ser menor a la fecha fin del periodo') END;
+                SELECT CASE WHEN NEW.FECHA_CERTIFICACION > date(NEW.FECHA_FIN, '+1 years')
+                THEN RAISE(ABORT, 'Fecha de certificacion no puede exceder un año despues de la fecha fin del periodo') END;
+                SELECT CASE WHEN NEW.FECHA_CERTIFICACION > date('now')
+                THEN RAISE(ABORT, 'Fecha de certificacion no puede ser una fecha futura') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_FORMACION_FECHAS")
+        db.execSQL("""
+            CREATE TRIGGER TR_FORMACION_FECHAS BEFORE INSERT ON FORMACION_ACADEMICA
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
+                THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin') END;
+                SELECT CASE WHEN NEW.FECHA_INICIO > date('now')
+                THEN RAISE(ABORT, 'Fecha inicio no puede ser una fecha futura') END;
+                SELECT CASE WHEN NEW.FECHA_FIN > date('now')
+                THEN RAISE(ABORT, 'Fecha fin no puede ser una fecha futura') END;
+                SELECT CASE WHEN NEW.FECHA_OBTENCION < NEW.FECHA_FIN
+                THEN RAISE(ABORT, 'Fecha de obtencion no puede ser menor a la fecha fin del periodo') END;
+                SELECT CASE WHEN NEW.FECHA_OBTENCION > date(NEW.FECHA_FIN, '+1 years')
+                THEN RAISE(ABORT, 'Fecha de obtencion no puede exceder un año despues de la fecha fin del periodo') END;
+                SELECT CASE WHEN NEW.FECHA_OBTENCION > date('now')
+                THEN RAISE(ABORT, 'Fecha de obtencion no puede ser una fecha futura') END;
+            END
+        """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_FORMACION_FECHAS_UPD BEFORE UPDATE ON FORMACION_ACADEMICA
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
+                THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin') END;
+                SELECT CASE WHEN NEW.FECHA_INICIO > date('now')
+                THEN RAISE(ABORT, 'Fecha inicio no puede ser una fecha futura') END;
+                SELECT CASE WHEN NEW.FECHA_FIN > date('now')
+                THEN RAISE(ABORT, 'Fecha fin no puede ser una fecha futura') END;
+                SELECT CASE WHEN NEW.FECHA_OBTENCION < NEW.FECHA_FIN
+                THEN RAISE(ABORT, 'Fecha de obtencion no puede ser menor a la fecha fin del periodo') END;
+                SELECT CASE WHEN NEW.FECHA_OBTENCION > date(NEW.FECHA_FIN, '+1 years')
+                THEN RAISE(ABORT, 'Fecha de obtencion no puede exceder un año despues de la fecha fin del periodo') END;
+                SELECT CASE WHEN NEW.FECHA_OBTENCION > date('now')
+                THEN RAISE(ABORT, 'Fecha de obtencion no puede ser una fecha futura') END;
+            END
+        """)
+
+        db.execSQL("DROP TRIGGER IF EXISTS TR_HABILIDAD_NIVEL")
+        db.execSQL("""
+            CREATE TRIGGER TR_HABILIDAD_NIVEL BEFORE INSERT ON HABILIDAD_POSTULANTE
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.NIVEL_DESTREZA NOT IN ('Básico', 'Intermedio', 'Avanzado')
+                THEN RAISE(ABORT, 'Nivel de destreza debe ser Basico, Intermedio o Avanzado') END;
+            END
+        """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_HABILIDAD_NIVEL_UPD BEFORE UPDATE ON HABILIDAD_POSTULANTE
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN NEW.NIVEL_DESTREZA NOT IN ('Básico', 'Intermedio', 'Avanzado')
+                THEN RAISE(ABORT, 'Nivel de destreza debe ser Basico, Intermedio o Avanzado') END;
+            END
+        """)
+
+
+
+
+
+        // ================================================================
+        // TRIGGERS DE INTEGRIDAD REFERENCIAL (5)
+        // ================================================================
 
         db.execSQL("DROP TRIGGER IF EXISTS TR_MUNICIPIO_DEPTO")
         db.execSQL("""
@@ -333,251 +535,100 @@ class ConnectionHelper(context: Context) :
                 THEN RAISE(ABORT, 'El departamento asociado no existe') END;
             END
         """)
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_USUARIO_FORMATO")
         db.execSQL("""
-            CREATE TRIGGER TR_USUARIO_FORMATO BEFORE INSERT ON USUARIO
+            CREATE TRIGGER IF NOT EXISTS TR_MUNICIPIO_DEPTO_UPD BEFORE UPDATE ON MUNICIPIO
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN LENGTH(NEW.PASSWORD) < 8
-                THEN RAISE(ABORT, 'Password mínimo 8 caracteres') END;
+                SELECT CASE WHEN (SELECT 1 FROM DEPARTAMENTO WHERE ID_DEPARTAMENTO = NEW.ID_DEPARTAMENTO) IS NULL
+                THEN RAISE(ABORT, 'El departamento asociado no existe') END;
             END
         """)
 
-        db.execSQL("DROP TRIGGER IF EXISTS TR_OFERTA_FECHA_AUTO")
+        db.execSQL("DROP TRIGGER IF EXISTS TR_DISTRITO_MUNICIPIO")
         db.execSQL("""
-            CREATE TRIGGER TR_OFERTA_FECHA_AUTO BEFORE INSERT ON OFERTA_TRABAJO
+            CREATE TRIGGER TR_DISTRITO_MUNICIPIO BEFORE INSERT ON DISTRITO
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN NEW.FECHA_PUBLICACION IS NULL
-                THEN RAISE(ABORT, 'La fecha de publicación es obligatoria') END;
+                SELECT CASE WHEN (SELECT 1 FROM MUNICIPIO WHERE ID_DEPARTAMENTO = NEW.ID_DEPARTAMENTO AND ID_MUNICIPIO = NEW.ID_MUNICIPIO) IS NULL
+                THEN RAISE(ABORT, 'El municipio asociado no existe') END;
+            END
+        """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_DISTRITO_MUNICIPIO_UPD BEFORE UPDATE ON DISTRITO
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT 1 FROM MUNICIPIO WHERE ID_DEPARTAMENTO = NEW.ID_DEPARTAMENTO AND ID_MUNICIPIO = NEW.ID_MUNICIPIO) IS NULL
+                THEN RAISE(ABORT, 'El municipio asociado no existe') END;
             END
         """)
 
-        db.execSQL("DROP TRIGGER IF EXISTS TR_HABILIDAD_NIVEL")
+        db.execSQL("DROP TRIGGER IF EXISTS TR_HABILIDAD_CATEGORIA")
         db.execSQL("""
-            CREATE TRIGGER TR_HABILIDAD_NIVEL BEFORE INSERT ON HABILIDAD_POSTULANTE
+            CREATE TRIGGER TR_HABILIDAD_CATEGORIA BEFORE INSERT ON HABILIDAD
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN NEW.NIVEL_DESTREZA NOT IN ('BASICO', 'INTERMEDIO', 'AVANZADO')
-                THEN RAISE(ABORT, 'Nivel de destreza debe ser Básico, Intermedio o Avanzado') END;
+                SELECT CASE WHEN (SELECT 1 FROM CATEGORIA_HABILIDAD WHERE ID_CATEGORIA_HABILIDAD = NEW.ID_CATEGORIA_HABILIDAD) IS NULL
+                THEN RAISE(ABORT, 'La categoria asociada no existe') END;
+            END
+        """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_HABILIDAD_CATEGORIA_UPD BEFORE UPDATE ON HABILIDAD
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT 1 FROM CATEGORIA_HABILIDAD WHERE ID_CATEGORIA_HABILIDAD = NEW.ID_CATEGORIA_HABILIDAD) IS NULL
+                THEN RAISE(ABORT, 'La categoria asociada no existe') END;
             END
         """)
 
-        db.execSQL("DROP TRIGGER IF EXISTS TR_POSTULANTE_EDAD")
+        db.execSQL("DROP TRIGGER IF EXISTS TR_EMPRESA_DISTRITO")
         db.execSQL("""
-            CREATE TRIGGER TR_POSTULANTE_EDAD BEFORE INSERT ON POSTULANTE
+            CREATE TRIGGER TR_EMPRESA_DISTRITO BEFORE INSERT ON EMPRESA
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN (strftime('%Y', 'now') - strftime('%Y', NEW.FECHA_NACIMIENTO)) < 18
-                THEN RAISE(ABORT, 'El postulante debe ser mayor de edad') END;
+                SELECT CASE WHEN (SELECT 1 FROM DISTRITO WHERE ID_DEPARTAMENTO = NEW.ID_DISTRITO_DEPTO AND ID_MUNICIPIO = NEW.ID_DISTRITO_MUNICIPIO AND ID_DISTRITO = NEW.ID_DISTRITO_ID) IS NULL
+                THEN RAISE(ABORT, 'El distrito asociado no existe') END;
+            END
+        """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_EMPRESA_DISTRITO_UPD BEFORE UPDATE ON EMPRESA
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT 1 FROM DISTRITO WHERE ID_DEPARTAMENTO = NEW.ID_DISTRITO_DEPTO AND ID_MUNICIPIO = NEW.ID_DISTRITO_MUNICIPIO AND ID_DISTRITO = NEW.ID_DISTRITO_ID) IS NULL
+                THEN RAISE(ABORT, 'El distrito asociado no existe') END;
             END
         """)
 
-        db.execSQL("DROP TRIGGER IF EXISTS TR_POSTULANTE_EMAIL")
+        db.execSQL("DROP TRIGGER IF EXISTS TR_POSTULANTE_FK")
         db.execSQL("""
-            CREATE TRIGGER TR_POSTULANTE_EMAIL BEFORE INSERT ON POSTULANTE
+            CREATE TRIGGER TR_POSTULANTE_FK BEFORE INSERT ON POSTULANTE
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN NEW.EMAIL NOT LIKE '%@%.%'
-                THEN RAISE(ABORT, 'Correo electrónico no válido') END;
+                SELECT CASE WHEN (SELECT 1 FROM GENERO WHERE ID_GENERO = NEW.ID_GENERO) IS NULL
+                THEN RAISE(ABORT, 'El genero asociado no existe') END;
+                SELECT CASE WHEN (SELECT 1 FROM TIPO_DOCUMENTO WHERE ID_TIPO_DOCUMENTO = NEW.ID_TIPO_DOCUMENTO) IS NULL
+                THEN RAISE(ABORT, 'El tipo de documento asociado no existe') END;
+                SELECT CASE WHEN NEW.ID_GRADO_ACADEMICO IS NOT NULL AND (SELECT 1 FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO) IS NULL
+                THEN RAISE(ABORT, 'El grado academico asociado no existe') END;
+            END
+        """)
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS TR_POSTULANTE_FK_UPD BEFORE UPDATE ON POSTULANTE
+            FOR EACH ROW BEGIN
+                SELECT CASE WHEN (SELECT 1 FROM GENERO WHERE ID_GENERO = NEW.ID_GENERO) IS NULL
+                THEN RAISE(ABORT, 'El genero asociado no existe') END;
+                SELECT CASE WHEN (SELECT 1 FROM TIPO_DOCUMENTO WHERE ID_TIPO_DOCUMENTO = NEW.ID_TIPO_DOCUMENTO) IS NULL
+                THEN RAISE(ABORT, 'El tipo de documento asociado no existe') END;
+                SELECT CASE WHEN NEW.ID_GRADO_ACADEMICO IS NOT NULL AND (SELECT 1 FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO) IS NULL
+                THEN RAISE(ABORT, 'El grado academico asociado no existe') END;
             END
         """)
 
-        // ================================================================
-        // BLOQUE 2: CASCADA DE BORRADO (14 triggers)
-        // ================================================================
+        Log.d(TAG, "Base de datos creada: 23 tablas, 22 indices, 23 triggers")
+    }
 
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_DEPARTAMENTO")
-        db.execSQL("CREATE TRIGGER TR_DEL_DEPARTAMENTO BEFORE DELETE ON DEPARTAMENTO FOR EACH ROW BEGIN DELETE FROM MUNICIPIO WHERE ID_DEPARTAMENTO = OLD.ID_DEPARTAMENTO; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_MUNICIPIO")
-        db.execSQL("CREATE TRIGGER TR_DEL_MUNICIPIO BEFORE DELETE ON MUNICIPIO FOR EACH ROW BEGIN DELETE FROM DISTRITO WHERE ID_MUNICIPIO = OLD.ID_MUNICIPIO; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_DISTRITO")
-        db.execSQL("CREATE TRIGGER TR_DEL_DISTRITO BEFORE DELETE ON DISTRITO FOR EACH ROW BEGIN DELETE FROM POSTULANTE WHERE ID_DISTRITO = OLD.ID_DISTRITO; DELETE FROM EMPRESA WHERE ID_DISTRITO = OLD.ID_DISTRITO; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_GENERO")
-        db.execSQL("CREATE TRIGGER TR_DEL_GENERO BEFORE DELETE ON GENERO FOR EACH ROW BEGIN DELETE FROM POSTULANTE WHERE ID_GENERO = OLD.ID_GENERO; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_TIPO_DOC")
-        db.execSQL("CREATE TRIGGER TR_DEL_TIPO_DOC BEFORE DELETE ON TIPO_DOCUMENTO FOR EACH ROW BEGIN DELETE FROM POSTULANTE WHERE ID_TIPO_DOCUMENTO = OLD.ID_TIPO_DOCUMENTO; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_INSTITUCION")
-        db.execSQL("CREATE TRIGGER TR_DEL_INSTITUCION BEFORE DELETE ON INSTITUCION FOR EACH ROW BEGIN DELETE FROM OFERTA_ACADEMICA WHERE ID_INSTITUCION = OLD.ID_INSTITUCION; DELETE FROM CERTIFICACION WHERE ID_INSTITUCION = OLD.ID_INSTITUCION; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_GRADO")
-        db.execSQL("CREATE TRIGGER TR_DEL_GRADO BEFORE DELETE ON GRADO_ACADEMICO FOR EACH ROW BEGIN DELETE FROM OFERTA_TRABAJO WHERE ID_GRADO_ACADEMICO = OLD.ID_GRADO_ACADEMICO; DELETE FROM OFERTA_ACADEMICA WHERE ID_GRADO_ACADEMICO = OLD.ID_GRADO_ACADEMICO; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_CATEGORIA")
-        db.execSQL("CREATE TRIGGER TR_DEL_CATEGORIA BEFORE DELETE ON CATEGORIA_HABILIDAD FOR EACH ROW BEGIN DELETE FROM HABILIDAD WHERE ID_CATEGORIA_HABILIDAD = OLD.ID_CATEGORIA_HABILIDAD; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_HABILIDAD")
-        db.execSQL("CREATE TRIGGER TR_DEL_HABILIDAD BEFORE DELETE ON HABILIDAD FOR EACH ROW BEGIN DELETE FROM HABILIDAD_POSTULANTE WHERE ID_HABILIDAD = OLD.ID_HABILIDAD; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_RED_SOCIAL")
-        db.execSQL("CREATE TRIGGER TR_DEL_RED_SOCIAL BEFORE DELETE ON RED_SOCIAL FOR EACH ROW BEGIN DELETE FROM RED_SOCIAL_POSTULANTE WHERE ID_RED_SOCIAL = OLD.ID_RED_SOCIAL; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_OFERTA_TRABAJO")
-        db.execSQL("CREATE TRIGGER TR_DEL_OFERTA_TRABAJO BEFORE DELETE ON OFERTA_TRABAJO FOR EACH ROW BEGIN DELETE FROM DETALLE_REQUISITO WHERE ID_EMPRESA = OLD.ID_EMPRESA AND ID_OFERTA = OLD.ID_OFERTA; DELETE FROM POSTULACION WHERE ID_EMPRESA = OLD.ID_EMPRESA AND ID_OFERTA = OLD.ID_OFERTA; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_OFERTA_ACAD")
-        db.execSQL("CREATE TRIGGER TR_DEL_OFERTA_ACAD BEFORE DELETE ON OFERTA_ACADEMICA FOR EACH ROW BEGIN DELETE FROM FORMACION_ACADEMICA WHERE ID_OFERTA_ACADEMICA = OLD.ID_OFERTA_ACADEMICA; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_EMPRESA")
-        db.execSQL("CREATE TRIGGER TR_DEL_EMPRESA BEFORE DELETE ON EMPRESA FOR EACH ROW BEGIN DELETE FROM OFERTA_TRABAJO WHERE ID_EMPRESA = OLD.ID_EMPRESA; DELETE FROM EXPERIENCIA_LABORAL WHERE ID_EMPRESA = OLD.ID_EMPRESA; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_DEL_POSTULANTE")
-        db.execSQL("CREATE TRIGGER TR_DEL_POSTULANTE BEFORE DELETE ON POSTULANTE FOR EACH ROW BEGIN DELETE FROM POSTULACION WHERE ID_POSTULANTE = OLD.ID_POSTULANTE; DELETE FROM EXPERIENCIA_LABORAL WHERE ID_POSTULANTE = OLD.ID_POSTULANTE; DELETE FROM FORMACION_ACADEMICA WHERE ID_POSTULANTE = OLD.ID_POSTULANTE; DELETE FROM CERTIFICACION WHERE ID_POSTULANTE = OLD.ID_POSTULANTE; DELETE FROM HABILIDAD_POSTULANTE WHERE ID_POSTULANTE = OLD.ID_POSTULANTE; DELETE FROM RED_SOCIAL_POSTULANTE WHERE ID_POSTULANTE = OLD.ID_POSTULANTE; END")
-
-        // ================================================================
-        // BLOQUE 3: CERO VACÍOS Y CERO DUPLICADOS (19 triggers, con LOWER)
-        // ================================================================
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_CATEGORIA")
-        db.execSQL("CREATE TRIGGER TR_INS_CATEGORIA BEFORE INSERT ON CATEGORIA_HABILIDAD FOR EACH ROW BEGIN SELECT CASE WHEN NEW.NOMBRE_CATEGORIA = '' THEN RAISE(ABORT, 'Vacío') WHEN (SELECT 1 FROM CATEGORIA_HABILIDAD WHERE LOWER(NOMBRE_CATEGORIA)=LOWER(NEW.NOMBRE_CATEGORIA)) IS NOT NULL THEN RAISE(ABORT, 'Duplicado') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_GENERO")
-        db.execSQL("CREATE TRIGGER TR_INS_GENERO BEFORE INSERT ON GENERO FOR EACH ROW BEGIN SELECT CASE WHEN NEW.NOMBRE_GENERO = '' THEN RAISE(ABORT, 'Vacío') WHEN (SELECT 1 FROM GENERO WHERE LOWER(NOMBRE_GENERO)=LOWER(NEW.NOMBRE_GENERO)) IS NOT NULL THEN RAISE(ABORT, 'Duplicado') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_TIPO_DOC")
-        db.execSQL("CREATE TRIGGER TR_INS_TIPO_DOC BEFORE INSERT ON TIPO_DOCUMENTO FOR EACH ROW BEGIN SELECT CASE WHEN NEW.NOMBRE_TIPO = '' THEN RAISE(ABORT, 'Vacío') WHEN (SELECT 1 FROM TIPO_DOCUMENTO WHERE LOWER(NOMBRE_TIPO)=LOWER(NEW.NOMBRE_TIPO)) IS NOT NULL THEN RAISE(ABORT, 'Duplicado') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_DEPARTAMENTO")
-        db.execSQL("CREATE TRIGGER TR_INS_DEPARTAMENTO BEFORE INSERT ON DEPARTAMENTO FOR EACH ROW BEGIN SELECT CASE WHEN NEW.NOMBRE_DEPARTAMENTO = '' THEN RAISE(ABORT, 'Vacío') WHEN (SELECT 1 FROM DEPARTAMENTO WHERE LOWER(NOMBRE_DEPARTAMENTO)=LOWER(NEW.NOMBRE_DEPARTAMENTO)) IS NOT NULL THEN RAISE(ABORT, 'Duplicado') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_GRADO")
-        db.execSQL("CREATE TRIGGER TR_INS_GRADO BEFORE INSERT ON GRADO_ACADEMICO FOR EACH ROW BEGIN SELECT CASE WHEN NEW.NOMBRE_GRADO = '' THEN RAISE(ABORT, 'Vacío') WHEN (SELECT 1 FROM GRADO_ACADEMICO WHERE LOWER(NOMBRE_GRADO)=LOWER(NEW.NOMBRE_GRADO)) IS NOT NULL THEN RAISE(ABORT, 'Duplicado') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_RED_SOCIAL")
-        db.execSQL("CREATE TRIGGER TR_INS_RED_SOCIAL BEFORE INSERT ON RED_SOCIAL FOR EACH ROW BEGIN SELECT CASE WHEN NEW.NOMBRE_RED = '' THEN RAISE(ABORT, 'Vacío') WHEN (SELECT 1 FROM RED_SOCIAL WHERE LOWER(NOMBRE_RED)=LOWER(NEW.NOMBRE_RED)) IS NOT NULL THEN RAISE(ABORT, 'Duplicado') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_INSTITUCION")
-        db.execSQL("CREATE TRIGGER TR_INS_INSTITUCION BEFORE INSERT ON INSTITUCION FOR EACH ROW BEGIN SELECT CASE WHEN NEW.NOMBRE_INSTITUCION = '' THEN RAISE(ABORT, 'Vacío') WHEN (SELECT 1 FROM INSTITUCION WHERE LOWER(NOMBRE_INSTITUCION)=LOWER(NEW.NOMBRE_INSTITUCION)) IS NOT NULL THEN RAISE(ABORT, 'Duplicado') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_MUNICIPIO")
-        db.execSQL("CREATE TRIGGER TR_INS_MUNICIPIO BEFORE INSERT ON MUNICIPIO FOR EACH ROW BEGIN SELECT CASE WHEN NEW.NOMBRE_MUNICIPIO = '' THEN RAISE(ABORT, 'Vacío') WHEN (SELECT 1 FROM MUNICIPIO WHERE LOWER(NOMBRE_MUNICIPIO)=LOWER(NEW.NOMBRE_MUNICIPIO) AND ID_DEPARTAMENTO=NEW.ID_DEPARTAMENTO) IS NOT NULL THEN RAISE(ABORT, 'Duplicado') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_DISTRITO")
-        db.execSQL("CREATE TRIGGER TR_INS_DISTRITO BEFORE INSERT ON DISTRITO FOR EACH ROW BEGIN SELECT CASE WHEN NEW.NOMBRE_DISTRITO = '' THEN RAISE(ABORT, 'Vacío') WHEN (SELECT 1 FROM DISTRITO WHERE LOWER(NOMBRE_DISTRITO)=LOWER(NEW.NOMBRE_DISTRITO) AND ID_MUNICIPIO=NEW.ID_MUNICIPIO) IS NOT NULL THEN RAISE(ABORT, 'Duplicado') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_HABILIDAD")
-        db.execSQL("CREATE TRIGGER TR_INS_HABILIDAD BEFORE INSERT ON HABILIDAD FOR EACH ROW BEGIN SELECT CASE WHEN NEW.NOMBRE_HABILIDAD = '' THEN RAISE(ABORT, 'Vacío') WHEN (SELECT 1 FROM HABILIDAD WHERE LOWER(NOMBRE_HABILIDAD)=LOWER(NEW.NOMBRE_HABILIDAD)) IS NOT NULL THEN RAISE(ABORT, 'Duplicado') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_POSTULANTE")
-        db.execSQL("CREATE TRIGGER TR_INS_POSTULANTE BEFORE INSERT ON POSTULANTE FOR EACH ROW BEGIN SELECT CASE WHEN NEW.NOMBRE='' OR NEW.APELLIDO='' OR NEW.NUM_DOCUMENTO='' OR NEW.EMAIL='' THEN RAISE(ABORT, 'Campos clave no pueden ser vacíos') WHEN (SELECT 1 FROM POSTULANTE WHERE NUM_DOCUMENTO=NEW.NUM_DOCUMENTO OR LOWER(EMAIL)=LOWER(NEW.EMAIL)) IS NOT NULL THEN RAISE(ABORT, 'Documento o Email ya registrado') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_EMPRESA")
-        db.execSQL("CREATE TRIGGER TR_INS_EMPRESA BEFORE INSERT ON EMPRESA FOR EACH ROW BEGIN SELECT CASE WHEN NEW.NOMBRE_EMPRESA='' OR NEW.NIT='' THEN RAISE(ABORT, 'Campos clave vacíos') WHEN (SELECT 1 FROM EMPRESA WHERE NIT=NEW.NIT OR LOWER(NOMBRE_EMPRESA)=LOWER(NEW.NOMBRE_EMPRESA)) IS NOT NULL THEN RAISE(ABORT, 'Empresa (NIT/Nombre) ya registrada') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_USUARIO")
-        db.execSQL("CREATE TRIGGER TR_INS_USUARIO BEFORE INSERT ON USUARIO FOR EACH ROW BEGIN SELECT CASE WHEN NEW.USERNAME='' OR NEW.PASSWORD='' THEN RAISE(ABORT, 'Vacío') WHEN (SELECT 1 FROM USUARIO WHERE LOWER(USERNAME)=LOWER(NEW.USERNAME)) IS NOT NULL THEN RAISE(ABORT, 'Usuario ya existe') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_CERTIFICACION")
-        db.execSQL("CREATE TRIGGER TR_INS_CERTIFICACION BEFORE INSERT ON CERTIFICACION FOR EACH ROW BEGIN SELECT CASE WHEN NEW.NOMBRE_CERTIFICACION='' OR NEW.CODIGO_CERTIFICACION='' THEN RAISE(ABORT, 'Vacío') WHEN LENGTH(NEW.CODIGO_CERTIFICACION)!=14 THEN RAISE(ABORT, 'Código debe tener 14 dígitos') WHEN NEW.CODIGO_CERTIFICACION NOT GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]' THEN RAISE(ABORT, 'Código debe ser solo números') WHEN (SELECT 1 FROM CERTIFICACION WHERE ID_POSTULANTE=NEW.ID_POSTULANTE AND LOWER(CODIGO_CERTIFICACION)=LOWER(NEW.CODIGO_CERTIFICACION)) IS NOT NULL THEN RAISE(ABORT, 'Duplicado') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_UPD_CERTIFICACION")
-        db.execSQL("CREATE TRIGGER TR_UPD_CERTIFICACION BEFORE UPDATE ON CERTIFICACION FOR EACH ROW BEGIN SELECT CASE WHEN NEW.NOMBRE_CERTIFICACION='' OR NEW.CODIGO_CERTIFICACION='' THEN RAISE(ABORT, 'Vacío') WHEN LENGTH(NEW.CODIGO_CERTIFICACION)!=14 THEN RAISE(ABORT, 'Código debe tener 14 dígitos') WHEN NEW.CODIGO_CERTIFICACION NOT GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]' THEN RAISE(ABORT, 'Código debe ser solo números') WHEN (SELECT 1 FROM CERTIFICACION WHERE ID_POSTULANTE=NEW.ID_POSTULANTE AND ID_CERTIFICACION!=NEW.ID_CERTIFICACION AND LOWER(CODIGO_CERTIFICACION)=LOWER(NEW.CODIGO_CERTIFICACION)) IS NOT NULL THEN RAISE(ABORT, 'Duplicado') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_OFERTA_TRABAJO")
-        db.execSQL("CREATE TRIGGER TR_INS_OFERTA_TRABAJO BEFORE INSERT ON OFERTA_TRABAJO FOR EACH ROW BEGIN SELECT CASE WHEN NEW.TITULO_PUESTO='' THEN RAISE(ABORT, 'Vacío') WHEN (SELECT 1 FROM OFERTA_TRABAJO WHERE ID_EMPRESA=NEW.ID_EMPRESA AND LOWER(TITULO_PUESTO)=LOWER(NEW.TITULO_PUESTO)) IS NOT NULL THEN RAISE(ABORT, 'Duplicado') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_UPD_OFERTA_TRABAJO")
-        db.execSQL("CREATE TRIGGER TR_UPD_OFERTA_TRABAJO BEFORE UPDATE ON OFERTA_TRABAJO FOR EACH ROW BEGIN SELECT CASE WHEN (SELECT 1 FROM OFERTA_TRABAJO WHERE ID_EMPRESA=NEW.ID_EMPRESA AND LOWER(TITULO_PUESTO)=LOWER(NEW.TITULO_PUESTO) AND (ID_EMPRESA != NEW.ID_EMPRESA OR ID_OFERTA != NEW.ID_OFERTA)) IS NOT NULL THEN RAISE(ABORT, 'Duplicado') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_DET_REQ")
-        db.execSQL("CREATE TRIGGER TR_INS_DET_REQ BEFORE INSERT ON DETALLE_REQUISITO FOR EACH ROW BEGIN SELECT CASE WHEN NEW.DESCRIPCION_REQUISITO='' THEN RAISE(ABORT, 'Vacío') WHEN (SELECT 1 FROM DETALLE_REQUISITO WHERE ID_OFERTA=NEW.ID_OFERTA AND LOWER(DESCRIPCION_REQUISITO)=LOWER(NEW.DESCRIPCION_REQUISITO)) IS NOT NULL THEN RAISE(ABORT, 'Duplicado') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_EXP_LAB")
-        db.execSQL("CREATE TRIGGER TR_INS_EXP_LAB BEFORE INSERT ON EXPERIENCIA_LABORAL FOR EACH ROW BEGIN SELECT CASE WHEN NEW.PUESTO_TRABAJO='' THEN RAISE(ABORT, 'Vacío') WHEN (SELECT 1 FROM EXPERIENCIA_LABORAL WHERE ID_POSTULANTE=NEW.ID_POSTULANTE AND ID_EMPRESA=NEW.ID_EMPRESA AND LOWER(PUESTO_TRABAJO)=LOWER(NEW.PUESTO_TRABAJO)) IS NOT NULL THEN RAISE(ABORT, 'Duplicado') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_FORM_ACAD")
-        db.execSQL("CREATE TRIGGER TR_INS_FORM_ACAD BEFORE INSERT ON FORMACION_ACADEMICA FOR EACH ROW BEGIN SELECT CASE WHEN NEW.TITULO_OBTENIDO='' THEN RAISE(ABORT, 'Vacío') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_POSTULACION")
-        db.execSQL("CREATE TRIGGER TR_INS_POSTULACION BEFORE INSERT ON POSTULACION FOR EACH ROW BEGIN SELECT CASE WHEN (SELECT 1 FROM POSTULACION WHERE ID_POSTULANTE=NEW.ID_POSTULANTE AND ID_OFERTA=NEW.ID_OFERTA) IS NOT NULL THEN RAISE(ABORT, 'El usuario ya aplicó a esta oferta') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_RED_POST")
-        db.execSQL("CREATE TRIGGER TR_INS_RED_POST BEFORE INSERT ON RED_SOCIAL_POSTULANTE FOR EACH ROW BEGIN SELECT CASE WHEN NEW.URL_PERFIL='' THEN RAISE(ABORT, 'Vacío') WHEN (SELECT 1 FROM RED_SOCIAL_POSTULANTE WHERE ID_POSTULANTE=NEW.ID_POSTULANTE AND ID_RED_SOCIAL=NEW.ID_RED_SOCIAL) IS NOT NULL THEN RAISE(ABORT, 'Red social ya vinculada al postulante') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_HAB_POST")
-        db.execSQL("CREATE TRIGGER TR_INS_HAB_POST BEFORE INSERT ON HABILIDAD_POSTULANTE FOR EACH ROW BEGIN SELECT CASE WHEN (SELECT 1 FROM HABILIDAD_POSTULANTE WHERE ID_POSTULANTE=NEW.ID_POSTULANTE AND ID_HABILIDAD=NEW.ID_HABILIDAD) IS NOT NULL THEN RAISE(ABORT, 'Habilidad ya asignada al postulante') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_INS_OFERTA_ACAD")
-        db.execSQL("CREATE TRIGGER TR_INS_OFERTA_ACAD BEFORE INSERT ON OFERTA_ACADEMICA FOR EACH ROW BEGIN SELECT CASE WHEN (SELECT 1 FROM OFERTA_ACADEMICA WHERE ID_INSTITUCION=NEW.ID_INSTITUCION AND ID_GRADO_ACADEMICO=NEW.ID_GRADO_ACADEMICO) IS NOT NULL THEN RAISE(ABORT, 'Oferta académica duplicada para la institución') END; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_UPD_OFERTA_ACAD")
-        db.execSQL("CREATE TRIGGER TR_UPD_OFERTA_ACAD BEFORE UPDATE ON OFERTA_ACADEMICA FOR EACH ROW BEGIN SELECT CASE WHEN (SELECT 1 FROM OFERTA_ACADEMICA WHERE ID_INSTITUCION=NEW.ID_INSTITUCION AND ID_GRADO_ACADEMICO=NEW.ID_GRADO_ACADEMICO AND ID_OFERTA_ACADEMICA != NEW.ID_OFERTA_ACADEMICA) IS NOT NULL THEN RAISE(ABORT, 'Oferta académica duplicada para la institución') END; END")
-
-        // ================================================================
-        // BLOQUE 4: NORMALIZACIÓN AUTOMÁTICA (20 triggers, con LOWER)
-        // ================================================================
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_CATEGORIA")
-        db.execSQL("CREATE TRIGGER TR_MIN_CATEGORIA AFTER INSERT ON CATEGORIA_HABILIDAD FOR EACH ROW BEGIN UPDATE CATEGORIA_HABILIDAD SET NOMBRE_CATEGORIA = LOWER(NEW.NOMBRE_CATEGORIA) WHERE ID_CATEGORIA_HABILIDAD = NEW.ID_CATEGORIA_HABILIDAD; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_GENERO")
-        db.execSQL("CREATE TRIGGER TR_MIN_GENERO AFTER INSERT ON GENERO FOR EACH ROW BEGIN UPDATE GENERO SET NOMBRE_GENERO = LOWER(NEW.NOMBRE_GENERO) WHERE ID_GENERO = NEW.ID_GENERO; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_TIPO_DOC")
-        db.execSQL("CREATE TRIGGER TR_MIN_TIPO_DOC AFTER INSERT ON TIPO_DOCUMENTO FOR EACH ROW BEGIN UPDATE TIPO_DOCUMENTO SET NOMBRE_TIPO = LOWER(NEW.NOMBRE_TIPO) WHERE ID_TIPO_DOCUMENTO = NEW.ID_TIPO_DOCUMENTO; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_DEPARTAMENTO")
-        db.execSQL("CREATE TRIGGER TR_MIN_DEPARTAMENTO AFTER INSERT ON DEPARTAMENTO FOR EACH ROW BEGIN UPDATE DEPARTAMENTO SET NOMBRE_DEPARTAMENTO = LOWER(NEW.NOMBRE_DEPARTAMENTO) WHERE ID_DEPARTAMENTO = NEW.ID_DEPARTAMENTO; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_MUNICIPIO")
-        db.execSQL("CREATE TRIGGER TR_MIN_MUNICIPIO AFTER INSERT ON MUNICIPIO FOR EACH ROW BEGIN UPDATE MUNICIPIO SET NOMBRE_MUNICIPIO = LOWER(NEW.NOMBRE_MUNICIPIO) WHERE ID_MUNICIPIO = NEW.ID_MUNICIPIO; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_DISTRITO")
-        db.execSQL("CREATE TRIGGER TR_MIN_DISTRITO AFTER INSERT ON DISTRITO FOR EACH ROW BEGIN UPDATE DISTRITO SET NOMBRE_DISTRITO = LOWER(NEW.NOMBRE_DISTRITO) WHERE ID_DISTRITO = NEW.ID_DISTRITO; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_INSTITUCION")
-        db.execSQL("CREATE TRIGGER TR_MIN_INSTITUCION AFTER INSERT ON INSTITUCION FOR EACH ROW BEGIN UPDATE INSTITUCION SET NOMBRE_INSTITUCION = LOWER(NEW.NOMBRE_INSTITUCION) WHERE ID_INSTITUCION = NEW.ID_INSTITUCION; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_GRADO")
-        db.execSQL("CREATE TRIGGER TR_MIN_GRADO AFTER INSERT ON GRADO_ACADEMICO FOR EACH ROW BEGIN UPDATE GRADO_ACADEMICO SET NOMBRE_GRADO = LOWER(NEW.NOMBRE_GRADO) WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_RED_SOCIAL")
-        db.execSQL("CREATE TRIGGER TR_MIN_RED_SOCIAL AFTER INSERT ON RED_SOCIAL FOR EACH ROW BEGIN UPDATE RED_SOCIAL SET NOMBRE_RED = LOWER(NEW.NOMBRE_RED) WHERE ID_RED_SOCIAL = NEW.ID_RED_SOCIAL; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_HABILIDAD")
-        db.execSQL("CREATE TRIGGER TR_MIN_HABILIDAD AFTER INSERT ON HABILIDAD FOR EACH ROW BEGIN UPDATE HABILIDAD SET NOMBRE_HABILIDAD = LOWER(NEW.NOMBRE_HABILIDAD) WHERE ID_HABILIDAD = NEW.ID_HABILIDAD; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_USUARIO")
-        db.execSQL("CREATE TRIGGER TR_MIN_USUARIO AFTER INSERT ON USUARIO FOR EACH ROW BEGIN UPDATE USUARIO SET USERNAME = LOWER(NEW.USERNAME), ROL = LOWER(NEW.ROL) WHERE ID_USUARIO = NEW.ID_USUARIO; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_POSTULANTE")
-        db.execSQL("CREATE TRIGGER TR_MIN_POSTULANTE AFTER INSERT ON POSTULANTE FOR EACH ROW BEGIN UPDATE POSTULANTE SET NOMBRE = LOWER(NEW.NOMBRE), APELLIDO = LOWER(NEW.APELLIDO), DIRECCION_DETALLE = LOWER(NEW.DIRECCION_DETALLE), EMAIL = LOWER(NEW.EMAIL) WHERE ID_POSTULANTE = NEW.ID_POSTULANTE; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_EMPRESA")
-        db.execSQL("CREATE TRIGGER TR_MIN_EMPRESA AFTER INSERT ON EMPRESA FOR EACH ROW BEGIN UPDATE EMPRESA SET NOMBRE_EMPRESA = LOWER(NEW.NOMBRE_EMPRESA), CONTACTO_DIRECTO = LOWER(NEW.CONTACTO_DIRECTO) WHERE ID_EMPRESA = NEW.ID_EMPRESA; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_CERTIFICACION")
-        db.execSQL("CREATE TRIGGER TR_MIN_CERTIFICACION AFTER INSERT ON CERTIFICACION FOR EACH ROW BEGIN UPDATE CERTIFICACION SET NOMBRE_CERTIFICACION = LOWER(NEW.NOMBRE_CERTIFICACION), CODIGO_CERTIFICACION = UPPER(NEW.CODIGO_CERTIFICACION) WHERE ID_POSTULANTE = NEW.ID_POSTULANTE AND ID_CERTIFICACION = NEW.ID_CERTIFICACION; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_OFERTA_TRABAJO")
-        db.execSQL("CREATE TRIGGER TR_MIN_OFERTA_TRABAJO AFTER INSERT ON OFERTA_TRABAJO FOR EACH ROW BEGIN UPDATE OFERTA_TRABAJO SET TITULO_PUESTO = LOWER(NEW.TITULO_PUESTO), DESCRIPCION_OFERTA_TRABAJO = LOWER(NEW.DESCRIPCION_OFERTA_TRABAJO) WHERE ID_EMPRESA = NEW.ID_EMPRESA AND ID_OFERTA = NEW.ID_OFERTA; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_DET_REQ")
-        db.execSQL("CREATE TRIGGER TR_MIN_DET_REQ AFTER INSERT ON DETALLE_REQUISITO FOR EACH ROW BEGIN UPDATE DETALLE_REQUISITO SET DESCRIPCION_REQUISITO = LOWER(NEW.DESCRIPCION_REQUISITO) WHERE ID_DETALLE = NEW.ID_DETALLE; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_EXP_LAB")
-        db.execSQL("CREATE TRIGGER TR_MIN_EXP_LAB AFTER INSERT ON EXPERIENCIA_LABORAL FOR EACH ROW BEGIN UPDATE EXPERIENCIA_LABORAL SET PUESTO_TRABAJO = LOWER(NEW.PUESTO_TRABAJO), DESCP_EXPERIENCIA_LABORAL = LOWER(NEW.DESCP_EXPERIENCIA_LABORAL), CONTACTO_REFERENCIA = LOWER(NEW.CONTACTO_REFERENCIA) WHERE ID_POSTULANTE = NEW.ID_POSTULANTE AND ID_EXPERIENCIA = NEW.ID_EXPERIENCIA; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_FORM_ACAD")
-        db.execSQL("CREATE TRIGGER TR_MIN_FORM_ACAD AFTER INSERT ON FORMACION_ACADEMICA FOR EACH ROW BEGIN UPDATE FORMACION_ACADEMICA SET TITULO_OBTENIDO = LOWER(NEW.TITULO_OBTENIDO) WHERE ID_FORMACION = NEW.ID_FORMACION; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_POSTULACION")
-        db.execSQL("CREATE TRIGGER TR_MIN_POSTULACION AFTER INSERT ON POSTULACION FOR EACH ROW BEGIN UPDATE POSTULACION SET ESTADO_PROCESO = LOWER(NEW.ESTADO_PROCESO) WHERE ID_EMPRESA = NEW.ID_EMPRESA AND ID_OFERTA = NEW.ID_OFERTA AND ID_POSTULANTE = NEW.ID_POSTULANTE AND ID_POSTULACION = NEW.ID_POSTULACION; END")
-
-        db.execSQL("DROP TRIGGER IF EXISTS TR_MIN_RED_POST")
-        db.execSQL("CREATE TRIGGER TR_MIN_RED_POST AFTER INSERT ON RED_SOCIAL_POSTULANTE FOR EACH ROW BEGIN UPDATE RED_SOCIAL_POSTULANTE SET URL_PERFIL = LOWER(NEW.URL_PERFIL) WHERE ID_RED_POSTUALNTE = NEW.ID_RED_POSTUALNTE; END")
-
-        Log.d(TAG, "Base de datos creada: 23 tablas, 9 índices, 63 triggers")
+    override fun onConfigure(db: SQLiteDatabase) {
+        super.onConfigure(db)
+        db.setForeignKeyConstraintsEnabled(true)
     }
 
     override fun onOpen(db: SQLiteDatabase) {
         super.onOpen(db)
-        db.execSQL("PRAGMA foreign_keys = ON;")
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        Log.d(TAG, "Actualizando BD de versión $oldVersion a $newVersion")
+        Log.d(TAG, "Actualizando BD de version $oldVersion a $newVersion")
         db.execSQL("PRAGMA foreign_keys = OFF;")
         dropAllTables(db)
         db.execSQL("PRAGMA foreign_keys = ON;")
@@ -590,7 +641,7 @@ class ConnectionHelper(context: Context) :
             "FORMACION_ACADEMICA", "EXPERIENCIA_LABORAL", "CERTIFICACION",
             "OFERTA_ACADEMICA", "DETALLE_REQUISITO", "OFERTA_TRABAJO",
             "HABILIDAD", "USUARIO", "POSTULANTE", "EMPRESA",
-            "RED_SOCIAL", "GRADO_ACADEMICO", "INSTITUCION",
+            "RED_SOCIAL", "TIPO_CERTIFICACION", "GRADO_ACADEMICO", "INSTITUCION",
             "DISTRITO", "MUNICIPIO", "DEPARTAMENTO",
             "TIPO_DOCUMENTO", "GENERO", "CATEGORIA_HABILIDAD"
         )
@@ -601,104 +652,4 @@ class ConnectionHelper(context: Context) :
 
     val writableDb: SQLiteDatabase
         get() = writableDatabase
-
-    val readableDb: SQLiteDatabase
-        get() = readableDatabase
-
-    fun getCount(tableName: String): Int {
-        var count = 0
-        try {
-            val db = readableDatabase
-            val cursor = db.rawQuery("SELECT COUNT(*) FROM $tableName", null)
-            if (cursor.moveToFirst()) {
-                count = cursor.getInt(0)
-            }
-            cursor.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return count
-    }
-
-    fun executeQuery(query: String): List<List<Any>> {
-        val results = mutableListOf<List<Any>>()
-        try {
-            val db = readableDatabase
-            val cursor = db.rawQuery(query, null)
-            while (cursor.moveToNext()) {
-                val row = mutableListOf<Any>()
-                for (i in 0 until cursor.columnCount) {
-                    when {
-                        cursor.isNull(i) -> row.add("")
-                        else -> row.add(cursor.getString(i) ?: "")
-                    }
-                }
-                results.add(row)
-            }
-            cursor.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return results
-    }
-
-    fun executeInsert(query: String): Long {
-        var id = -1L
-        try {
-            val db = writableDatabase
-            db.execSQL(query)
-            val cursor = db.rawQuery("SELECT last_insert_rowid()", null)
-            if (cursor.moveToFirst()) {
-                id = cursor.getLong(0)
-            }
-            cursor.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return id
-    }
-
-    fun executeUpdate(query: String): Int {
-        var rows = 0
-        try {
-            val db = writableDatabase
-            db.execSQL(query)
-            rows = 1
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return rows
-    }
-
-    fun executeDelete(query: String): Int {
-        var rows = 0
-        try {
-            val db = writableDatabase
-            db.execSQL(query)
-            rows = 1
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return rows
-    }
-
-    fun search(tableName: String, column: String, value: String): List<List<Any>> {
-        val query = "SELECT * FROM $tableName WHERE $column LIKE '%$value%'"
-        return executeQuery(query)
-    }
-
-    fun getAll(tableName: String): List<List<Any>> {
-        val query = "SELECT * FROM $tableName"
-        return executeQuery(query)
-    }
-
-    fun getById(tableName: String, idName: String, idValue: Int): List<List<Any>> {
-        val query = "SELECT * FROM $tableName WHERE $idName = $idValue"
-        return executeQuery(query)
-    }
-
-    fun deleteById(tableName: String, idName: String, idValue: Int): Int {
-        val query = "DELETE FROM $tableName WHERE $idName = $idValue"
-        return executeDelete(query)
-    }
 }

@@ -20,17 +20,31 @@
         app:navigationIcon="@android:drawable/ic_menu_revert"
         app:titleTextColor="?attr/colorOnPrimary">
 
-        <ImageButton
-            android:id="@+id/btnThemeToggle"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_marginBottom="6dp"
-            android:layout_marginEnd="0dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Cambiar tema"
-            app:tint="?attr/colorOnPrimary"
-            app:srcCompat="@drawable/luna" />
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btnLanguage"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/content_desc_select_language"
+                app:tint="?attr/colorOnPrimary"
+                app:srcCompat="@drawable/ic_world_n" />
+
+            <ImageButton
+                android:id="@+id/btnThemeToggle"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/content_desc_theme_toggle"
+                app:tint="?attr/colorOnPrimary"
+                app:srcCompat="@drawable/luna" />
+        </LinearLayout>
 
     </com.google.android.material.appbar.MaterialToolbar>
 
@@ -74,6 +88,20 @@
         android:layout_margin="16dp"
         android:backgroundTint="?attr/colorPrimary"
         android:src="@android:drawable/ic_input_add"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:shapeAppearance="@style/ShapeAppearance.BT.FAB"
+        app:tint="?attr/colorOnPrimary" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabExport"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="80dp"
+        android:backgroundTint="#FF43A047"
+        android:src="@android:drawable/ic_menu_save"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:shapeAppearance="@style/ShapeAppearance.BT.FAB"

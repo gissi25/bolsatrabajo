@@ -8,41 +8,123 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
+import sv.ues.fia.eisi.bt.utils.Constants
+import sv.ues.fia.eisi.bt.utils.removeAccents
+
+sealed class DashboardItem {
+    data class Section(val sectionKey: String, val isExpanded: Boolean = false) : DashboardItem()
+    data class Table(val info: MainRepository.TableInfo, val isReadOnly: Boolean = false, val sectionKey: String = "") : DashboardItem()
+}
 
 class DashboardViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = MainRepository(application)
 
-    private val _tables = MutableLiveData<List<MainRepository.TableInfo>>()
-    val tables: LiveData<List<MainRepository.TableInfo>> = _tables
+    private val _items = MutableLiveData<List<DashboardItem>>()
+    val items: LiveData<List<DashboardItem>> = _items
 
-    private var allTablesOriginal: List<MainRepository.TableInfo> = emptyList()
+    private var allItemsOriginal: List<DashboardItem> = emptyList()
+    private var currentRole: String = Constants.ROLE_ADMIN
+    private val expandedSections = mutableSetOf<String>()
 
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
-    private val _error = MutableLiveData<String?>()
-    val error: LiveData<String?> = _error
+    private val _seedResult = MutableLiveData<Resource?>()
+    val seedResult: LiveData<Resource?> get() = _seedResult
 
-    init {
-        loadTables()
-    }
+    private val catalogTables = setOf(
+        "CATEGORIA_HABILIDAD", "GENERO", "TIPO_DOCUMENTO", "DEPARTAMENTO",
+        "MUNICIPIO", "DISTRITO", "INSTITUCION", "GRADO_ACADEMICO",
+        "RED_SOCIAL", "TIPO_CERTIFICACION", "HABILIDAD", "OFERTA_ACADEMICA", "USUARIO"
+    )
+    private val empresaTables = setOf("EMPRESA", "OFERTA_TRABAJO", "DETALLE_REQUISITO")
+    private val postulanteTables = setOf(
+        "POSTULANTE", "FORMACION_ACADEMICA", "CERTIFICACION",
+        "EXPERIENCIA_LABORAL", "HABILIDAD_POSTULANTE", "RED_SOCIAL_POSTULANTE", "POSTULACION"
+    )
 
-    fun loadTables() {
+    fun loadTables(role: String? = null) {
+        if (role != null) currentRole = role
         _isLoading.value = true
-        _error.value = null
         viewModelScope.launch {
             try {
-                val result = withContext(Dispatchers.IO) {
+                val all = withContext(Dispatchers.IO) {
                     repository.getAllTablesWithCount()
                 }
-                allTablesOriginal = result
-                _tables.postValue(result)
+                val roleTables = Constants.getRoleTables(currentRole)
+                val filtered = all.filter { roleTables.containsKey(it.name) }
+                allItemsOriginal = buildSectionedList(filtered)
+                _items.postValue(allItemsOriginal.filter { item ->
+                    item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionKey in expandedSections
+                })
             } catch (e: Exception) {
-                _error.postValue(e.message ?: "Error al cargar las tablas")
             } finally {
                 _isLoading.postValue(false)
+            }
+        }
+    }
+
+    private val catalogOrder = listOf(
+        "DEPARTAMENTO", "MUNICIPIO", "DISTRITO", "GENERO", "TIPO_DOCUMENTO",
+        "GRADO_ACADEMICO", "INSTITUCION", "OFERTA_ACADEMICA", "TIPO_CERTIFICACION",
+        "RED_SOCIAL", "CATEGORIA_HABILIDAD", "HABILIDAD", "USUARIO"
+    )
+    private val empresaOrder = listOf("EMPRESA", "OFERTA_TRABAJO", "DETALLE_REQUISITO")
+    private val postulanteOrder = listOf(
+        "POSTULANTE", "FORMACION_ACADEMICA", "CERTIFICACION",
+        "EXPERIENCIA_LABORAL", "HABILIDAD_POSTULANTE", "RED_SOCIAL_POSTULANTE", "POSTULACION"
+    )
+
+    companion object {
+        const val SECTION_CATALOGOS = "catalogos"
+        const val SECTION_EMPRESA = "empresa"
+        const val SECTION_POSTULANTE = "postulante"
+        const val SECTION_OTRAS = "otras"
+    }
+
+    private fun buildSectionedList(tables: List<MainRepository.TableInfo>): List<DashboardItem> {
+        val roleTables = Constants.getRoleTables(currentRole)
+        val catalog = tables.filter { it.name in catalogTables }
+        val empresa = tables.filter { it.name in empresaTables }
+        val postulante = tables.filter { it.name in postulanteTables }
+        val otros = tables.filter { it.name !in catalogTables && it.name !in empresaTables && it.name !in postulanteTables }
+
+        fun accessLevel(name: String) = roleTables[name] != Constants.AccessLevel.FULL
+        fun sortByOrder(list: List<MainRepository.TableInfo>, order: List<String>) =
+            list.sortedBy { order.indexOf(it.name).let { i -> if (i < 0) Int.MAX_VALUE else i } }
+
+        val result = mutableListOf<DashboardItem>()
+        if (catalog.isNotEmpty()) {
+            result.add(DashboardItem.Section(SECTION_CATALOGOS, SECTION_CATALOGOS in expandedSections))
+            result.addAll(sortByOrder(catalog, catalogOrder).map { DashboardItem.Table(it, accessLevel(it.name), SECTION_CATALOGOS) })
+        }
+        if (empresa.isNotEmpty()) {
+            result.add(DashboardItem.Section(SECTION_EMPRESA, SECTION_EMPRESA in expandedSections))
+            result.addAll(sortByOrder(empresa, empresaOrder).map { DashboardItem.Table(it, accessLevel(it.name), SECTION_EMPRESA) })
+        }
+        if (postulante.isNotEmpty()) {
+            result.add(DashboardItem.Section(SECTION_POSTULANTE, SECTION_POSTULANTE in expandedSections))
+            result.addAll(sortByOrder(postulante, postulanteOrder).map { DashboardItem.Table(it, accessLevel(it.name), SECTION_POSTULANTE) })
+        }
+        if (otros.isNotEmpty()) {
+            result.add(DashboardItem.Section(SECTION_OTRAS, SECTION_OTRAS in expandedSections))
+            result.addAll(otros.sortedBy { it.displayName }.map { DashboardItem.Table(it, accessLevel(it.name), SECTION_OTRAS) })
+        }
+        return result
+    }
+
+    fun toggleSection(key: String) {
+        if (key in expandedSections) expandedSections.remove(key) else expandedSections.add(key)
+        allItemsOriginal = allItemsOriginal.map { item ->
+            if (item is DashboardItem.Section && item.sectionKey == key) item.copy(isExpanded = key in expandedSections) else item
+        }
+        _items.value = allItemsOriginal.filter { item ->
+            when (item) {
+                is DashboardItem.Section -> true
+                is DashboardItem.Table -> item.sectionKey in expandedSections
             }
         }
     }
@@ -50,30 +132,67 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     fun refreshCounts() {
         viewModelScope.launch {
             try {
-                val result = withContext(Dispatchers.IO) {
+                val all = withContext(Dispatchers.IO) {
                     repository.getAllTablesWithCount()
                 }
-                allTablesOriginal = result
-                _tables.postValue(result)
+                val roleTables = Constants.getRoleTables(currentRole)
+                val filtered = all.filter { roleTables.containsKey(it.name) }
+                allItemsOriginal = buildSectionedList(filtered)
+                _items.postValue(allItemsOriginal.filter { item ->
+                    item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionKey in expandedSections
+                })
             } catch (e: Exception) {
-                _error.postValue(e.message ?: "Error al actualizar contadores")
             }
         }
     }
 
     fun filterTables(query: String) {
-        if (query.isBlank()) {
-            _tables.value = allTablesOriginal
-        } else {
-            val filtered = allTablesOriginal.filter { 
-                it.displayName.contains(query, ignoreCase = true) || 
-                it.name.contains(query, ignoreCase = true) 
+        val q = query.removeAccents()
+        if (q.isBlank()) {
+            _items.value = allItemsOriginal.filter { item ->
+                item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionKey in expandedSections
             }
-            _tables.value = filtered
+        } else {
+            val matchingKeys = allItemsOriginal.filterIsInstance<DashboardItem.Table>()
+                .filter { it.info.displayName.removeAccents().contains(q, ignoreCase = true) || it.info.name.removeAccents().contains(q, ignoreCase = true) }
+                .map { it.sectionKey }.toSet()
+            val filtered = allItemsOriginal.filter { item ->
+                when (item) {
+                    is DashboardItem.Section -> item.sectionKey in matchingKeys
+                    is DashboardItem.Table ->
+                        (item.info.displayName.removeAccents().contains(q, ignoreCase = true) || item.info.name.removeAccents().contains(q, ignoreCase = true))
+                }
+            }
+            _items.value = filtered
         }
     }
-    
+
     fun loadOriginalTables() {
-        _tables.value = allTablesOriginal
+        _items.value = allItemsOriginal.filter { item ->
+            item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionKey in expandedSections
+        }
+    }
+
+    fun clearSeedResult() {
+        _seedResult.value = null
+    }
+
+    fun insertSeedData() {
+        _seedResult.value = null
+        viewModelScope.launch {
+            try {
+                val error = withContext(Dispatchers.IO) {
+                    repository.insertSeedData()
+                }
+                if (error == null) {
+                    _seedResult.postValue(Resource.Success(getApplication<Application>().getString(R.string.seed_inserted)))
+                    refreshCounts()
+                } else {
+                    _seedResult.postValue(Resource.Error(error, error))
+                }
+            } catch (e: Exception) {
+                _seedResult.postValue(Resource.Error(e.message ?: getApplication<Application>().getString(R.string.error_desconocido), getApplication<Application>().getString(R.string.seed_error)))
+            }
+        }
     }
 }

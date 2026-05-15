@@ -3,44 +3,124 @@ package sv.ues.fia.eisi.bt.ui.dashboard
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
 import sv.ues.fia.eisi.bt.R
-import sv.ues.fia.eisi.bt.data.repository.MainRepository
+import sv.ues.fia.eisi.bt.utils.getTableDisplayName
+import sv.ues.fia.eisi.bt.viewmodel.DashboardItem
+import sv.ues.fia.eisi.bt.viewmodel.DashboardViewModel
 
 class DashboardAdapter(
-    private val onItemClick: (MainRepository.TableInfo) -> Unit
-) : ListAdapter<MainRepository.TableInfo, DashboardAdapter.ViewHolder>(TableDiffCallback()) {
+    private val onItemClick: (DashboardItem.Table) -> Unit,
+    private val onSectionClick: (String) -> Unit
+) : ListAdapter<DashboardItem, RecyclerView.ViewHolder>(DashboardDiffCallback()) {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_table_card, parent, false) as MaterialCardView
-        return ViewHolder(view)
+    companion object {
+        private const val TYPE_SECTION = 0
+        private const val TYPE_TABLE = 1
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position))
+    override fun getItemViewType(position: Int): Int {
+        return when (getItem(position)) {
+            is DashboardItem.Section -> TYPE_SECTION
+            is DashboardItem.Table -> TYPE_TABLE
+        }
     }
 
-    inner class ViewHolder(itemView: MaterialCardView) : RecyclerView.ViewHolder(itemView) {
-
-        fun bind(table: MainRepository.TableInfo) {
-            itemView.findViewById<android.widget.TextView>(R.id.tvTableName).text = table.displayName
-            itemView.findViewById<android.widget.TextView>(R.id.tvRecordCount).text = "${table.count} ${itemView.context.getString(R.string.records)}"
-
-            itemView.setOnClickListener {
-                onItemClick(table)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return when (viewType) {
+            TYPE_SECTION -> {
+                val view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.item_section_header, parent, false)
+                SectionViewHolder(view)
+            }
+            else -> {
+                val view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.item_table_card, parent, false) as MaterialCardView
+                TableViewHolder(view)
             }
         }
     }
 
-    class TableDiffCallback : DiffUtil.ItemCallback<MainRepository.TableInfo>() {
-        override fun areItemsTheSame(oldItem: MainRepository.TableInfo, newItem: MainRepository.TableInfo): Boolean {
-            return oldItem.name == newItem.name
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (val item = getItem(position)) {
+            is DashboardItem.Section -> (holder as SectionViewHolder).bind(item)
+            is DashboardItem.Table -> (holder as TableViewHolder).bind(item)
+        }
+    }
+
+    private fun sectionKeyToResId(key: String): Int {
+        return when (key) {
+            DashboardViewModel.SECTION_CATALOGOS -> R.string.section_catalogos
+            DashboardViewModel.SECTION_EMPRESA -> R.string.section_empresa
+            DashboardViewModel.SECTION_POSTULANTE -> R.string.section_postulante
+            DashboardViewModel.SECTION_OTRAS -> R.string.section_otras
+            else -> R.string.section_otras
+        }
+    }
+
+    inner class SectionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tvSectionTitle: TextView = itemView.findViewById(R.id.tvSectionTitle)
+        private val tvArrow: TextView = itemView.findViewById(R.id.tvArrow)
+
+        init {
+            itemView.setOnClickListener {
+                val pos = bindingAdapterPosition
+                if (pos != RecyclerView.NO_POSITION) {
+                    val item = getItem(pos)
+                    if (item is DashboardItem.Section) onSectionClick(item.sectionKey)
+                }
+            }
         }
 
-        override fun areContentsTheSame(oldItem: MainRepository.TableInfo, newItem: MainRepository.TableInfo): Boolean {
+        fun bind(section: DashboardItem.Section) {
+            tvSectionTitle.text = itemView.context.getString(sectionKeyToResId(section.sectionKey))
+            tvArrow.text = if (section.isExpanded) "▲" else "▼"
+        }
+    }
+
+    inner class TableViewHolder(itemView: MaterialCardView) : RecyclerView.ViewHolder(itemView) {
+        private val tvTableName: TextView = itemView.findViewById(R.id.tvTableName)
+        private val tvRecordCount: TextView = itemView.findViewById(R.id.tvRecordCount)
+        private val tvAccessBadge: TextView = itemView.findViewById(R.id.tvAccessBadge)
+
+        init {
+            itemView.setOnClickListener {
+                val pos = bindingAdapterPosition
+                if (pos != RecyclerView.NO_POSITION) {
+                    val item = getItem(pos)
+                    if (item is DashboardItem.Table) onItemClick(item)
+                }
+            }
+        }
+
+        fun bind(table: DashboardItem.Table) {
+            tvTableName.text = itemView.context.getTableDisplayName(table.info.name)
+            tvRecordCount.text = "${table.info.count} ${itemView.context.getString(R.string.records)}"
+            if (table.isReadOnly) {
+                tvAccessBadge.visibility = View.VISIBLE
+                tvAccessBadge.text = itemView.context.getString(R.string.solo_lectura)
+            } else {
+                tvAccessBadge.visibility = View.GONE
+            }
+        }
+    }
+
+    class DashboardDiffCallback : DiffUtil.ItemCallback<DashboardItem>() {
+        override fun areItemsTheSame(oldItem: DashboardItem, newItem: DashboardItem): Boolean {
+            return when {
+                oldItem is DashboardItem.Section && newItem is DashboardItem.Section ->
+                    oldItem.sectionKey == newItem.sectionKey
+                oldItem is DashboardItem.Table && newItem is DashboardItem.Table ->
+                    oldItem.info.name == newItem.info.name
+                else -> false
+            }
+        }
+
+        override fun areContentsTheSame(oldItem: DashboardItem, newItem: DashboardItem): Boolean {
             return oldItem == newItem
         }
     }
