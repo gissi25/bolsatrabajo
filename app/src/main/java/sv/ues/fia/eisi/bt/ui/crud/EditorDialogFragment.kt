@@ -1517,6 +1517,18 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun getHintText(column: String): String {
+        val tableHint = when {
+            tableName == "EMPRESA" && column == "NIT" -> R.string.hint_nit_empresa
+            tableName == "DETALLE_REQUISITO" && column == "NIT" -> R.string.hint_empresa
+            tableName == "DETALLE_REQUISITO" && column == "ID_OFERTA" -> R.string.hint_titulo_puesto
+            tableName == "FORMACION_ACADEMICA" && column == "ID_OFERTA_ACADEMICA" -> R.string.hint_oferta_academica
+            tableName == "POSTULACION" && column == "ID_OFERTA" -> R.string.hint_puesto_aplica
+            tableName == "POSTULANTE" && column == "ID_GRADO_ACADEMICO" -> R.string.hint_grado_academico
+            (tableName == "CERTIFICACION" || tableName == "FORMACION_ACADEMICA" || tableName == "EXPERIENCIA_LABORAL") && column == "FECHA_INICIO" -> R.string.hint_periodo_fecha_inicio
+            (tableName == "CERTIFICACION" || tableName == "FORMACION_ACADEMICA" || tableName == "EXPERIENCIA_LABORAL") && column == "FECHA_FIN" -> R.string.hint_periodo_fecha_fin
+            else -> 0
+        }
+        if (tableHint != 0) return getString(tableHint)
         val resId = getHintResId(column)
         if (resId != 0) return getString(resId)
         val hintOverride = when (column.uppercase()) {
@@ -1525,18 +1537,6 @@ class EditorDialogFragment : DialogFragment() {
             else -> 0
         }
         if (hintOverride != 0) return getString(hintOverride)
-        val tableHint = when {
-            tableName == "EMPRESA" && column == "NIT" -> R.string.hint_nit_empresa
-            tableName == "DETALLE_REQUISITO" && column == "NIT" -> R.string.hint_empresa
-            tableName == "DETALLE_REQUISITO" && column == "ID_OFERTA" -> R.string.hint_titulo_puesto
-            tableName == "FORMACION_ACADEMICA" && column == "ID_OFERTA_ACADEMICA" -> R.string.hint_oferta_academica
-            tableName == "POSTULACION" && column == "ID_OFERTA" -> R.string.hint_oferta_trabajo
-            tableName == "POSTULANTE" && column == "ID_GRADO_ACADEMICO" -> R.string.hint_grado_academico
-            (tableName == "CERTIFICACION" || tableName == "FORMACION_ACADEMICA" || tableName == "EXPERIENCIA_LABORAL") && column == "FECHA_INICIO" -> R.string.hint_periodo_fecha_inicio
-            (tableName == "CERTIFICACION" || tableName == "FORMACION_ACADEMICA" || tableName == "EXPERIENCIA_LABORAL") && column == "FECHA_FIN" -> R.string.hint_periodo_fecha_fin
-            else -> 0
-        }
-        if (tableHint != 0) return getString(tableHint)
         return column.replace("ID_", "").replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
     }
 
