@@ -9,8 +9,10 @@ import sv.ues.fia.eisi.bt.utils.PasswordHasher
 import sv.ues.fia.eisi.bt.utils.OfertaFullData
 import sv.ues.fia.eisi.bt.utils.PostulantFullData
 import sv.ues.fia.eisi.bt.utils.TriggerErrorTranslator
+import sv.ues.fia.eisi.bt.R
+import sv.ues.fia.eisi.bt.utils.getTableDisplayName
 
-class MainRepository(context: Context) {
+class MainRepository(private val context: Context) {
 
     // Es la capa de acceso a datos (DAO/Repository).
     // Usa ConnectionHelper para ejecutar operaciones CRUD
@@ -83,7 +85,7 @@ class MainRepository(context: Context) {
             }
             true
         } catch (e: android.database.sqlite.SQLiteException) {
-            throw Exception(TriggerErrorTranslator.translate(e.message))
+            throw Exception(TriggerErrorTranslator.translate(e.message, context))
         }
     }
 
@@ -99,7 +101,7 @@ class MainRepository(context: Context) {
             getDb().execSQL("DELETE FROM $tableName WHERE $whereClause")
             true
         } catch (e: android.database.sqlite.SQLiteException) {
-            throw Exception(TriggerErrorTranslator.translate(e.message))
+            throw Exception(TriggerErrorTranslator.translate(e.message, context))
         }
     }
 
@@ -296,7 +298,7 @@ class MainRepository(context: Context) {
             } else 1L
         } catch (e: Exception) {
             getDb().endTransaction()
-            throw Exception(TriggerErrorTranslator.translate(e.message))
+            throw Exception(TriggerErrorTranslator.translate(e.message, context))
         }
     }
 
@@ -345,16 +347,16 @@ class MainRepository(context: Context) {
 
     private fun getDuplicateCheckFields(tableName: String): List<Pair<String, String>> {
         return when (tableName) {
-            "GENERO" -> listOf("LOWER(NOMBRE_GENERO) = LOWER('{NOMBRE_GENERO}')" to "Ya existe un genero con ese nombre")
-            "CATEGORIA_HABILIDAD" -> listOf("LOWER(NOMBRE_CATEGORIA) = LOWER('{NOMBRE_CATEGORIA}')" to "Ya existe una categoria con ese nombre")
-            "TIPO_DOCUMENTO" -> listOf("LOWER(NOMBRE_TIPO) = LOWER('{NOMBRE_TIPO}')" to "Ya existe un tipo de documento con ese nombre")
-            "DEPARTAMENTO" -> listOf("LOWER(NOMBRE_DEPARTAMENTO) = LOWER('{NOMBRE_DEPARTAMENTO}')" to "Ya existe un departamento con ese nombre")
-            "GRADO_ACADEMICO" -> listOf("LOWER(NOMBRE_GRADO) = LOWER('{NOMBRE_GRADO}')" to "Ya existe un grado academico con ese nombre")
-            "RED_SOCIAL" -> listOf("LOWER(NOMBRE_RED) = LOWER('{NOMBRE_RED}')" to "Ya existe una red social con ese nombre")
-            "TIPO_CERTIFICACION" -> listOf("LOWER(NOMBRE_TIPO) = LOWER('{NOMBRE_TIPO}')" to "Ya existe un tipo de certificacion con ese nombre")
-            "INSTITUCION" -> listOf("LOWER(NOMBRE_INSTITUCION) = LOWER('{NOMBRE_INSTITUCION}')" to "Ya existe una institucion con ese nombre")
-            "MUNICIPIO" -> listOf("ID_DEPARTAMENTO = {ID_DEPARTAMENTO} AND LOWER(NOMBRE_MUNICIPIO) = LOWER('{NOMBRE_MUNICIPIO}')" to "Ya existe un municipio con ese nombre en el departamento")
-            "DISTRITO" -> listOf("ID_DEPARTAMENTO = {ID_DEPARTAMENTO} AND ID_MUNICIPIO = {ID_MUNICIPIO} AND LOWER(NOMBRE_DISTRITO) = LOWER('{NOMBRE_DISTRITO}')" to "Ya existe un distrito con ese nombre en el municipio")
+            "GENERO" -> listOf("LOWER(NOMBRE_GENERO) = LOWER('{NOMBRE_GENERO}')" to context.getString(R.string.ya_existe_genero))
+            "CATEGORIA_HABILIDAD" -> listOf("LOWER(NOMBRE_CATEGORIA) = LOWER('{NOMBRE_CATEGORIA}')" to context.getString(R.string.ya_existe_categoria))
+            "TIPO_DOCUMENTO" -> listOf("LOWER(NOMBRE_TIPO) = LOWER('{NOMBRE_TIPO}')" to context.getString(R.string.ya_existe_tipo_documento))
+            "DEPARTAMENTO" -> listOf("LOWER(NOMBRE_DEPARTAMENTO) = LOWER('{NOMBRE_DEPARTAMENTO}')" to context.getString(R.string.ya_existe_departamento))
+            "GRADO_ACADEMICO" -> listOf("LOWER(NOMBRE_GRADO) = LOWER('{NOMBRE_GRADO}')" to context.getString(R.string.ya_existe_grado_academico))
+            "RED_SOCIAL" -> listOf("LOWER(NOMBRE_RED) = LOWER('{NOMBRE_RED}')" to context.getString(R.string.ya_existe_red_social))
+            "TIPO_CERTIFICACION" -> listOf("LOWER(NOMBRE_TIPO) = LOWER('{NOMBRE_TIPO}')" to context.getString(R.string.ya_existe_tipo_certificacion))
+            "INSTITUCION" -> listOf("LOWER(NOMBRE_INSTITUCION) = LOWER('{NOMBRE_INSTITUCION}')" to context.getString(R.string.ya_existe_institucion))
+            "MUNICIPIO" -> listOf("ID_DEPARTAMENTO = {ID_DEPARTAMENTO} AND LOWER(NOMBRE_MUNICIPIO) = LOWER('{NOMBRE_MUNICIPIO}')" to context.getString(R.string.ya_existe_municipio))
+            "DISTRITO" -> listOf("ID_DEPARTAMENTO = {ID_DEPARTAMENTO} AND ID_MUNICIPIO = {ID_MUNICIPIO} AND LOWER(NOMBRE_DISTRITO) = LOWER('{NOMBRE_DISTRITO}')" to context.getString(R.string.ya_existe_distrito))
             "HABILIDAD" -> listOf("LOWER(NOMBRE_HABILIDAD) = LOWER('{NOMBRE_HABILIDAD}')" to "Ya existe una habilidad con ese nombre")
             "EMPRESA" -> listOf(
                 "NIT = '{NIT}'" to "Ya existe una empresa con ese NIT",
@@ -365,7 +367,7 @@ class MainRepository(context: Context) {
                 "NUP = '{NUP}'" to "Ya existe un postulante con ese NUP",
                 "LOWER(EMAIL) = LOWER('{EMAIL}')" to "Ya existe un postulante con ese email"
             )
-            "USUARIO" -> listOf("LOWER(USERNAME) = LOWER('{USERNAME}')" to "Ya existe un usuario con ese nombre")
+            "USUARIO" -> listOf("LOWER(USERNAME) = LOWER('{USERNAME}')" to context.getString(R.string.ya_existe_usuario))
             "OFERTA_TRABAJO" -> listOf("NIT = '{NIT}' AND LOWER(TITULO_PUESTO) = LOWER('{TITULO_PUESTO}')" to "Ya existe una oferta con ese titulo en la empresa")
             "DETALLE_REQUISITO" -> listOf("NIT = '{NIT}' AND ID_OFERTA = '{ID_OFERTA}' AND LOWER(DESCRIPCION_REQUISITO) = LOWER('{DESCRIPCION_REQUISITO}')" to "Ya existe un requisito con esa descripcion en la oferta")
             "EXPERIENCIA_LABORAL" -> listOf("ID_POSTULANTE = '{ID_POSTULANTE}' AND NIT = '{NIT}' AND LOWER(PUESTO_TRABAJO) = LOWER('{PUESTO_TRABAJO}')" to "Ya existe una experiencia con ese puesto para el postulante")
@@ -452,7 +454,7 @@ class MainRepository(context: Context) {
             getDb().execSQL("UPDATE $tableName SET $setClause WHERE $whereClause")
             return 1
         } catch (e: Exception) {
-            throw Exception(TriggerErrorTranslator.translate(e.message))
+            throw Exception(TriggerErrorTranslator.translate(e.message, context))
         }
     }
 
@@ -476,7 +478,7 @@ class MainRepository(context: Context) {
                 cursor.moveToFirst()
                 val count = cursor.getInt(0)
                 cursor.close()
-                TableInfo(tableName, tableName.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }, count)
+                TableInfo(tableName, context.getTableDisplayName(tableName), count)
             }
         } catch (e: Exception) {
             emptyList()
@@ -498,7 +500,7 @@ class MainRepository(context: Context) {
                 val count = cursor.getInt(0)
                 cursor.close()
                 if (count > 0) {
-                    return "La base de datos ya fué llenada"
+                    return context.getString(R.string.database_already_seeded)
                 }
             }
 
@@ -552,7 +554,7 @@ class MainRepository(context: Context) {
             }
             return null
         } catch (e: Exception) {
-            return "Error al insertar datos: ${e.message}"
+            return context.getString(R.string.error_insertar_datos_con_msg, e.message)
         }
     }
 
@@ -854,7 +856,7 @@ class MainRepository(context: Context) {
                 while (cursor.moveToNext()) {
                     val id = cursor.getString(0) ?: ""
                     val nombre = cursor.getString(1) ?: ""
-                    val categoria = cursor.getString(2) ?: "Sin Categoria"
+                    val categoria = cursor.getString(2) ?: context.getString(R.string.fallback_sin_categoria)
                     val display = "[$categoria] $nombre"
                     options.add(Pair(id, display))
                 }
@@ -898,7 +900,7 @@ class MainRepository(context: Context) {
                 while (cursor.moveToNext()) {
                     val id = cursor.getString(0) ?: ""
                     val nombre = cursor.getString(1) ?: ""
-                    val categoria = cursor.getString(2) ?: "Sin Categoria"
+                    val categoria = cursor.getString(2) ?: context.getString(R.string.fallback_sin_categoria)
                     val display = "[$categoria] $nombre"
                     options.add(Pair(id, display))
                 }

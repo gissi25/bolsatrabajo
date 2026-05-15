@@ -26,6 +26,7 @@ import sv.ues.fia.eisi.bt.data.repository.MainRepository
 import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.InputMaskUtils
 import sv.ues.fia.eisi.bt.utils.StyledToast
+import sv.ues.fia.eisi.bt.utils.getTableDisplayName
 
 import sv.ues.fia.eisi.bt.utils.ValidationRules
 import sv.ues.fia.eisi.bt.viewmodel.CrudViewModel
@@ -157,10 +158,11 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun setupTitle() {
+        val displayName = requireContext().getTableDisplayName(tableName)
         tvTitle.text = when {
-            isViewMode -> getString(R.string.ver_tabla, tableName)
-            isEditMode -> getString(R.string.editar_tabla, tableName)
-            else -> getString(R.string.nuevo_tabla, tableName)
+            isViewMode -> getString(R.string.ver_tabla, displayName)
+            isEditMode -> getString(R.string.editar_tabla, displayName)
+            else -> getString(R.string.nuevo_tabla, displayName)
         }
     }
 
@@ -1441,140 +1443,119 @@ class EditorDialogFragment : DialogFragment() {
         }
     }
 
+    private fun getHintResId(column: String): Int {
+        return when (column.uppercase()) {
+            "ID_GENERO" -> R.string.hint_genero
+            "ID_TIPO_DOCUMENTO" -> R.string.hint_tipo_documento
+            "NUM_DOCUMENTO" -> R.string.hint_numero_documento
+            "ID_DISTRITO" -> R.string.hint_id_distrito
+            "NOMBRE" -> R.string.hint_nombre
+            "APELLIDO" -> R.string.hint_apellido
+            "FECHA_NACIMIENTO" -> R.string.hint_fecha_nacimiento
+            "NUP" -> R.string.hint_nup
+            "DIRECCION_DETALLE" -> R.string.hint_direccion
+            "TELEFONO_CASA" -> R.string.hint_telefono_casa
+            "TELEFONO_CELULAR" -> R.string.hint_telefono_celular
+            "EMAIL", "CORREO" -> R.string.hint_correo_electronico
+            "ID_DEPARTAMENTO" -> R.string.hint_departamento
+            "ID_MUNICIPIO" -> R.string.hint_id_municipio
+            "NOMBRE_CATEGORIA" -> R.string.hint_nombre_categoria
+            "NOMBRE_GENERO" -> R.string.hint_nombre_genero
+            "NOMBRE_TIPO" -> R.string.hint_nombre_tipo
+            "NOMBRE_DEPARTAMENTO" -> R.string.hint_nombre_departamento
+            "NOMBRE_MUNICIPIO" -> R.string.hint_nombre_municipio
+            "NOMBRE_DISTRITO" -> R.string.hint_nombre_distrito
+            "NOMBRE_HABILIDAD" -> R.string.hint_nombre_habilidad
+            "ID_CATEGORIA_HABILIDAD" -> R.string.hint_categoria_habilidad
+            "NOMBRE_EMPRESA" -> R.string.hint_nombre_empresa
+            "CONTACTO_DIRECTO" -> R.string.hint_contacto_directo
+            "NOMBRE_INSTITUCION" -> R.string.hint_nombre_institucion
+            "NOMBRE_GRADO" -> R.string.hint_nombre_grado
+            "NOMBRE_RED" -> R.string.hint_nombre_red_social
+            "ID_INSTITUCION" -> R.string.hint_institucion
+            "ID_GRADO_ACADEMICO" -> R.string.hint_grado_academico
+            "TITULO_PUESTO" -> R.string.hint_titulo_puesto
+            "FECHA_PUBLICACION" -> R.string.hint_fecha_publicacion
+            "FECHA_CADUCIDAD" -> R.string.hint_fecha_caducidad
+            "EXPERIENCIA_ANIOS" -> R.string.hint_anios_experiencia
+            "EDAD_MINIMA" -> R.string.hint_edad_minima
+            "EDAD_MAXIMA" -> R.string.hint_edad_maxima
+            "DESCRIPCION_OFERTA_TRABAJO", "DESCRIPCION", "DESC" -> R.string.hint_descripcion
+            "DESCRIPCION_REQUISITO" -> R.string.hint_descripcion_requisito
+            "NIT" -> R.string.hint_empresa
+            "ID_OFERTA" -> R.string.hint_codigo_oferta
+            "ID_POSTULANTE" -> R.string.hint_codigo_postulante
+            "ID_CERTIFICACION" -> R.string.hint_codigo_certificacion
+            "NOMBRE_CERTIFICACION" -> R.string.hint_nombre_certificacion
+            "FECHA_CERTIFICACION" -> R.string.hint_fecha_certificacion
+            "ID_EXPERIENCIA" -> R.string.hint_codigo_experiencia
+            "PUESTO_TRABAJO" -> R.string.hint_puesto_trabajo
+            "FECHA_INICIO" -> R.string.hint_fecha_inicio
+            "FECHA_FIN" -> R.string.hint_fecha_fin
+            "DESCP_EXPERIENCIA_LABORAL" -> R.string.hint_descripcion_experiencia
+            "CONTACTO_REFERENCIA" -> R.string.hint_contacto_referencia
+            "ID_FORMACION" -> R.string.hint_codigo_formacion
+            "ID_OFERTA_ACADEMICA" -> R.string.hint_codigo_oferta_academica
+            "TITULO_OBTENIDO" -> R.string.hint_titulo_obtenido
+            "FECHA_OBTENCION" -> R.string.hint_fecha_obtencion
+            "ID_HABILIDAD" -> R.string.hint_codigo_habilidad
+            "NIVEL_DESTREZA" -> R.string.hint_nivel_destreza
+            "ID_POSTULACION" -> R.string.hint_codigo_postulacion
+            "FECHA_APLICACION" -> R.string.hint_fecha_aplicacion
+            "ESTADO_PROCESO" -> R.string.hint_estado_proceso
+            "ID_DETALLE" -> R.string.hint_codigo_detalle
+            "ID_RED_SOCIAL" -> R.string.hint_red_social
+            "URL_PERFIL" -> R.string.hint_url_perfil
+            "ID_DISTRITO_DEPTO" -> R.string.hint_departamento
+            "ID_DISTRITO_MUNICIPIO" -> R.string.hint_municipio
+            "ID_DISTRITO_ID" -> R.string.hint_id_distrito
+            "USERNAME", "USER" -> R.string.hint_nombre_usuario
+            "PASSWORD", "CONTRA" -> R.string.hint_contrasena
+            "ROL" -> R.string.hint_rol
+            else -> 0
+        }
+    }
+
     private fun getHintText(column: String): String {
-        if (tableName == "EMPRESA" && column == "NIT") {
-            return "NIT EMPRESA"
+        val resId = getHintResId(column)
+        if (resId != 0) return getString(resId)
+        val hintOverride = when (column.uppercase()) {
+            "ID_TIPO_CERTIFICACION" -> if (tableName == "CERTIFICACION") R.string.hint_tipo_certificacion else 0
+            "ID_HABILIDAD" -> if (tableName == "HABILIDAD_POSTULANTE") R.string.hint_habilidad_postulante else 0
+            else -> 0
         }
-        if (tableName == "DETALLE_REQUISITO") {
-            when (column) {
-                "NIT" -> return "Empresa"
-                "ID_OFERTA" -> return "Titulo puesto"
-            }
+        if (hintOverride != 0) return getString(hintOverride)
+        val tableHint = when {
+            tableName == "EMPRESA" && column == "NIT" -> R.string.hint_nit_empresa
+            tableName == "DETALLE_REQUISITO" && column == "NIT" -> R.string.hint_empresa
+            tableName == "DETALLE_REQUISITO" && column == "ID_OFERTA" -> R.string.hint_titulo_puesto
+            tableName == "FORMACION_ACADEMICA" && column == "ID_OFERTA_ACADEMICA" -> R.string.hint_oferta_academica
+            tableName == "POSTULACION" && column == "ID_OFERTA" -> R.string.hint_oferta_trabajo
+            tableName == "POSTULANTE" && column == "ID_GRADO_ACADEMICO" -> R.string.hint_grado_academico
+            (tableName == "CERTIFICACION" || tableName == "FORMACION_ACADEMICA" || tableName == "EXPERIENCIA_LABORAL") && column == "FECHA_INICIO" -> R.string.hint_periodo_fecha_inicio
+            (tableName == "CERTIFICACION" || tableName == "FORMACION_ACADEMICA" || tableName == "EXPERIENCIA_LABORAL") && column == "FECHA_FIN" -> R.string.hint_periodo_fecha_fin
+            else -> 0
         }
-        if (tableName == "FORMACION_ACADEMICA") {
-            when (column) {
-                "ID_OFERTA_ACADEMICA" -> return "Oferta academica"
-            }
-        }
-        if (tableName == "POSTULACION") {
-            when (column) {
-                "ID_OFERTA" -> return "Oferta de trabajo"
-            }
-        }
-        if (tableName == "POSTULANTE" && column == "ID_GRADO_ACADEMICO") {
-            return "Grado academico"
-        }
-        if (tableName == "CERTIFICACION") {
-            when (column) {
-                "ID_TIPO_CERTIFICACION" -> return "Tipo de certificacion"
-                "FECHA_INICIO" -> return "Periodo - Fecha inicio"
-                "FECHA_FIN" -> return "Periodo - Fecha fin"
-            }
-        }
-        if (tableName == "FORMACION_ACADEMICA") {
-            when (column) {
-                "FECHA_INICIO" -> return "Periodo - Fecha inicio"
-                "FECHA_FIN" -> return "Periodo - Fecha fin"
-            }
-        }
-        if (tableName == "EXPERIENCIA_LABORAL") {
-            when (column) {
-                "FECHA_INICIO" -> return "Periodo - Fecha inicio"
-                "FECHA_FIN" -> return "Periodo - Fecha fin"
-            }
-        }
-        if (tableName == "HABILIDAD_POSTULANTE" && column == "ID_HABILIDAD") {
-            return "Habilidad del postulante"
-        }
-        val col = column.uppercase()
-        return when (col) {
-            "ID_GENERO" -> "Género"
-            "ID_TIPO_DOCUMENTO" -> "Tipo de documento"
-            "NUM_DOCUMENTO" -> "Número de documento"
-            "ID_DISTRITO" -> "Id Distrito"
-            "NOMBRE" -> "Nombre"
-            "APELLIDO" -> "Apellido"
-            "FECHA_NACIMIENTO" -> "Fecha de nacimiento"
-            "NUP" -> "NUP"
-            "DIRECCION_DETALLE" -> "Dirección"
-            "TELEFONO_CASA" -> "Teléfono casa"
-            "TELEFONO_CELULAR" -> "Teléfono celular"
-            "EMAIL", "CORREO" -> "Correo electrónico"
-            "ID_DEPARTAMENTO" -> "Departamento"
-            "ID_MUNICIPIO" -> "Id Municipio"
-            "NOMBRE_CATEGORIA" -> "Nombre de categoría"
-            "NOMBRE_GENERO" -> "Nombre de género"
-            "NOMBRE_TIPO" -> "Nombre de tipo"
-            "NOMBRE_DEPARTAMENTO" -> "Nombre de departamento"
-            "NOMBRE_MUNICIPIO" -> "Nombre de municipio"
-            "NOMBRE_DISTRITO" -> "Nombre de distrito"
-            "NOMBRE_HABILIDAD" -> "Nombre de habilidad"
-            "ID_CATEGORIA_HABILIDAD" -> "Categoría de habilidad"
-            "NOMBRE_EMPRESA" -> "Nombre de empresa"
-            "CONTACTO_DIRECTO" -> "Contacto directo"
-            "NOMBRE_INSTITUCION" -> "Nombre de institución"
-            "NOMBRE_GRADO" -> "Nombre de grado"
-            "NOMBRE_RED" -> "Nombre de red social"
-            "ID_INSTITUCION" -> "Institución"
-            "ID_GRADO_ACADEMICO" -> "Grado académico"
-            "TITULO_PUESTO" -> "Título del puesto"
-            "FECHA_PUBLICACION" -> "Fecha de publicación"
-            "FECHA_CADUCIDAD" -> "Fecha de caducidad"
-            "EXPERIENCIA_ANIOS" -> "Años de experiencia"
-            "EDAD_MINIMA" -> "Edad mínima"
-            "EDAD_MAXIMA" -> "Edad máxima"
-            "DESCRIPCION_OFERTA_TRABAJO", "DESCRIPCION", "DESC" -> "Descripción"
-            "DESCRIPCION_REQUISITO" -> "Descripcion del requisito"
-            "NIT" -> "Empresa"
-            "ID_OFERTA" -> "Codigo de oferta"
-            "ID_POSTULANTE" -> "Codigo postulante"
-            "ID_CERTIFICACION" -> "Codigo certificacion"
-            "NOMBRE_CERTIFICACION" -> "Nombre de certificacion"
-            "FECHA_CERTIFICACION" -> "Fecha de certificacion"
-            "ID_EXPERIENCIA" -> "Codigo experiencia"
-            "PUESTO_TRABAJO" -> "Puesto de trabajo"
-            "FECHA_INICIO" -> "Fecha de inicio"
-            "FECHA_FIN" -> "Fecha de fin"
-            "DESCP_EXPERIENCIA_LABORAL" -> "Descripcion de experiencia"
-            "CONTACTO_REFERENCIA" -> "Contacto de referencia"
-            "ID_FORMACION" -> "Codigo formacion"
-            "ID_OFERTA_ACADEMICA" -> "Codigo oferta academica"
-            "TITULO_OBTENIDO" -> "Titulo obtenido"
-            "FECHA_OBTENCION" -> "Fecha de obtencion"
-            "ID_HABILIDAD" -> "Codigo habilidad"
-            "NIVEL_DESTREZA" -> "Nivel de destreza"
-            "ID_POSTULACION" -> "Codigo postulacion"
-            "FECHA_APLICACION" -> "Fecha de aplicacion"
-            "ESTADO_PROCESO" -> "Estado del proceso"
-            "ID_DETALLE" -> "Codigo detalle"
-            "ID_RED_SOCIAL" -> "Red social"
-            "URL_PERFIL" -> "URL del perfil"
-            "ID_DISTRITO_DEPTO" -> "Departamento"
-            "ID_DISTRITO_MUNICIPIO" -> "Municipio"
-            "ID_DISTRITO_ID" -> "Distrito"
-            "USERNAME", "USER" -> "Nombre de usuario"
-            "PASSWORD", "CONTRA" -> "Contraseña"
-            "ROL" -> "Rol"
-            else -> column.replace("ID_", "").replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
-        }
+        if (tableHint != 0) return getString(tableHint)
+        return column.replace("ID_", "").replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
     }
 
     private fun getHelperText(column: String): String? {
         return when (column.uppercase()) {
-            "ID_POSTULANTE" -> "Ej: AB12345"
-            "ID_OFERTA" -> "Ej: OF001"
-            "ID_CERTIFICACION" -> "Ej: C001"
-            "ID_EXPERIENCIA" -> "Ej: EL01"
-            "ID_FORMACION" -> "Ej: FOA001"
-            "ID_OFERTA_ACADEMICA" -> "Ej: OFA01"
-            "ID_POSTULACION" -> "Ej: POS001"
-            "ID_DETALLE" -> "Ej: D1"
-            "ID_INSTITUCION" -> "Ej: INS001"
-            "ID_HABILIDAD" -> "Ej: H01"
-            "NIT" -> if (tableName == "EMPRESA") "14 digitos" else null
-            "ID_MUNICIPIO" -> "Ej: 5"
-            "ID_DISTRITO" -> "Ej: 1"
-            "URL_PERFIL" -> "Ej: https://"
+            "ID_POSTULANTE" -> getString(R.string.helper_format, getString(R.string.helper_ej_ab12345))
+            "ID_OFERTA" -> getString(R.string.helper_format, getString(R.string.helper_ej_of001))
+            "ID_CERTIFICACION" -> getString(R.string.helper_format, getString(R.string.helper_ej_c001))
+            "ID_EXPERIENCIA" -> getString(R.string.helper_format, getString(R.string.helper_ej_el01))
+            "ID_FORMACION" -> getString(R.string.helper_format, getString(R.string.helper_ej_foa001))
+            "ID_OFERTA_ACADEMICA" -> getString(R.string.helper_format, getString(R.string.helper_ej_ofa01))
+            "ID_POSTULACION" -> getString(R.string.helper_format, getString(R.string.helper_ej_pos001))
+            "ID_DETALLE" -> getString(R.string.helper_format, getString(R.string.helper_ej_d1))
+            "ID_INSTITUCION" -> getString(R.string.helper_format, getString(R.string.helper_ej_ins001))
+            "ID_HABILIDAD" -> getString(R.string.helper_format, getString(R.string.helper_ej_h01))
+            "NIT" -> if (tableName == "EMPRESA") getString(R.string.helper_14_digitos) else null
+            "ID_MUNICIPIO" -> getString(R.string.helper_format, getString(R.string.helper_ej_5))
+            "ID_DISTRITO" -> getString(R.string.helper_format, getString(R.string.helper_ej_1))
+            "URL_PERFIL" -> getString(R.string.helper_format, getString(R.string.helper_ej_https))
             else -> null
         }
     }
@@ -1582,9 +1563,9 @@ class EditorDialogFragment : DialogFragment() {
     private fun getFieldValidationError(column: String, value: String): String? {
         if (value.isBlank()) return null
         return when {
-            column.contains("EMAIL") -> InputMaskUtils.validateEmail(value)
-            column.contains("PASSWORD") || column.contains("CONTRA") -> InputMaskUtils.validatePassword(value)
-            column.contains("FECHA") -> InputMaskUtils.validateFecha(value)
+            column.contains("EMAIL") -> InputMaskUtils.validateEmail(requireContext(), value)
+            column.contains("PASSWORD") || column.contains("CONTRA") -> InputMaskUtils.validatePassword(requireContext(), value)
+            column.contains("FECHA") -> InputMaskUtils.validateFecha(requireContext(), value)
             else -> null
         }
     }
@@ -1700,10 +1681,10 @@ class EditorDialogFragment : DialogFragment() {
                             getString(R.string.estado_en_proceso) -> "en proceso"
                             getString(R.string.estado_contratado) -> "contratado"
                             getString(R.string.estado_rechazado) -> "rechazado"
-                            "Activo" -> "activo"
-                            "En Proceso" -> "en proceso"
-                            "Contratado" -> "contratado"
-                            "Rechazado" -> "rechazado"
+                            getString(R.string.estado_activo) -> "activo"
+                            getString(R.string.estado_en_proceso) -> "en proceso"
+                            getString(R.string.estado_contratado) -> "contratado"
+                            getString(R.string.estado_rechazado) -> "rechazado"
                             else -> ""
                         }
                         values.add(estadoValue)
@@ -1756,7 +1737,7 @@ class EditorDialogFragment : DialogFragment() {
                     val et = textFields.values.find { it.first == col }?.second
                     val textValue = et?.text?.toString()?.trim() ?: ""
 
-                    val errorMsg = ValidationRules.validate(tableName, col, textValue)
+                    val errorMsg = ValidationRules.validate(requireContext(), tableName, col, textValue)
 
                     if (errorMsg != null) {
                         var parent = et?.parent
@@ -1789,18 +1770,18 @@ class EditorDialogFragment : DialogFragment() {
                 val dFin = dateFormat.parse(fechaFin)!!
                 val dRef = dateFormat.parse(fechaRef)!!
                 if (!dInicio.before(dFin)) {
-                    StyledToast.show(requireContext(), "Fecha inicio debe ser menor a fecha fin")
+                    StyledToast.show(requireContext(), getString(R.string.fecha_inicio_menor_fin))
                     btnSave.isEnabled = true; return false
                 }
                 if (dRef.before(dFin)) {
-                    StyledToast.show(requireContext(), "$fechaRefName no puede ser menor a la fecha fin del periodo")
+                    StyledToast.show(requireContext(), getString(R.string.fecha_ref_menor_periodo, fechaRefName))
                     btnSave.isEnabled = true; return false
                 }
                 val cal = java.util.Calendar.getInstance()
                 cal.time = dFin
                 cal.add(java.util.Calendar.YEAR, 1)
                 if (dRef.after(cal.time)) {
-                    StyledToast.show(requireContext(), "$fechaRefName no puede exceder un año despues de la fecha fin del periodo")
+                    StyledToast.show(requireContext(), getString(R.string.fecha_ref_excede_anio, fechaRefName))
                     btnSave.isEnabled = true; return false
                 }
             } catch (_: Exception) { return true }
@@ -1811,13 +1792,13 @@ class EditorDialogFragment : DialogFragment() {
             val inicioIdx = editableColumns.indexOf("FECHA_INICIO")
             val finIdx = editableColumns.indexOf("FECHA_FIN")
             val certIdx = editableColumns.indexOf("FECHA_CERTIFICACION")
-            if (!validatePeriodDates(inicioIdx, finIdx, certIdx, "Fecha de certificacion")) return
+            if (!validatePeriodDates(inicioIdx, finIdx, certIdx, getString(R.string.fecha_ref_name_certificacion))) return
         }
         if (tableName == "FORMACION_ACADEMICA") {
             val inicioIdx = editableColumns.indexOf("FECHA_INICIO")
             val finIdx = editableColumns.indexOf("FECHA_FIN")
             val obtenIdx = editableColumns.indexOf("FECHA_OBTENCION")
-            if (!validatePeriodDates(inicioIdx, finIdx, obtenIdx, "Fecha de obtencion")) return
+            if (!validatePeriodDates(inicioIdx, finIdx, obtenIdx, getString(R.string.fecha_ref_name_obtencion))) return
         }
 
         if (tableName == "USUARIO") {

@@ -8,6 +8,7 @@ import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import androidx.core.content.FileProvider
+import sv.ues.fia.eisi.bt.R
 import java.io.File
 import java.io.FileOutputStream
 
@@ -73,7 +74,7 @@ object CVExportUtil {
     fun generateCVPdf(context: Context, data: PostulantFullData, fileName: String): File {
         val document = PdfDocument()
         val mgr = PageManager(document)
-        drawCVDocument(mgr, data)
+        drawCVDocument(mgr, data, context)
         mgr.finish()
         return savePdf(document, context, fileName)
     }
@@ -81,7 +82,7 @@ object CVExportUtil {
     fun generateOfertaPdf(context: Context, data: OfertaFullData, fileName: String): File {
         val document = PdfDocument()
         val mgr = PageManager(document)
-        drawOfertaDocument(mgr, data)
+        drawOfertaDocument(mgr, data, context)
         mgr.finish()
         return savePdf(document, context, fileName)
     }
@@ -128,10 +129,10 @@ object CVExportUtil {
         canvas.drawRect(0f, 0f, PAGE_WIDTH.toFloat(), 60f, bgPaint)
     }
 
-    private fun drawCVDocument(mgr: PageManager, data: PostulantFullData) {
+    private fun drawCVDocument(mgr: PageManager, data: PostulantFullData, context: Context) {
         with(mgr) {
-            drawPageTitle(canvas, "CURRICULUM VITAE")
-            y = drawSectionHeader(canvas, "Datos Personales", y)
+            drawPageTitle(canvas, context.getString(R.string.pdf_curriculum_vitae))
+            y = drawSectionHeader(canvas, context.getString(R.string.pdf_datos_personales), y)
 
             val fullDir = buildString {
                 if (data.direccion.isNotBlank()) append(data.direccion)
@@ -145,19 +146,19 @@ object CVExportUtil {
                 if (data.numDocumento.isNotBlank()) { if (isNotEmpty()) append(" "); append(data.numDocumento) }
             }
 
-            y = drawField2Col(canvas, "Codigo", data.idPostulante, "Grado", data.gradoAcademico, y)
-            y = drawField2Col(canvas, "Nombre", "${data.nombre} ${data.apellido}", "Genero", data.genero, y)
-            y = drawField2Col(canvas, "Nacimiento", data.fechaNacimiento, "Documento", docInfo, y)
-            y = drawField2Col(canvas, "NUP", data.nup, "Email", data.email, y)
-            y = drawField2Col(canvas, "Telefono", data.telefonoCelular, "Tel. Casa", data.telefonoCasa, y)
+            y = drawField2Col(canvas, context.getString(R.string.pdf_codigo), data.idPostulante, context.getString(R.string.pdf_grado), data.gradoAcademico, y)
+            y = drawField2Col(canvas, context.getString(R.string.hint_nombre), "${data.nombre} ${data.apellido}", context.getString(R.string.pdf_genero), data.genero, y)
+            y = drawField2Col(canvas, context.getString(R.string.pdf_nacimiento), data.fechaNacimiento, context.getString(R.string.pdf_documento), docInfo, y)
+            y = drawField2Col(canvas, context.getString(R.string.pdf_nup), data.nup, context.getString(R.string.pdf_email), data.email, y)
+            y = drawField2Col(canvas, context.getString(R.string.pdf_telefono), data.telefonoCelular, context.getString(R.string.pdf_tel_casa), data.telefonoCasa, y)
             if (fullDir.isNotBlank()) {
                 checkPage()
-                y = drawSectionField(canvas, "Direccion", fullDir, y, this)
+                y = drawSectionField(canvas, context.getString(R.string.pdf_direccion), fullDir, y, this)
             }
 
             if (data.formaciones.isNotEmpty()) {
                 y += SECTION_SPACE; checkPage()
-                y = drawSectionHeader(canvas, "Formacion Academica", y)
+                y = drawSectionHeader(canvas, context.getString(R.string.pdf_formacion_academica), y)
                 for (f in data.formaciones) {
                     val titulo = f.getOrElse(0) { "" }
                     val institucion = f.getOrElse(1) { "" }
@@ -167,20 +168,20 @@ object CVExportUtil {
                     val fechaObtencion = f.getOrElse(5) { "" }
                     val periodo = if (inicio.isNotBlank() || fin.isNotBlank()) "$inicio → $fin" else ""
 
-                    y = drawBullet(canvas, titulo.ifBlank { "(sin titulo)" }, y, this)
+                    y = drawBullet(canvas, titulo.ifBlank { context.getString(R.string.fallback_sin_titulo) }, y, this)
                     val sub = buildString {
                         if (institucion.isNotBlank()) append(institucion)
                         if (grado.isNotBlank()) { if (isNotEmpty()) append("  |  "); append(grado) }
                         if (periodo.isNotBlank()) { if (isNotEmpty()) append("  |  "); append(periodo) }
                     }
                     if (sub.isNotBlank()) { y = drawSubtext(canvas, sub, y, this) }
-                    if (fechaObtencion.isNotBlank()) { y = drawSmallText(canvas, "Obtencion: $fechaObtencion", y, this) }
+                    if (fechaObtencion.isNotBlank()) { y = drawSmallText(canvas, "${context.getString(R.string.pdf_obtencion)}$fechaObtencion", y, this) }
                 }
             }
 
             if (data.certificaciones.isNotEmpty()) {
                 y += SECTION_SPACE; checkPage()
-                y = drawSectionHeader(canvas, "Certificaciones", y)
+                y = drawSectionHeader(canvas, context.getString(R.string.pdf_certificaciones), y)
                 for (c in data.certificaciones) {
                     val nombre = c.getOrElse(0) { "" }
                     val institucion = c.getOrElse(1) { "" }
@@ -190,20 +191,20 @@ object CVExportUtil {
                     val periodoFin = c.getOrElse(5) { "" }
                     val periodo = if (periodoInicio.isNotBlank() || periodoFin.isNotBlank()) "$periodoInicio → $periodoFin" else ""
 
-                    y = drawBullet(canvas, nombre.ifBlank { "(sin nombre)" }, y, this)
+                    y = drawBullet(canvas, nombre.ifBlank { context.getString(R.string.fallback_sin_nombre) }, y, this)
                     val sub = buildString {
                         if (tipo.isNotBlank()) append(tipo)
                         if (institucion.isNotBlank()) { if (isNotEmpty()) append("  |  "); append(institucion) }
                         if (periodo.isNotBlank()) { if (isNotEmpty()) append("  |  "); append(periodo) }
                     }
                     if (sub.isNotBlank()) { y = drawSubtext(canvas, sub, y, this) }
-                    if (fechaCert.isNotBlank()) { y = drawSmallText(canvas, "Certificado: $fechaCert", y, this) }
+                    if (fechaCert.isNotBlank()) { y = drawSmallText(canvas, "${context.getString(R.string.pdf_certificado)}$fechaCert", y, this) }
                 }
             }
 
             if (data.habilidades.isNotEmpty()) {
                 y += SECTION_SPACE; checkPage()
-                y = drawSectionHeader(canvas, "Habilidades", y)
+                y = drawSectionHeader(canvas, context.getString(R.string.pdf_habilidades), y)
                 for (h in data.habilidades) {
                     val nombre = h.getOrElse(0) { "" }
                     val nivel = h.getOrElse(1) { "" }
@@ -214,7 +215,7 @@ object CVExportUtil {
 
             if (data.experiencias.isNotEmpty()) {
                 y += SECTION_SPACE; checkPage()
-                y = drawSectionHeader(canvas, "Experiencia Laboral", y)
+                y = drawSectionHeader(canvas, context.getString(R.string.pdf_experiencia_laboral), y)
                 for (e in data.experiencias) {
                     val puesto = e.getOrElse(0) { "" }
                     val empresa = e.getOrElse(1) { "" }
@@ -224,20 +225,20 @@ object CVExportUtil {
                     val contacto = e.getOrElse(5) { "" }
                     val periodo = if (inicio.isNotBlank() || fin.isNotBlank()) "$inicio → $fin" else ""
 
-                    y = drawBullet(canvas, puesto.ifBlank { "(sin puesto)" }, y, this)
+                    y = drawBullet(canvas, puesto.ifBlank { context.getString(R.string.fallback_sin_puesto) }, y, this)
                     val sub = buildString {
                         if (empresa.isNotBlank()) append(empresa)
                         if (periodo.isNotBlank()) { if (isNotEmpty()) append("  |  "); append(periodo) }
                     }
                     if (sub.isNotBlank()) { y = drawSubtext(canvas, sub, y, this) }
                     if (desc.isNotBlank()) { y = drawSmallText(canvas, desc, y, this) }
-                    if (contacto.isNotBlank()) { y = drawSmallText(canvas, "Contacto: $contacto", y, this) }
+                    if (contacto.isNotBlank()) { y = drawSmallText(canvas, "${context.getString(R.string.pdf_contacto_prefix)}$contacto", y, this) }
                 }
             }
 
             if (data.redesSociales.isNotEmpty()) {
                 y += SECTION_SPACE; checkPage()
-                y = drawSectionHeader(canvas, "Redes Sociales", y)
+                y = drawSectionHeader(canvas, context.getString(R.string.pdf_redes_sociales), y)
                 for (r in data.redesSociales) {
                     val nombre = r.getOrElse(0) { "" }
                     val url = r.getOrElse(1) { "" }
@@ -248,9 +249,9 @@ object CVExportUtil {
         }
     }
 
-    private fun drawOfertaDocument(mgr: PageManager, data: OfertaFullData) {
+    private fun drawOfertaDocument(mgr: PageManager, data: OfertaFullData, context: Context) {
         with(mgr) {
-            drawPageTitle(canvas, "DETALLE DE LA VACANTE")
+            drawPageTitle(canvas, context.getString(R.string.pdf_detalle_vacante))
 
             val dirEmpresa = buildString {
                 if (data.empresaDistrito.isNotBlank()) append(data.empresaDistrito)
@@ -258,19 +259,19 @@ object CVExportUtil {
                 if (data.empresaDepartamento.isNotBlank()) { if (isNotEmpty()) append(", "); append(data.empresaDepartamento) }
             }
 
-            y = drawSectionHeader(canvas, "Empresa", y)
-            y = drawField2Col(canvas, "Nombre", data.nombreEmpresa, "NIT", data.nit, y)
-            y = drawField2Col(canvas, "Contacto", data.contactoEmpresa, "Ubicacion", dirEmpresa, y)
+            y = drawSectionHeader(canvas, context.getString(R.string.pdf_empresa_section), y)
+            y = drawField2Col(canvas, context.getString(R.string.hint_nombre), data.nombreEmpresa, context.getString(R.string.pdf_nit), data.nit, y)
+            y = drawField2Col(canvas, context.getString(R.string.pdf_contacto), data.contactoEmpresa, context.getString(R.string.pdf_ubicacion), dirEmpresa, y)
 
             y += SECTION_SPACE; checkPage()
-            y = drawSectionHeader(canvas, "Puesto", y)
-            y = drawField2Col(canvas, "Titulo", data.tituloPuesto, "Grado requerido", data.nombreGrado, y)
-            y = drawField2Col(canvas, "Experiencia", if (data.experienciaAnios.isNotBlank()) "${data.experienciaAnios} años" else "", "Edad", if (data.edadMinima.isNotBlank()) "${data.edadMinima} — ${data.edadMaxima} años" else "", y)
-            y = drawField2Col(canvas, "Publicacion", data.fechaPublicacion, "Caducidad", data.fechaCaducidad, y)
+            y = drawSectionHeader(canvas, context.getString(R.string.pdf_puesto), y)
+            y = drawField2Col(canvas, context.getString(R.string.pdf_puesto), data.tituloPuesto, context.getString(R.string.pdf_grado_requerido), data.nombreGrado, y)
+            y = drawField2Col(canvas, context.getString(R.string.pdf_experiencia), if (data.experienciaAnios.isNotBlank()) "${data.experienciaAnios} ${context.getString(R.string.pdf_anios)}" else "", context.getString(R.string.pdf_edad), if (data.edadMinima.isNotBlank()) "${data.edadMinima} — ${data.edadMaxima} ${context.getString(R.string.pdf_anios)}" else "", y)
+            y = drawField2Col(canvas, context.getString(R.string.pdf_publicacion), data.fechaPublicacion, context.getString(R.string.pdf_caducidad), data.fechaCaducidad, y)
 
             if (data.requisitos.isNotEmpty()) {
                 y += SECTION_SPACE; checkPage()
-                y = drawSectionHeader(canvas, "Requisitos", y)
+                y = drawSectionHeader(canvas, context.getString(R.string.pdf_requisitos), y)
                 for (r in data.requisitos) {
                     y = drawBullet(canvas, r, y, this)
                 }
@@ -278,7 +279,7 @@ object CVExportUtil {
 
             if (data.descripcion.isNotBlank()) {
                 y += SECTION_SPACE; checkPage()
-                y = drawSectionHeader(canvas, "Descripcion", y)
+                y = drawSectionHeader(canvas, context.getString(R.string.pdf_section_descripcion), y)
                 y = drawSmallText(canvas, data.descripcion, y, this)
             }
         }

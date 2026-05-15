@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
 import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.removeAccents
@@ -184,13 +185,13 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                     repository.insertSeedData()
                 }
                 if (error == null) {
-                    _seedResult.postValue(Resource.Success("Datos insertados correctamente"))
+                    _seedResult.postValue(Resource.Success(getApplication<Application>().getString(R.string.seed_inserted)))
                     refreshCounts()
                 } else {
                     _seedResult.postValue(Resource.Error(error, error))
                 }
             } catch (e: Exception) {
-                _seedResult.postValue(Resource.Error(e.message ?: "Error desconocido", "Error al insertar datos"))
+                _seedResult.postValue(Resource.Error(e.message ?: getApplication<Application>().getString(R.string.error_desconocido), getApplication<Application>().getString(R.string.seed_error)))
             }
         }
     }
