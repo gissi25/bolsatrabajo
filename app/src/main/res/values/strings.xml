@@ -185,13 +185,14 @@
     <string name="hint_telefono_casa">Teléfono casa</string>
     <string name="hint_telefono_celular">Teléfono celular</string>
     <string name="hint_correo_electronico">Correo electrónico</string>
-    <string name="hint_id_municipio">Id Municipio</string>
+    <string name="hint_id_municipio">Municipio</string>
     <string name="hint_nombre_categoria">Nombre de categoría</string>
     <string name="hint_nombre_genero">Nombre de género</string>
     <string name="hint_nombre_tipo">Nombre de tipo</string>
     <string name="hint_nombre_departamento">Nombre de departamento</string>
     <string name="hint_nombre_municipio">Nombre de municipio</string>
     <string name="hint_nombre_distrito">Nombre de distrito</string>
+    <string name="hint_distrito_id">ID Distrito</string>
     <string name="hint_nombre_habilidad">Nombre de habilidad</string>
     <string name="hint_categoria_habilidad">Categoría de habilidad</string>
     <string name="hint_nombre_empresa">Nombre de empresa</string>

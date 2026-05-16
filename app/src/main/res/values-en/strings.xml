@@ -185,13 +185,14 @@
     <string name="hint_telefono_casa">Home phone</string>
     <string name="hint_telefono_celular">Cell phone</string>
     <string name="hint_correo_electronico">Email</string>
-    <string name="hint_id_municipio">Municipality ID</string>
+    <string name="hint_id_municipio">Municipality</string>
     <string name="hint_nombre_categoria">Category name</string>
     <string name="hint_nombre_genero">Gender name</string>
     <string name="hint_nombre_tipo">Type name</string>
     <string name="hint_nombre_departamento">Department name</string>
     <string name="hint_nombre_municipio">Municipality name</string>
     <string name="hint_nombre_distrito">District name</string>
+    <string name="hint_distrito_id">District ID</string>
     <string name="hint_nombre_habilidad">Skill name</string>
     <string name="hint_categoria_habilidad">Skill category</string>
     <string name="hint_nombre_empresa">Company name</string>

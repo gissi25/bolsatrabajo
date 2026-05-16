@@ -1498,6 +1498,7 @@ class EditorDialogFragment : DialogFragment() {
 
     private fun getHintText(column: String): String {
         val tableHint = when {
+            tableName == "DISTRITO" && column == "ID_DISTRITO" -> R.string.hint_distrito_id
             tableName == "EMPRESA" && column == "NIT" -> R.string.hint_nit_empresa
             tableName == "DETALLE_REQUISITO" && column == "NIT" -> R.string.hint_empresa
             tableName == "DETALLE_REQUISITO" && column == "ID_OFERTA" -> R.string.hint_titulo_puesto
