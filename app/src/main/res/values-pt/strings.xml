@@ -69,7 +69,7 @@
     <string name="debe_seleccionar_estado">Você deve selecionar um status</string>
     <string name="no_hay_datos_en">Não há dados em %s. Crie-os primeiro.</string>
     <string name="debe_seleccionar">Você deve selecionar %s</string>
-    <string name="seleccione_opcion_valida">Selecione uma opção válida de %s: %s</string>
+    <string name="seleccione_opcion_valida" formatted="false">Selecione uma opção válida de %s: %s</string>
     <string name="contrasena_bloqueada">Senha (bloqueada)</string>
     <string name="ver_tabla">Ver %s</string>
     <string name="editar_tabla">Editar %s</string>
@@ -84,13 +84,13 @@
 
     <!-- Field validation -->
     <string name="obligatorio">%s é obrigatório</string>
-    <string name="minimo_caracteres">%s deve ter pelo menos %d caracteres</string>
-    <string name="maximo_caracteres">%s não deve exceder %d caracteres</string>
+    <string name="minimo_caracteres" formatted="false">%s deve ter pelo menos %d caracteres</string>
+    <string name="maximo_caracteres" formatted="false">%s não deve exceder %d caracteres</string>
     <string name="formato_invalido">%s tem um formato inválido</string>
     <string name="fecha_futura">%s não pode ser uma data futura</string>
     <string name="debe_ser_numero">%s deve ser um número</string>
-    <string name="debe_ser_mayor_igual">%s deve ser maior ou igual a %d</string>
-    <string name="debe_ser_menor_igual">%s deve ser menor ou igual a %d</string>
+    <string name="debe_ser_mayor_igual" formatted="false">%s deve ser maior ou igual a %d</string>
+    <string name="debe_ser_menor_igual" formatted="false">%s deve ser menor ou igual a %d</string>
 
     <!-- Hardcoded strings -->
     <string name="estado_vigente">VIGENTE</string>

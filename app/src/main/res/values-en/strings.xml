@@ -69,7 +69,7 @@
     <string name="debe_seleccionar_estado">You must select a status</string>
     <string name="no_hay_datos_en">No data in %s. Create it first.</string>
     <string name="debe_seleccionar">You must select %s</string>
-    <string name="seleccione_opcion_valida">Select a valid %s option: %s</string>
+    <string name="seleccione_opcion_valida" formatted="false">Select a valid %s option: %s</string>
     <string name="contrasena_bloqueada">Password (locked)</string>
     <string name="ver_tabla">View %s</string>
     <string name="editar_tabla">Edit %s</string>
@@ -84,13 +84,13 @@
 
     <!-- Field validation -->
     <string name="obligatorio">%s is required</string>
-    <string name="minimo_caracteres">%s must be at least %d characters</string>
-    <string name="maximo_caracteres">%s must not exceed %d characters</string>
+    <string name="minimo_caracteres" formatted="false">%s must be at least %d characters</string>
+    <string name="maximo_caracteres" formatted="false">%s must not exceed %d characters</string>
     <string name="formato_invalido">%s has an invalid format</string>
     <string name="fecha_futura">%s cannot be a future date</string>
     <string name="debe_ser_numero">%s must be a number</string>
-    <string name="debe_ser_mayor_igual">%s must be greater than or equal to %d</string>
-    <string name="debe_ser_menor_igual">%s must be less than or equal to %d</string>
+    <string name="debe_ser_mayor_igual" formatted="false">%s must be greater than or equal to %d</string>
+    <string name="debe_ser_menor_igual" formatted="false">%s must be less than or equal to %d</string>
 
     <!-- Hardcoded strings -->
     <string name="estado_vigente">ACTIVE</string>
