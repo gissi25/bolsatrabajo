@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.content.Context
+import androidx.core.content.edit
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -62,7 +63,7 @@ class DashboardFragment : Fragment() {
         btnInsertScript = view.findViewById(R.id.btnInsertScript)
         btnOverflow = view.findViewById(R.id.btnOverflow)
 
-        val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
         val username = prefs.getString(Constants.KEY_USERNAME, "")
         toolbar.title = getString(R.string.welcome_user, username)
         toolbar.post {
@@ -126,7 +127,7 @@ class DashboardFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         etSearch.setText("")
-        val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
         val role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
         viewModel.loadTables(role)
     }
@@ -222,8 +223,8 @@ class DashboardFragment : Fragment() {
             .setTitle(R.string.logout)
             .setMessage(R.string.logout_confirm_message)
             .setPositiveButton(R.string.yes) { _, _ ->
-                val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
-                prefs.edit().clear().apply()
+                val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
+                prefs.edit { clear() }
                 findNavController().navigate(R.id.action_dashboard_to_login)
             }
             .setNegativeButton(R.string.no, null)

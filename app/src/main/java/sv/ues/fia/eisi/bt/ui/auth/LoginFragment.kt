@@ -72,14 +72,14 @@ class LoginFragment : Fragment() {
         viewModel.loginResult.observe(viewLifecycleOwner) { result ->
             result.onSuccess { usuario ->
                 if (usuario != null) {
-                    saveSession(usuario.id_usuario, usuario.username, usuario.rol)
+                    saveSession(usuario.idUsuario, usuario.username, usuario.rol)
                     findNavController().navigate(R.id.action_login_to_dashboard)
                 } else {
                     StyledToast.show(requireContext(), getString(R.string.usuario_o_contrasena_incorrectos))
                 }
             }
             result.onFailure { exception ->
-                StyledToast.show(requireContext(), TriggerErrorTranslator.translate(exception.message, requireContext()) ?: getString(R.string.error_inicio_sesion))
+                StyledToast.show(requireContext(), TriggerErrorTranslator.translate(exception.message, requireContext()))
             }
         }
 

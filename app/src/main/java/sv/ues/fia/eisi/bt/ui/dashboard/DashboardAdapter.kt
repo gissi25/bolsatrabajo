@@ -99,7 +99,7 @@ class DashboardAdapter(
 
         fun bind(table: DashboardItem.Table) {
             tvTableName.text = itemView.context.getTableDisplayName(table.info.name)
-            tvRecordCount.text = "${table.info.count} ${itemView.context.getString(R.string.records)}"
+            tvRecordCount.text = String.format("%d %s", table.info.count, itemView.context.getString(R.string.records))
             if (table.isReadOnly) {
                 tvAccessBadge.visibility = View.VISIBLE
                 tvAccessBadge.text = itemView.context.getString(R.string.solo_lectura)
@@ -111,11 +111,9 @@ class DashboardAdapter(
 
     class DashboardDiffCallback : DiffUtil.ItemCallback<DashboardItem>() {
         override fun areItemsTheSame(oldItem: DashboardItem, newItem: DashboardItem): Boolean {
-            return when {
-                oldItem is DashboardItem.Section && newItem is DashboardItem.Section ->
-                    oldItem.sectionKey == newItem.sectionKey
-                oldItem is DashboardItem.Table && newItem is DashboardItem.Table ->
-                    oldItem.info.name == newItem.info.name
+            return when (oldItem) {
+                is DashboardItem.Section -> newItem is DashboardItem.Section && oldItem.sectionKey == newItem.sectionKey
+                is DashboardItem.Table -> newItem is DashboardItem.Table && oldItem.info.name == newItem.info.name
                 else -> false
             }
         }

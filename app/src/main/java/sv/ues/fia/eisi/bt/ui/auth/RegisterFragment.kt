@@ -15,14 +15,13 @@ import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import sv.ues.fia.eisi.bt.R
-import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.LocaleHelper
 import sv.ues.fia.eisi.bt.utils.StyledToast
 import sv.ues.fia.eisi.bt.utils.ThemeToggleHelper
 import sv.ues.fia.eisi.bt.utils.TriggerErrorTranslator
 import sv.ues.fia.eisi.bt.viewmodel.AuthViewModel
 
-class RegisterFragment : Fragment() {
+class   RegisterFragment : Fragment() {
 
     private val viewModel: AuthViewModel by viewModels()
     private lateinit var tilUsername: TextInputLayout
@@ -72,10 +71,10 @@ class RegisterFragment : Fragment() {
             val confirmPassword = etConfirmPassword.text.toString().trim()
             val rol = if (actvRol.text?.isNotBlank() == true) {
                 val selected = actvRol.text.toString().trim()
-                when {
-                    selected == getString(R.string.rol_postulante) -> "postulante"
-                    selected == getString(R.string.rol_empresa) -> "gerente de empresa"
-                    selected == getString(R.string.rol_admin) -> "administrador"
+                when (selected) {
+                    getString(R.string.rol_postulante) -> "postulante"
+                    getString(R.string.rol_empresa) -> "gerente de empresa"
+                    getString(R.string.rol_admin) -> "administrador"
                     else -> "postulante"
                 }
             } else "postulante"
@@ -102,7 +101,7 @@ class RegisterFragment : Fragment() {
                 }
             }
             result.onFailure { exception ->
-                StyledToast.show(requireContext(), TriggerErrorTranslator.translate(exception.message, requireContext()) ?: getString(R.string.error_registro))
+                StyledToast.show(requireContext(), TriggerErrorTranslator.translate(exception.message, requireContext()))
             }
         }
 

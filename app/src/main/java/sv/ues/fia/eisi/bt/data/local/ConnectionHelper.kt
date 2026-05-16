@@ -330,19 +330,23 @@ class ConnectionHelper(context: Context) :
         db.execSQL("""
             CREATE TRIGGER TR_POSTULANTE_EDAD BEFORE INSERT ON POSTULANTE
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN NEW.FECHA_NACIMIENTO > date('now')
-                THEN RAISE(ABORT, 'La fecha de nacimiento no puede ser futura') END;
-                SELECT CASE WHEN (strftime('%Y', 'now') - strftime('%Y', NEW.FECHA_NACIMIENTO)) < 18
-                THEN RAISE(ABORT, 'El postulante debe ser mayor de edad') END;
+                SELECT CASE
+                    WHEN NEW.FECHA_NACIMIENTO > date('now')
+                        THEN RAISE(ABORT, 'La fecha de nacimiento no puede ser futura')
+                    WHEN (strftime('%Y', 'now') - strftime('%Y', NEW.FECHA_NACIMIENTO)) < 18
+                        THEN RAISE(ABORT, 'El postulante debe ser mayor de edad')
+                END;
             END
         """)
         db.execSQL("""
             CREATE TRIGGER IF NOT EXISTS TR_POSTULANTE_EDAD_UPD BEFORE UPDATE ON POSTULANTE
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN NEW.FECHA_NACIMIENTO > date('now')
-                THEN RAISE(ABORT, 'La fecha de nacimiento no puede ser futura') END;
-                SELECT CASE WHEN (strftime('%Y', 'now') - strftime('%Y', NEW.FECHA_NACIMIENTO)) < 18
-                THEN RAISE(ABORT, 'El postulante debe ser mayor de edad') END;
+                SELECT CASE
+                    WHEN NEW.FECHA_NACIMIENTO > date('now')
+                        THEN RAISE(ABORT, 'La fecha de nacimiento no puede ser futura')
+                    WHEN (strftime('%Y', 'now') - strftime('%Y', NEW.FECHA_NACIMIENTO)) < 18
+                        THEN RAISE(ABORT, 'El postulante debe ser mayor de edad')
+                END;
             END
         """)
 
@@ -370,20 +374,24 @@ class ConnectionHelper(context: Context) :
         db.execSQL("""
             CREATE TRIGGER TR_OFERTA_RANGO_EDAD BEFORE INSERT ON OFERTA_TRABAJO
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN NEW.EDAD_MINIMA < 18
-                THEN RAISE(ABORT, 'Edad minima debe ser mayor o igual a 18') END;
-                SELECT CASE WHEN NEW.EDAD_MINIMA > NEW.EDAD_MAXIMA
-                THEN RAISE(ABORT, 'Edad minima no puede ser mayor a la maxima') END;
+                SELECT CASE
+                    WHEN NEW.EDAD_MINIMA < 18
+                        THEN RAISE(ABORT, 'Edad minima debe ser mayor o igual a 18')
+                    WHEN NEW.EDAD_MINIMA > NEW.EDAD_MAXIMA
+                        THEN RAISE(ABORT, 'Edad minima no puede ser mayor a la maxima')
+                END;
             END
         """)
         db.execSQL("DROP TRIGGER IF EXISTS TR_OFERTA_RANGO_EDAD_UPD")
         db.execSQL("""
             CREATE TRIGGER IF NOT EXISTS TR_OFERTA_RANGO_EDAD_UPD BEFORE UPDATE ON OFERTA_TRABAJO
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN NEW.EDAD_MINIMA < 18
-                THEN RAISE(ABORT, 'Edad minima debe ser mayor o igual a 18') END;
-                SELECT CASE WHEN NEW.EDAD_MINIMA > NEW.EDAD_MAXIMA
-                THEN RAISE(ABORT, 'Edad minima no puede ser mayor a la maxima') END;
+                SELECT CASE
+                    WHEN NEW.EDAD_MINIMA < 18
+                        THEN RAISE(ABORT, 'Edad minima debe ser mayor o igual a 18')
+                    WHEN NEW.EDAD_MINIMA > NEW.EDAD_MAXIMA
+                        THEN RAISE(ABORT, 'Edad minima no puede ser mayor a la maxima')
+                END;
             END
         """)
 
@@ -435,35 +443,39 @@ class ConnectionHelper(context: Context) :
         db.execSQL("""
             CREATE TRIGGER TR_CERTIFICACION_FECHAS BEFORE INSERT ON CERTIFICACION
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
-                THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin') END;
-                SELECT CASE WHEN NEW.FECHA_INICIO > date('now')
-                THEN RAISE(ABORT, 'Fecha inicio no puede ser una fecha futura') END;
-                SELECT CASE WHEN NEW.FECHA_FIN > date('now')
-                THEN RAISE(ABORT, 'Fecha fin no puede ser una fecha futura') END;
-                SELECT CASE WHEN NEW.FECHA_CERTIFICACION < NEW.FECHA_FIN
-                THEN RAISE(ABORT, 'Fecha de certificacion no puede ser menor a la fecha fin del periodo') END;
-                SELECT CASE WHEN NEW.FECHA_CERTIFICACION > date(NEW.FECHA_FIN, '+1 years')
-                THEN RAISE(ABORT, 'Fecha de certificacion no puede exceder un año despues de la fecha fin del periodo') END;
-                SELECT CASE WHEN NEW.FECHA_CERTIFICACION > date('now')
-                THEN RAISE(ABORT, 'Fecha de certificacion no puede ser una fecha futura') END;
+                SELECT CASE
+                    WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
+                        THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin')
+                    WHEN NEW.FECHA_INICIO > date('now')
+                        THEN RAISE(ABORT, 'Fecha inicio no puede ser una fecha futura')
+                    WHEN NEW.FECHA_FIN > date('now')
+                        THEN RAISE(ABORT, 'Fecha fin no puede ser una fecha futura')
+                    WHEN NEW.FECHA_CERTIFICACION < NEW.FECHA_FIN
+                        THEN RAISE(ABORT, 'Fecha de certificacion no puede ser menor a la fecha fin del periodo')
+                    WHEN NEW.FECHA_CERTIFICACION > date(NEW.FECHA_FIN, '+1 years')
+                        THEN RAISE(ABORT, 'Fecha de certificacion no puede exceder un año despues de la fecha fin del periodo')
+                    WHEN NEW.FECHA_CERTIFICACION > date('now')
+                        THEN RAISE(ABORT, 'Fecha de certificacion no puede ser una fecha futura')
+                END;
             END
         """)
         db.execSQL("""
             CREATE TRIGGER IF NOT EXISTS TR_CERTIFICACION_FECHAS_UPD BEFORE UPDATE ON CERTIFICACION
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
-                THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin') END;
-                SELECT CASE WHEN NEW.FECHA_INICIO > date('now')
-                THEN RAISE(ABORT, 'Fecha inicio no puede ser una fecha futura') END;
-                SELECT CASE WHEN NEW.FECHA_FIN > date('now')
-                THEN RAISE(ABORT, 'Fecha fin no puede ser una fecha futura') END;
-                SELECT CASE WHEN NEW.FECHA_CERTIFICACION < NEW.FECHA_FIN
-                THEN RAISE(ABORT, 'Fecha de certificacion no puede ser menor a la fecha fin del periodo') END;
-                SELECT CASE WHEN NEW.FECHA_CERTIFICACION > date(NEW.FECHA_FIN, '+1 years')
-                THEN RAISE(ABORT, 'Fecha de certificacion no puede exceder un año despues de la fecha fin del periodo') END;
-                SELECT CASE WHEN NEW.FECHA_CERTIFICACION > date('now')
-                THEN RAISE(ABORT, 'Fecha de certificacion no puede ser una fecha futura') END;
+                SELECT CASE
+                    WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
+                        THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin')
+                    WHEN NEW.FECHA_INICIO > date('now')
+                        THEN RAISE(ABORT, 'Fecha inicio no puede ser una fecha futura')
+                    WHEN NEW.FECHA_FIN > date('now')
+                        THEN RAISE(ABORT, 'Fecha fin no puede ser una fecha futura')
+                    WHEN NEW.FECHA_CERTIFICACION < NEW.FECHA_FIN
+                        THEN RAISE(ABORT, 'Fecha de certificacion no puede ser menor a la fecha fin del periodo')
+                    WHEN NEW.FECHA_CERTIFICACION > date(NEW.FECHA_FIN, '+1 years')
+                        THEN RAISE(ABORT, 'Fecha de certificacion no puede exceder un año despues de la fecha fin del periodo')
+                    WHEN NEW.FECHA_CERTIFICACION > date('now')
+                        THEN RAISE(ABORT, 'Fecha de certificacion no puede ser una fecha futura')
+                END;
             END
         """)
 
@@ -471,35 +483,39 @@ class ConnectionHelper(context: Context) :
         db.execSQL("""
             CREATE TRIGGER TR_FORMACION_FECHAS BEFORE INSERT ON FORMACION_ACADEMICA
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
-                THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin') END;
-                SELECT CASE WHEN NEW.FECHA_INICIO > date('now')
-                THEN RAISE(ABORT, 'Fecha inicio no puede ser una fecha futura') END;
-                SELECT CASE WHEN NEW.FECHA_FIN > date('now')
-                THEN RAISE(ABORT, 'Fecha fin no puede ser una fecha futura') END;
-                SELECT CASE WHEN NEW.FECHA_OBTENCION < NEW.FECHA_FIN
-                THEN RAISE(ABORT, 'Fecha de obtencion no puede ser menor a la fecha fin del periodo') END;
-                SELECT CASE WHEN NEW.FECHA_OBTENCION > date(NEW.FECHA_FIN, '+1 years')
-                THEN RAISE(ABORT, 'Fecha de obtencion no puede exceder un año despues de la fecha fin del periodo') END;
-                SELECT CASE WHEN NEW.FECHA_OBTENCION > date('now')
-                THEN RAISE(ABORT, 'Fecha de obtencion no puede ser una fecha futura') END;
+                SELECT CASE
+                    WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
+                        THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin')
+                    WHEN NEW.FECHA_INICIO > date('now')
+                        THEN RAISE(ABORT, 'Fecha inicio no puede ser una fecha futura')
+                    WHEN NEW.FECHA_FIN > date('now')
+                        THEN RAISE(ABORT, 'Fecha fin no puede ser una fecha futura')
+                    WHEN NEW.FECHA_OBTENCION < NEW.FECHA_FIN
+                        THEN RAISE(ABORT, 'Fecha de obtencion no puede ser menor a la fecha fin del periodo')
+                    WHEN NEW.FECHA_OBTENCION > date(NEW.FECHA_FIN, '+1 years')
+                        THEN RAISE(ABORT, 'Fecha de obtencion no puede exceder un año despues de la fecha fin del periodo')
+                    WHEN NEW.FECHA_OBTENCION > date('now')
+                        THEN RAISE(ABORT, 'Fecha de obtencion no puede ser una fecha futura')
+                END;
             END
         """)
         db.execSQL("""
             CREATE TRIGGER IF NOT EXISTS TR_FORMACION_FECHAS_UPD BEFORE UPDATE ON FORMACION_ACADEMICA
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
-                THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin') END;
-                SELECT CASE WHEN NEW.FECHA_INICIO > date('now')
-                THEN RAISE(ABORT, 'Fecha inicio no puede ser una fecha futura') END;
-                SELECT CASE WHEN NEW.FECHA_FIN > date('now')
-                THEN RAISE(ABORT, 'Fecha fin no puede ser una fecha futura') END;
-                SELECT CASE WHEN NEW.FECHA_OBTENCION < NEW.FECHA_FIN
-                THEN RAISE(ABORT, 'Fecha de obtencion no puede ser menor a la fecha fin del periodo') END;
-                SELECT CASE WHEN NEW.FECHA_OBTENCION > date(NEW.FECHA_FIN, '+1 years')
-                THEN RAISE(ABORT, 'Fecha de obtencion no puede exceder un año despues de la fecha fin del periodo') END;
-                SELECT CASE WHEN NEW.FECHA_OBTENCION > date('now')
-                THEN RAISE(ABORT, 'Fecha de obtencion no puede ser una fecha futura') END;
+                SELECT CASE
+                    WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
+                        THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin')
+                    WHEN NEW.FECHA_INICIO > date('now')
+                        THEN RAISE(ABORT, 'Fecha inicio no puede ser una fecha futura')
+                    WHEN NEW.FECHA_FIN > date('now')
+                        THEN RAISE(ABORT, 'Fecha fin no puede ser una fecha futura')
+                    WHEN NEW.FECHA_OBTENCION < NEW.FECHA_FIN
+                        THEN RAISE(ABORT, 'Fecha de obtencion no puede ser menor a la fecha fin del periodo')
+                    WHEN NEW.FECHA_OBTENCION > date(NEW.FECHA_FIN, '+1 years')
+                        THEN RAISE(ABORT, 'Fecha de obtencion no puede exceder un año despues de la fecha fin del periodo')
+                    WHEN NEW.FECHA_OBTENCION > date('now')
+                        THEN RAISE(ABORT, 'Fecha de obtencion no puede ser una fecha futura')
+                END;
             END
         """)
 
@@ -518,10 +534,6 @@ class ConnectionHelper(context: Context) :
                 THEN RAISE(ABORT, 'Nivel de destreza debe ser Basico, Intermedio o Avanzado') END;
             END
         """)
-
-
-
-
 
         // ================================================================
         // TRIGGERS DE INTEGRIDAD REFERENCIAL (5)
@@ -595,23 +607,27 @@ class ConnectionHelper(context: Context) :
         db.execSQL("""
             CREATE TRIGGER TR_POSTULANTE_FK BEFORE INSERT ON POSTULANTE
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN (SELECT 1 FROM GENERO WHERE ID_GENERO = NEW.ID_GENERO) IS NULL
-                THEN RAISE(ABORT, 'El genero asociado no existe') END;
-                SELECT CASE WHEN (SELECT 1 FROM TIPO_DOCUMENTO WHERE ID_TIPO_DOCUMENTO = NEW.ID_TIPO_DOCUMENTO) IS NULL
-                THEN RAISE(ABORT, 'El tipo de documento asociado no existe') END;
-                SELECT CASE WHEN NEW.ID_GRADO_ACADEMICO IS NOT NULL AND (SELECT 1 FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO) IS NULL
-                THEN RAISE(ABORT, 'El grado academico asociado no existe') END;
+                SELECT CASE
+                    WHEN (SELECT 1 FROM GENERO WHERE ID_GENERO = NEW.ID_GENERO) IS NULL
+                        THEN RAISE(ABORT, 'El genero asociado no existe')
+                    WHEN (SELECT 1 FROM TIPO_DOCUMENTO WHERE ID_TIPO_DOCUMENTO = NEW.ID_TIPO_DOCUMENTO) IS NULL
+                        THEN RAISE(ABORT, 'El tipo de documento asociado no existe')
+                    WHEN NEW.ID_GRADO_ACADEMICO IS NOT NULL AND (SELECT 1 FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO) IS NULL
+                        THEN RAISE(ABORT, 'El grado academico asociado no existe')
+                END;
             END
         """)
         db.execSQL("""
             CREATE TRIGGER IF NOT EXISTS TR_POSTULANTE_FK_UPD BEFORE UPDATE ON POSTULANTE
             FOR EACH ROW BEGIN
-                SELECT CASE WHEN (SELECT 1 FROM GENERO WHERE ID_GENERO = NEW.ID_GENERO) IS NULL
-                THEN RAISE(ABORT, 'El genero asociado no existe') END;
-                SELECT CASE WHEN (SELECT 1 FROM TIPO_DOCUMENTO WHERE ID_TIPO_DOCUMENTO = NEW.ID_TIPO_DOCUMENTO) IS NULL
-                THEN RAISE(ABORT, 'El tipo de documento asociado no existe') END;
-                SELECT CASE WHEN NEW.ID_GRADO_ACADEMICO IS NOT NULL AND (SELECT 1 FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO) IS NULL
-                THEN RAISE(ABORT, 'El grado academico asociado no existe') END;
+                SELECT CASE
+                    WHEN (SELECT 1 FROM GENERO WHERE ID_GENERO = NEW.ID_GENERO) IS NULL
+                        THEN RAISE(ABORT, 'El genero asociado no existe')
+                    WHEN (SELECT 1 FROM TIPO_DOCUMENTO WHERE ID_TIPO_DOCUMENTO = NEW.ID_TIPO_DOCUMENTO) IS NULL
+                        THEN RAISE(ABORT, 'El tipo de documento asociado no existe')
+                    WHEN NEW.ID_GRADO_ACADEMICO IS NOT NULL AND (SELECT 1 FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO) IS NULL
+                        THEN RAISE(ABORT, 'El grado academico asociado no existe')
+                END;
             END
         """)
 
