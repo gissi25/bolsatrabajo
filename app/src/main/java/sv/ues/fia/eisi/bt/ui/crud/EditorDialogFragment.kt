@@ -344,7 +344,16 @@ class EditorDialogFragment : DialogFragment() {
         }
 
         val includeExpired = fkRef.refTable == "OFERTA_TRABAJO" && tableName == "DETALLE_REQUISITO"
-        val options = if (!parentId.isNullOrBlank() && filterColumn != null) {
+        val options = if (tableName == Constants.TABLE_HABILIDAD_POSTULANTE && column == "ID_HABILIDAD") {
+            if (!parentId.isNullOrBlank()) {
+                viewModel.getFilteredOptions(
+                    fkRef.refTable, "ID_CATEGORIA_HABILIDAD", parentId!!,
+                    fkRef.refDisplayColumn, includeExpired
+                )
+            } else {
+                emptyList<Pair<String, String>>()
+            }
+        } else if (!parentId.isNullOrBlank() && filterColumn != null) {
             viewModel.getFilteredOptions(fkRef.refTable, filterColumn, parentId, fkRef.refDisplayColumn, includeExpired)
         } else {
             viewModel.getDropdownOptions(fkRef.refTable, fkRef.refDisplayColumn)
@@ -373,7 +382,8 @@ class EditorDialogFragment : DialogFragment() {
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
         autoComplete.setAdapter(adapter)
 
-        autoComplete.setOnTouchListener { _, event ->
+        autoComplete.setOnTouchListener { v, event ->
+            if (!v.isEnabled) return@setOnTouchListener false
             if (event.action == android.view.MotionEvent.ACTION_UP) {
                 autoComplete.showDropDown()
                 autoComplete.performClick()
@@ -391,7 +401,12 @@ class EditorDialogFragment : DialogFragment() {
 
         autoComplete.setOnItemClickListener { _, _, _, _ ->
             if (column == "ID_DEPARTAMENTO") refreshDependentDropdown("ID_MUNICIPIO")
-            if (column == "ID_CATEGORIA_HABILIDAD") refreshDependentDropdown("ID_HABILIDAD")
+            if (column == "ID_CATEGORIA_HABILIDAD") {
+                refreshDependentDropdown("ID_HABILIDAD")
+                if (tableName == Constants.TABLE_HABILIDAD_POSTULANTE) {
+                    updateHabilidadPostulanteDropdownState()
+                }
+            }
             if (column == "NIT" && (tableName == "POSTULACION" || tableName == "DETALLE_REQUISITO")) refreshDependentDropdown("ID_OFERTA")
             if (column == "ID_DISTRITO_DEPTO") refreshDependentDropdown("ID_DISTRITO_MUNICIPIO")
             if (column == "ID_DISTRITO_MUNICIPIO") refreshDependentDropdown("ID_DISTRITO_ID")
@@ -405,12 +420,23 @@ class EditorDialogFragment : DialogFragment() {
                     refreshNumDocHintAndValidation()
                     textFields[numDocColumnIndex]?.second?.setText("")
                 }
+                if (tableName == Constants.TABLE_HABILIDAD_POSTULANTE && column == "ID_CATEGORIA_HABILIDAD") {
+                    if (isCategoriaHabilidadSelected()) {
+                        refreshDependentDropdown("ID_HABILIDAD")
+                    } else {
+                        updateHabilidadPostulanteDropdownState()
+                    }
+                }
             }
         })
 
         til.addView(autoComplete)
         tilFieldsContainer.addView(til)
         dropDownFields[colIndex] = Pair(column, autoComplete)
+
+        if (tableName == Constants.TABLE_HABILIDAD_POSTULANTE && column == "ID_HABILIDAD") {
+            updateHabilidadPostulanteDropdownState()
+        }
 
         if (tableName == "DISTRITO" && column == "ID_MUNICIPIO") {
             distritoMunicipioAutoComplete = autoComplete
@@ -1090,6 +1116,30 @@ class EditorDialogFragment : DialogFragment() {
         }
     }
 
+    private fun getCategoriaHabilidadAutoComplete(): MaterialAutoCompleteTextView? {
+        if (tableName != Constants.TABLE_HABILIDAD_POSTULANTE) return null
+        return dropDownFields.values.find { it.first == "ID_CATEGORIA_HABILIDAD" }?.second
+    }
+
+    private fun isCategoriaHabilidadSelected(): Boolean {
+        return getSelectedDropdownValue(getCategoriaHabilidadAutoComplete()) != null
+    }
+
+    private fun updateHabilidadPostulanteDropdownState() {
+        if (tableName != Constants.TABLE_HABILIDAD_POSTULANTE) return
+        val habilidadAutoComplete = dropDownFields.values.find { it.first == "ID_HABILIDAD" }?.second ?: return
+        val categorySelected = isCategoriaHabilidadSelected()
+        habilidadAutoComplete.isEnabled = categorySelected
+        habilidadAutoComplete.isFocusable = categorySelected
+        habilidadAutoComplete.isClickable = categorySelected
+        if (!categorySelected) {
+            habilidadAutoComplete.setText("", false)
+            habilidadAutoComplete.setAdapter(
+                ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, emptyList<String>())
+            )
+        }
+    }
+
     private fun refreshDependentDropdown(childColumn: String) {
         val childInfo = dropDownFields.values.find { it.first == childColumn } ?: return
         val childAutoComplete = childInfo.second
@@ -1123,13 +1173,20 @@ class EditorDialogFragment : DialogFragment() {
         }
 
         val parentAutoComplete = dropDownFields.values.find { it.first == parentFkColumn }?.second
-        var parentId = getSelectedDropdownValue(parentAutoComplete) ?: return
+        val parentId = getSelectedDropdownValue(parentAutoComplete)
+        if (parentId == null) {
+            if (tableName == Constants.TABLE_HABILIDAD_POSTULANTE && childColumn == "ID_HABILIDAD") {
+                updateHabilidadPostulanteDropdownState()
+            }
+            return
+        }
 
+        var filterParentId = parentId
         if (childColumn == "ID_DISTRITO_ID") {
             val deptoAutoComplete = dropDownFields.values.find { it.first == "ID_DISTRITO_DEPTO" }?.second
             val deptoId = getSelectedDropdownValue(deptoAutoComplete)
             if (deptoId != null) {
-                parentId = "$deptoId|$parentId"
+                filterParentId = "$deptoId|$parentId"
             }
         }
 
@@ -1137,7 +1194,7 @@ class EditorDialogFragment : DialogFragment() {
         val newOptions = viewModel.getFilteredOptions(
             childFkRef.refTable,
             actualFilterColumn,
-            parentId,
+            filterParentId,
             childFkRef.refDisplayColumn,
             includeExpired
         )
@@ -1148,6 +1205,10 @@ class EditorDialogFragment : DialogFragment() {
         )
         childAutoComplete.setText("", false)
         childTil.hint = getHintText(childColumn)
+
+        if (tableName == Constants.TABLE_HABILIDAD_POSTULANTE && childColumn == "ID_HABILIDAD") {
+            updateHabilidadPostulanteDropdownState()
+        }
     }
 
     private fun createTextInputField(idx: Int, column: String, colIndex: Int) {
