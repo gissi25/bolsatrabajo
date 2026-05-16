@@ -883,18 +883,14 @@ class MainRepository(private val context: Context) {
         if (childTable == "HABILIDAD") {
             return try {
                 val cursor = getDb().rawQuery(
-                    "SELECT h.ID_HABILIDAD, h.NOMBRE_HABILIDAD, c.NOMBRE_CATEGORIA FROM HABILIDAD h " +
-                    "LEFT JOIN CATEGORIA_HABILIDAD c ON h.ID_CATEGORIA_HABILIDAD = c.ID_CATEGORIA_HABILIDAD " +
-                    "WHERE h.$childFkColumn = ?",
+                    "SELECT h.ID_HABILIDAD, h.NOMBRE_HABILIDAD FROM HABILIDAD h WHERE h.$childFkColumn = ?",
                     arrayOf(parentId)
                 )
                 val options = mutableListOf<Pair<String, String>>()
                 while (cursor.moveToNext()) {
                     val id = cursor.getString(0) ?: ""
                     val nombre = cursor.getString(1) ?: ""
-                    val categoria = cursor.getString(2) ?: context.getString(R.string.fallback_sin_categoria)
-                    val display = "[$categoria] $nombre"
-                    options.add(Pair(id, display))
+                    options.add(Pair(id, nombre))
                 }
                 cursor.close()
                 options
