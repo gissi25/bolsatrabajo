@@ -1061,8 +1061,9 @@ class EditorDialogFragment : DialogFragment() {
         // 3. Aplicar Filtros estrictos de caracteres y longitud
         val filters = mutableListOf<InputFilter>()
         val maxLength = when (tipo) {
-            "DUI" -> 10 // 8 digitos + guion + 1 digito
-            "NIT" -> 17 // Formato completo con guiones
+            "DUI" -> 10
+            "NIT" -> 17
+            "PASAPORTE" -> 15
             else -> 17
         }
         filters.add(InputFilter.LengthFilter(maxLength))
@@ -1310,7 +1311,7 @@ class EditorDialogFragment : DialogFragment() {
                 null
             })
         }
-        if (column == "CONTACTO_DIRECTO") {
+        if (column == "CONTACTO_DIRECTO" || column == "CONTACTO_REFERENCIA" || column.contains("TELEFONO") || column.contains("TEL")) {
             filters.add(InputFilter { source, start, end, _, _, _ ->
                 for (i in start until end) { if (!source[i].isDigit() && source[i] != '-') return@InputFilter "" }
                 null
@@ -1484,6 +1485,10 @@ class EditorDialogFragment : DialogFragment() {
             column.contains("EMAIL") -> InputMaskUtils.validateEmail(requireContext(), value)
             column.contains("PASSWORD") || column.contains("CONTRA") -> InputMaskUtils.validatePassword(requireContext(), value)
             column.contains("FECHA") -> InputMaskUtils.validateFecha(requireContext(), value)
+            column.contains("NUM_DOCUMENTO") || column.contains("DOCUMENTO") -> {
+                val docType = getSelectedDocType()
+                if (docType != null) InputMaskUtils.validateNumDocumento(requireContext(), value, docType) else null
+            }
             else -> null
         }
     }
@@ -1654,6 +1659,24 @@ class EditorDialogFragment : DialogFragment() {
                 else -> {
                     val et = textFields.values.find { it.first == col }?.second
                     val textValue = et?.text?.toString()?.trim() ?: ""
+
+                    if (col.contains("NUM_DOCUMENTO") || col.contains("DOCUMENTO")) {
+                        val docType = getSelectedDocType()
+                        if (docType != null) {
+                            val docError = InputMaskUtils.validateNumDocumento(requireContext(), textValue, docType)
+                            if (docError != null) {
+                                var parent = et?.parent
+                                while (parent != null && parent !is TextInputLayout) {
+                                    parent = parent.parent
+                                }
+                                if (parent is TextInputLayout) {
+                                    parent.error = docError
+                                }
+                                StyledToast.show(requireContext(), docError)
+                                return
+                            }
+                        }
+                    }
 
                     val errorMsg = ValidationRules.validate(requireContext(), tableName, col, textValue)
 

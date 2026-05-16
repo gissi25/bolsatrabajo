@@ -409,6 +409,9 @@
     <string name="validation_password_min" formatted="false">Mínimo %1$d caracteres</string>
     <string name="validation_email_invalid">E-mail inválido</string>
     <string name="validation_date_format">Formato: AAAA-MM-DD</string>
+    <string name="validation_dui_format">O DUI deve ter o formato ########-#</string>
+    <string name="validation_nit_format">O NIT deve ter o formato ####-######-###-#</string>
+    <string name="validation_pasaporte_format">O passaporte deve ter entre 6 e 15 caracteres alfanumericos</string>
 
     <!-- Seed data messages -->
     <string name="seed_inserted">Dados inseridos com sucesso</string>
