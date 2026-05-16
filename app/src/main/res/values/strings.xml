@@ -222,7 +222,7 @@
     <string name="hint_codigo_oferta_academica">Código oferta académica</string>
     <string name="hint_titulo_obtenido">Título obtenido</string>
     <string name="hint_fecha_obtencion">Fecha de obtención</string>
-    <string name="hint_codigo_habilidad">Código habilidad</string>
+    <string name="hint_codigo_habilidad">Habilidad</string>
     <string name="hint_nivel_destreza">Nivel de destreza</string>
     <string name="hint_codigo_postulacion">Código postulación</string>
     <string name="hint_fecha_aplicacion">Fecha de aplicación</string>
