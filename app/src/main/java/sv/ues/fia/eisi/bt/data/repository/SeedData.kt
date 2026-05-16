@@ -45,7 +45,7 @@ object SeedData {
     )
 
     val REDES_SOCIALES = listOf(
-        "GitHub", "Steam", "LinkedIn", "Discord", "X (Twitter)"
+        "GitHub", "Facebook", "LinkedIn", "Discord", "X (Twitter)", "Instagram"
     )
 
     val INSTITUCIONES = listOf(
