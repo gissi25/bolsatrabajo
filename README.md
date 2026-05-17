@@ -1478,21 +1478,21 @@ Cada inserción pasa por **3 capas de validación**:
 
 ### 14.1 Tablas y Registros
 
-| # | Tabla | Registros |
-|---|-------|-----------|
-| 1 | DEPARTAMENTO | 14 departamentos de El Salvador |
-| 2 | GENERO | 5 géneros |
-| 3 | CATEGORIA_HABILIDAD | 5 categorías |
-| 4 | GRADO_ACADEMICO | 7 grados (Bachiller a Doctorado) |
-| 5 | RED_SOCIAL | 5 redes (GitHub, Steam, LinkedIn, Discord, X) |
-| 6 | TIPO_CERTIFICACION | 5 tipos |
-| 7 | INSTITUCION | 6 instituciones |
-| 8 | TIPO_DOCUMENTO | 3 tipos (DUI, NIT, Pasaporte) |
-| 9 | MUNICIPIO | 44 municipios |
-| 10 | DISTRITO | 262 distritos |
-| 11 | HABILIDAD | 15 habilidades (3 por categoría) |
-| 12 | EMPRESA | 10 empresas |
-| 13 | OFERTA_ACADEMICA | 5 ofertas académicas |
+| # | Tabla | Registros                                                |
+|---|-------|----------------------------------------------------------|
+| 1 | DEPARTAMENTO | 14 departamentos de El Salvador                          |
+| 2 | GENERO | 5 géneros                                                |
+| 3 | CATEGORIA_HABILIDAD | 5 categorías                                             |
+| 4 | GRADO_ACADEMICO | 7 grados (Bachiller a Doctorado)                         |
+| 5 | RED_SOCIAL | 6 redes (GitHub, Facebook, LinkedIn, Discord, X, Instagram) |
+| 6 | TIPO_CERTIFICACION | 5 tipos                                                  |
+| 7 | INSTITUCION | 6 instituciones                                          |
+| 8 | TIPO_DOCUMENTO | 3 tipos (DUI, NIT, Pasaporte)                            |
+| 9 | MUNICIPIO | 44 municipios                                            |
+| 10 | DISTRITO | 262 distritos                                            |
+| 11 | HABILIDAD | 15 habilidades (3 por categoría)                         |
+| 12 | EMPRESA | 10 empresas                                              |
+| 13 | OFERTA_ACADEMICA | 5 ofertas académicas                                     |
 
 ### 14.2 Verificación de Seguridad
 

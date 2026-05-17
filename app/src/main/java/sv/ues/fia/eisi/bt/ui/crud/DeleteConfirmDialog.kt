@@ -9,6 +9,7 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.DialogFragment
+import androidx.core.graphics.toColorInt
 import androidx.lifecycle.Observer
 import androidx.fragment.app.viewModels
 import com.google.android.material.button.MaterialButton
@@ -41,7 +42,7 @@ class DeleteConfirmDialog : DialogFragment() {
         dialog?.setCanceledOnTouchOutside(false)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val context = requireContext()
         val layout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -101,7 +102,7 @@ class DeleteConfirmDialog : DialogFragment() {
         val btnDelete = MaterialButton(context).apply {
             text = context.getString(R.string.delete)
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-            setBackgroundColor(android.graphics.Color.parseColor("#D32F2F"))
+            setBackgroundColor("#D32F2F".toColorInt())
             setTextColor(android.graphics.Color.WHITE)
             setOnClickListener { performDelete() }
         }
@@ -195,7 +196,7 @@ class DeleteConfirmDialog : DialogFragment() {
         val btnDelete = MaterialButton(requireContext()).apply {
             text = getString(R.string.delete)
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-            setBackgroundColor(android.graphics.Color.parseColor("#D32F2F"))
+            setBackgroundColor("#D32F2F".toColorInt())
             setTextColor(android.graphics.Color.WHITE)
             setOnClickListener { performDelete() }
         }
@@ -204,7 +205,7 @@ class DeleteConfirmDialog : DialogFragment() {
     }
 
     private fun showCannotDeleteDialog(
-        deps: List<MainRepository.DependencyInfo>,
+        @Suppress("UNUSED_PARAMETER") deps: List<MainRepository.DependencyInfo>,
         titleTv: TextView,
         depsLayout: LinearLayout,
         buttonsLayout: LinearLayout
@@ -236,7 +237,7 @@ class DeleteConfirmDialog : DialogFragment() {
     private fun performDelete() {
         if (isLoading) return
 
-        val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
         val role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_POSTULANTE) ?: Constants.ROLE_POSTULANTE
         val access = Constants.getRoleTables(role)[tableName] ?: Constants.AccessLevel.NONE
         if (access != Constants.AccessLevel.FULL) {

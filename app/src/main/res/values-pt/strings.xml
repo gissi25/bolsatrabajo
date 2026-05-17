@@ -69,7 +69,7 @@
     <string name="debe_seleccionar_estado">Você deve selecionar um status</string>
     <string name="no_hay_datos_en">Não há dados em %s. Crie-os primeiro.</string>
     <string name="debe_seleccionar">Você deve selecionar %s</string>
-    <string name="seleccione_opcion_valida">Selecione uma opção válida de %s: %s</string>
+    <string name="seleccione_opcion_valida" formatted="false">Selecione uma opção válida de %s: %s</string>
     <string name="contrasena_bloqueada">Senha (bloqueada)</string>
     <string name="ver_tabla">Ver %s</string>
     <string name="editar_tabla">Editar %s</string>
@@ -84,13 +84,13 @@
 
     <!-- Field validation -->
     <string name="obligatorio">%s é obrigatório</string>
-    <string name="minimo_caracteres">%s deve ter pelo menos %d caracteres</string>
-    <string name="maximo_caracteres">%s não deve exceder %d caracteres</string>
+    <string name="minimo_caracteres" formatted="false">%s deve ter pelo menos %d caracteres</string>
+    <string name="maximo_caracteres" formatted="false">%s não deve exceder %d caracteres</string>
     <string name="formato_invalido">%s tem um formato inválido</string>
     <string name="fecha_futura">%s não pode ser uma data futura</string>
     <string name="debe_ser_numero">%s deve ser um número</string>
-    <string name="debe_ser_mayor_igual">%s deve ser maior ou igual a %d</string>
-    <string name="debe_ser_menor_igual">%s deve ser menor ou igual a %d</string>
+    <string name="debe_ser_mayor_igual" formatted="false">%s deve ser maior ou igual a %d</string>
+    <string name="debe_ser_menor_igual" formatted="false">%s deve ser menor ou igual a %d</string>
 
     <!-- Hardcoded strings -->
     <string name="estado_vigente">VIGENTE</string>
@@ -185,13 +185,14 @@
     <string name="hint_telefono_casa">Telefone casa</string>
     <string name="hint_telefono_celular">Telefone celular</string>
     <string name="hint_correo_electronico">E-mail</string>
-    <string name="hint_id_municipio">ID Município</string>
+    <string name="hint_id_municipio">Município</string>
     <string name="hint_nombre_categoria">Nome da categoria</string>
     <string name="hint_nombre_genero">Nome do gênero</string>
     <string name="hint_nombre_tipo">Nome do tipo</string>
     <string name="hint_nombre_departamento">Nome do departamento</string>
     <string name="hint_nombre_municipio">Nome do município</string>
     <string name="hint_nombre_distrito">Nome do distrito</string>
+    <string name="hint_distrito_id">ID Distrito</string>
     <string name="hint_nombre_habilidad">Nome da habilidade</string>
     <string name="hint_categoria_habilidad">Categoria da habilidade</string>
     <string name="hint_nombre_empresa">Nome da empresa</string>
@@ -222,7 +223,7 @@
     <string name="hint_codigo_oferta_academica">Código oferta acadêmica</string>
     <string name="hint_titulo_obtenido">Título obtido</string>
     <string name="hint_fecha_obtencion">Data de obtenção</string>
-    <string name="hint_codigo_habilidad">Código da habilidade</string>
+    <string name="hint_codigo_habilidad">Habilidade</string>
     <string name="hint_nivel_destreza">Nível de destreza</string>
     <string name="hint_codigo_postulacion">Código da candidatura</string>
     <string name="hint_fecha_aplicacion">Data de aplicação</string>
@@ -409,6 +410,9 @@
     <string name="validation_password_min" formatted="false">Mínimo %1$d caracteres</string>
     <string name="validation_email_invalid">E-mail inválido</string>
     <string name="validation_date_format">Formato: AAAA-MM-DD</string>
+    <string name="validation_dui_format">O DUI deve ter o formato ########-#</string>
+    <string name="validation_nit_format">O NIT deve ter o formato ####-######-###-#</string>
+    <string name="validation_pasaporte_format">O passaporte deve ter entre 6 e 15 caracteres alfanumericos</string>
 
     <!-- Seed data messages -->
     <string name="seed_inserted">Dados inseridos com sucesso</string>

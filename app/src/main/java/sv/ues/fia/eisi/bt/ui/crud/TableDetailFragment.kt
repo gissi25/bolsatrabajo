@@ -165,7 +165,7 @@ class TableDetailFragment : Fragment() {
             tableName = tableName,
             canEdit = canEdit,
             canDelete = canDelete,
-            onEditClick = { item, position ->
+            onEditClick = { item, _ ->
                 showEditDialog(item, true)
             },
             onDeleteClick = { item, position ->
@@ -348,7 +348,7 @@ class TableDetailFragment : Fragment() {
                     val ofertaUri = CVExportUtil.getPdfUri(requireContext(), ofertaFile)
 
                     // DISEÑO MODERNO DEL MODAL DE RESULTADOS
-                    val resultLayout = LinearLayout(requireContext()).apply {
+                    LinearLayout(requireContext()).apply {
                         orientation = LinearLayout.VERTICAL
                         setPadding(70, 60, 70, 50)
                         gravity = Gravity.CENTER_HORIZONTAL
@@ -433,7 +433,7 @@ class TableDetailFragment : Fragment() {
                                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 })
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
                                 StyledToast.show(requireContext(), getString(R.string.error_sin_visor_pdf))
                             }
                         }
@@ -445,7 +445,7 @@ class TableDetailFragment : Fragment() {
                                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 })
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
                                 StyledToast.show(requireContext(), getString(R.string.error_sin_visor_pdf))
                             }
                         }
@@ -453,8 +453,9 @@ class TableDetailFragment : Fragment() {
                         btnCerrar.setOnClickListener { finalDialog.dismiss() }
 
                         finalDialog.setOnDismissListener {
+                            val oldPos = adapter.selectedPosition
                             adapter.selectedPosition = -1
-                            adapter.notifyDataSetChanged()
+                            if (oldPos != -1) adapter.notifyItemChanged(oldPos)
                             fabExport.isEnabled = false
                             fabExport.alpha = 0.4f
                         }
@@ -524,7 +525,7 @@ class TableDetailFragment : Fragment() {
         val labels = languages.map { it.first }.toTypedArray()
         val currentLang = LocaleHelper.getLanguage(requireContext())
 
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+        MaterialAlertDialogBuilder(requireContext())
             .setTitle(getString(R.string.idiomas))
             .setItems(labels) { _, which ->
                 val lang = languages[which].second

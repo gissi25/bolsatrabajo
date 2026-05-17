@@ -19,7 +19,7 @@ class MainRepository(private val context: Context) {
     private val dbHelper = ConnectionHelper(context)
     private var db: SQLiteDatabase? = null
 
-    data class Usuario(val id_usuario: Int, val username: String, val password: String, val rol: String)
+    data class Usuario(val idUsuario: Int, val username: String, val password: String, val rol: String)
 
     @Synchronized
     private fun getDb(): SQLiteDatabase {
@@ -93,11 +93,11 @@ class MainRepository(private val context: Context) {
         val columns = getColumnsForTable(tableName)
         val pkColumns = getPrimaryKeyColumns(tableName)
         return try {
-            val whereClause = pkColumns.map { col ->
+            val whereClause = pkColumns.joinToString(" AND ") { col ->
                 val idx = columns.indexOf(col)
                 val value = if (idx >= 0 && idx < rowData.size) rowData[idx] else ""
                 "$col = '$value'"
-            }.joinToString(" AND ")
+            }
             getDb().execSQL("DELETE FROM $tableName WHERE $whereClause")
             true
         } catch (e: android.database.sqlite.SQLiteException) {
@@ -208,19 +208,11 @@ class MainRepository(private val context: Context) {
 
     private fun getPrimaryKeyColumns(tableName: String): List<String> = Constants.getPrimaryKeyColumns(tableName)
 
-    private fun getAutoGenColumns(): Set<String> {
-        return setOf(
-            "ID_USUARIO", "ID_GENERO", "ID_TIPO_DOCUMENTO",
-            "ID_DEPARTAMENTO", "ID_GRADO_ACADEMICO", "ID_RED_SOCIAL",
-            "ID_CATEGORIA_HABILIDAD", "ID_TIPO_CERTIFICACION"
-        )
-    }
-
     private fun getAutoGenColumn(tableName: String): String? = Constants.getAutoGenColumn(tableName)
 
     fun insertRecord(tableName: String, values: List<Any>): Long {
         val idCol = getAutoGenColumn(tableName)
-        var columns = getColumnsForTable(tableName).filter { it != idCol }
+        val columns = getColumnsForTable(tableName).filter { it != idCol }
         val finalValues = values.toMutableList()
 
         android.util.Log.d("MainRepository", "Table: $tableName")
@@ -257,9 +249,9 @@ class MainRepository(private val context: Context) {
 
         val processedValues = finalValues.mapIndexed { i, v ->
             val col = columns.getOrNull(i) ?: ""
-            when {
-                col in lowerFields -> v.toString().lowercase()
-                col in upperFields -> v.toString().uppercase()
+            when (col) {
+                in lowerFields -> v.toString().lowercase()
+                in upperFields -> v.toString().uppercase()
                 else -> v
             }
         }
@@ -397,7 +389,7 @@ class MainRepository(private val context: Context) {
 
     fun updateRecord(tableName: String, id: Any, values: List<Any>): Int {
         val idCol = getAutoGenColumn(tableName)
-        var columns = getColumnsForTable(tableName).filter { it != idCol }
+        val columns = getColumnsForTable(tableName).filter { it != idCol }
         val finalValues = values.toMutableList()
 
         val lowerFields = setOf(
@@ -415,14 +407,14 @@ class MainRepository(private val context: Context) {
 
         val processedValues = finalValues.mapIndexed { i, v ->
             val col = columns.getOrNull(i) ?: ""
-            when {
-                col in lowerFields -> v.toString().lowercase()
-                col in upperFields -> v.toString().uppercase()
+            when (col) {
+                in lowerFields -> v.toString().lowercase()
+                in upperFields -> v.toString().uppercase()
                 else -> v
             }
         }
 
-        val setClause = columns.zip(processedValues).map { "${it.first} = '${it.second}'" }.joinToString(", ")
+        val setClause = columns.zip(processedValues).joinToString(", ") { "${it.first} = '${it.second}'" }
 
         val pkCols = getPrimaryKeyColumns(tableName)
         val idStr = id.toString()
@@ -480,7 +472,7 @@ class MainRepository(private val context: Context) {
                 cursor.close()
                 TableInfo(tableName, context.getTableDisplayName(tableName), count)
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             emptyList()
         }
     }
@@ -815,7 +807,7 @@ class MainRepository(private val context: Context) {
                 }
                 cursor.close()
                 options
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 emptyList()
             }
         }
@@ -840,7 +832,7 @@ class MainRepository(private val context: Context) {
                 }
                 cursor.close()
                 options
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 emptyList()
             }
         }
@@ -862,7 +854,7 @@ class MainRepository(private val context: Context) {
                 }
                 cursor.close()
                 options
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 emptyList()
             }
         }
@@ -877,12 +869,12 @@ class MainRepository(private val context: Context) {
                 val displayName = try {
                     val colIndex = cursor.getColumnIndex(displayColumn)
                     if (colIndex >= 0) cursor.getString(colIndex) ?: id else id
-                } catch (e: Exception) { id }
+                } catch (_: Exception) { id }
                 options.add(Pair(id, displayName))
             }
             cursor.close()
             options
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             emptyList()
         }
     }
@@ -891,22 +883,18 @@ class MainRepository(private val context: Context) {
         if (childTable == "HABILIDAD") {
             return try {
                 val cursor = getDb().rawQuery(
-                    "SELECT h.ID_HABILIDAD, h.NOMBRE_HABILIDAD, c.NOMBRE_CATEGORIA FROM HABILIDAD h " +
-                    "LEFT JOIN CATEGORIA_HABILIDAD c ON h.ID_CATEGORIA_HABILIDAD = c.ID_CATEGORIA_HABILIDAD " +
-                    "WHERE h.$childFkColumn = ?",
+                    "SELECT h.ID_HABILIDAD, h.NOMBRE_HABILIDAD FROM HABILIDAD h WHERE h.$childFkColumn = ?",
                     arrayOf(parentId)
                 )
                 val options = mutableListOf<Pair<String, String>>()
                 while (cursor.moveToNext()) {
                     val id = cursor.getString(0) ?: ""
                     val nombre = cursor.getString(1) ?: ""
-                    val categoria = cursor.getString(2) ?: context.getString(R.string.fallback_sin_categoria)
-                    val display = "[$categoria] $nombre"
-                    options.add(Pair(id, display))
+                    options.add(Pair(id, nombre))
                 }
                 cursor.close()
                 options
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 emptyList()
             }
         }
@@ -927,7 +915,7 @@ class MainRepository(private val context: Context) {
                 }
                 cursor.close()
                 options
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 emptyList()
             }
         }
@@ -951,7 +939,7 @@ class MainRepository(private val context: Context) {
                 }
                 cursor.close()
                 options
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 emptyList()
             }
         }
@@ -975,7 +963,7 @@ class MainRepository(private val context: Context) {
                 }
                 cursor.close()
                 options
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 emptyList()
             }
         }
@@ -997,17 +985,14 @@ class MainRepository(private val context: Context) {
                 }
                 cursor.close()
                 options
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 emptyList()
             }
         }
 
         val idColumn = when (childTable) {
-            "OFERTA_ACADEMICA" -> "ID_OFERTA_ACADEMICA"
             "OFERTA_TRABAJO" -> "ID_OFERTA"
-            "HABILIDAD" -> "ID_HABILIDAD"
             "EMPRESA" -> "NIT"
-            "POSTULANTE" -> "ID_POSTULANTE"
             "INSTITUCION" -> "ID_INSTITUCION"
             else -> getIdColumn(childTable)
         }
@@ -1030,7 +1015,7 @@ class MainRepository(private val context: Context) {
             }
             cursor.close()
             options
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             emptyList()
         }
     }
@@ -1073,7 +1058,7 @@ class MainRepository(private val context: Context) {
             val result = if (cursor.moveToFirst()) cursor.getString(0) else null
             cursor.close()
             result
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -1087,7 +1072,7 @@ class MainRepository(private val context: Context) {
             val result = if (cursor.moveToFirst()) cursor.getString(0) else null
             cursor.close()
             result
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -1138,7 +1123,7 @@ class MainRepository(private val context: Context) {
             )
             cursor.close()
             data
-        } catch (e: Exception) { null }
+        } catch (_: Exception) { null }
     }
 
     fun getOfertaFullData(nit: String, idOferta: String): OfertaFullData? {
@@ -1189,7 +1174,7 @@ class MainRepository(private val context: Context) {
             )
             cursor.close()
             data
-        } catch (e: Exception) { null }
+        } catch (_: Exception) { null }
     }
 
     private fun getFormacionesForPostulant(idPostulante: String): List<List<String>> {

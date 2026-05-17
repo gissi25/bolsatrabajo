@@ -37,10 +37,10 @@ object ValidationRules {
                 "ID_GENERO" to FieldRule(field = "ID_GENERO", required = true, friendlyNameResId = R.string.friendly_nombre_genero),
                 "ID_TIPO_DOCUMENTO" to FieldRule(field = "ID_TIPO_DOCUMENTO", required = true, friendlyNameResId = R.string.hint_tipo_documento),
                 "ID_GRADO_ACADEMICO" to FieldRule(field = "ID_GRADO_ACADEMICO", required = true, friendlyNameResId = R.string.friendly_nombre_grado),
-                "NUP" to FieldRule(field = "NUP", required = true, friendlyNameResId = R.string.friendly_nup),
+                "NUP" to FieldRule(field = "NUP", required = true, pattern = "^\\d{12}$", friendlyNameResId = R.string.friendly_nup),
                 "DIRECCION_DETALLE" to FieldRule(field = "DIRECCION_DETALLE", required = true, friendlyNameResId = R.string.friendly_direccion),
-                "TELEFONO_CASA" to FieldRule(field = "TELEFONO_CASA", required = true, friendlyNameResId = R.string.friendly_telefono_casa),
-                "TELEFONO_CELULAR" to FieldRule(field = "TELEFONO_CELULAR", required = true, friendlyNameResId = R.string.friendly_telefono_celular)
+                "TELEFONO_CASA" to FieldRule(field = "TELEFONO_CASA", required = true, pattern = "^\\d{4}-\\d{4}$", friendlyNameResId = R.string.friendly_telefono_casa),
+                "TELEFONO_CELULAR" to FieldRule(field = "TELEFONO_CELULAR", required = true, pattern = "^\\d{4}-\\d{4}$", friendlyNameResId = R.string.friendly_telefono_celular)
             )
             "EMPRESA" -> mapOf(
                 "NIT" to FieldRule(field = "NIT", required = true, minLength = 14, maxLength = 14, pattern = "^\\d{14}$", friendlyNameResId = R.string.friendly_nit),
@@ -111,7 +111,7 @@ object ValidationRules {
                 "FECHA_INICIO" to FieldRule(field = "FECHA_INICIO", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyNameResId = R.string.friendly_fecha_inicio),
                 "FECHA_FIN" to FieldRule(field = "FECHA_FIN", required = true, pattern = "^\\d{4}-\\d{2}-\\d{2}$", friendlyNameResId = R.string.friendly_fecha_fin),
                 "DESCP_EXPERIENCIA_LABORAL" to FieldRule(field = "DESCP_EXPERIENCIA_LABORAL", required = true, friendlyNameResId = R.string.friendly_descripcion_experiencia),
-                "CONTACTO_REFERENCIA" to FieldRule(field = "CONTACTO_REFERENCIA", required = true, friendlyNameResId = R.string.friendly_contacto_referencia)
+                "CONTACTO_REFERENCIA" to FieldRule(field = "CONTACTO_REFERENCIA", required = true, pattern = "^\\d{4}-\\d{4}$", friendlyNameResId = R.string.friendly_contacto_referencia)
             )
             "FORMACION_ACADEMICA" -> mapOf(
                 "ID_FORMACION" to FieldRule(field = "ID_FORMACION", required = true, pattern = "^FOA\\d{3,}$", friendlyNameResId = R.string.friendly_codigo_formacion, maxLength = 10),

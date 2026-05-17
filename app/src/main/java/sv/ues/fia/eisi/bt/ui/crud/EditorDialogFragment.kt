@@ -1,6 +1,5 @@
 package sv.ues.fia.eisi.bt.ui.crud
 
-import android.content.res.TypedArray
 import android.graphics.Color
 import android.os.Bundle
 import android.view.WindowManager
@@ -14,6 +13,7 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.edit
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
 import com.google.android.material.button.MaterialButton
@@ -139,10 +139,10 @@ class EditorDialogFragment : DialogFragment() {
                         val currentUserId = prefs.getInt(Constants.KEY_USER_ID, -1)
                         val editedUserId = itemData.firstOrNull()?.trim()?.toIntOrNull() ?: -1
                         if (editedUserId == currentUserId) {
-                            prefs.edit()
-                                .putString(Constants.KEY_USERNAME, savedUsername)
-                                .putString(Constants.KEY_USER_ROLE, savedNewRole)
-                                .apply()
+                            prefs.edit {
+                                putString(Constants.KEY_USERNAME, savedUsername)
+                                putString(Constants.KEY_USER_ROLE, savedNewRole)
+                            }
                         }
                     }
                     StyledToast.show(requireContext(), result.message)
@@ -249,7 +249,7 @@ class EditorDialogFragment : DialogFragment() {
         }
     }
 
-    private fun createDropdownField(idx: Int, column: String, colIndex: Int) {
+    private fun createDropdownField(@Suppress("UNUSED_PARAMETER") idx: Int, column: String, colIndex: Int) {
         val fkRef = fkRefs[column] ?: return
 
         var parentId: String? = null
@@ -344,7 +344,16 @@ class EditorDialogFragment : DialogFragment() {
         }
 
         val includeExpired = fkRef.refTable == "OFERTA_TRABAJO" && tableName == "DETALLE_REQUISITO"
-        val options = if (parentId != null && parentId.isNotBlank() && filterColumn != null) {
+        val options = if (tableName == Constants.TABLE_HABILIDAD_POSTULANTE && column == "ID_HABILIDAD") {
+            if (!parentId.isNullOrBlank()) {
+                viewModel.getFilteredOptions(
+                    fkRef.refTable, "ID_CATEGORIA_HABILIDAD", parentId!!,
+                    fkRef.refDisplayColumn, includeExpired
+                )
+            } else {
+                emptyList<Pair<String, String>>()
+            }
+        } else if (!parentId.isNullOrBlank() && filterColumn != null) {
             viewModel.getFilteredOptions(fkRef.refTable, filterColumn, parentId, fkRef.refDisplayColumn, includeExpired)
         } else {
             viewModel.getDropdownOptions(fkRef.refTable, fkRef.refDisplayColumn)
@@ -374,8 +383,10 @@ class EditorDialogFragment : DialogFragment() {
         autoComplete.setAdapter(adapter)
 
         autoComplete.setOnTouchListener { v, event ->
+            if (!v.isEnabled) return@setOnTouchListener false
             if (event.action == android.view.MotionEvent.ACTION_UP) {
                 autoComplete.showDropDown()
+                autoComplete.performClick()
             }
             true
         }
@@ -390,7 +401,12 @@ class EditorDialogFragment : DialogFragment() {
 
         autoComplete.setOnItemClickListener { _, _, _, _ ->
             if (column == "ID_DEPARTAMENTO") refreshDependentDropdown("ID_MUNICIPIO")
-            if (column == "ID_CATEGORIA_HABILIDAD") refreshDependentDropdown("ID_HABILIDAD")
+            if (column == "ID_CATEGORIA_HABILIDAD") {
+                refreshDependentDropdown("ID_HABILIDAD")
+                if (tableName == Constants.TABLE_HABILIDAD_POSTULANTE) {
+                    updateHabilidadPostulanteDropdownState()
+                }
+            }
             if (column == "NIT" && (tableName == "POSTULACION" || tableName == "DETALLE_REQUISITO")) refreshDependentDropdown("ID_OFERTA")
             if (column == "ID_DISTRITO_DEPTO") refreshDependentDropdown("ID_DISTRITO_MUNICIPIO")
             if (column == "ID_DISTRITO_MUNICIPIO") refreshDependentDropdown("ID_DISTRITO_ID")
@@ -404,12 +420,23 @@ class EditorDialogFragment : DialogFragment() {
                     refreshNumDocHintAndValidation()
                     textFields[numDocColumnIndex]?.second?.setText("")
                 }
+                if (tableName == Constants.TABLE_HABILIDAD_POSTULANTE && column == "ID_CATEGORIA_HABILIDAD") {
+                    if (isCategoriaHabilidadSelected()) {
+                        refreshDependentDropdown("ID_HABILIDAD")
+                    } else {
+                        updateHabilidadPostulanteDropdownState()
+                    }
+                }
             }
         })
 
         til.addView(autoComplete)
         tilFieldsContainer.addView(til)
         dropDownFields[colIndex] = Pair(column, autoComplete)
+
+        if (tableName == Constants.TABLE_HABILIDAD_POSTULANTE && column == "ID_HABILIDAD") {
+            updateHabilidadPostulanteDropdownState()
+        }
 
         if (tableName == "DISTRITO" && column == "ID_MUNICIPIO") {
             distritoMunicipioAutoComplete = autoComplete
@@ -424,7 +451,7 @@ class EditorDialogFragment : DialogFragment() {
         return departamentoOptions.find { it.second == text }?.first
     }
 
-    private fun createNivelDestrezaDropdown(idx: Int, column: String, colIndex: Int) {
+    private fun createNivelDestrezaDropdown(@Suppress("UNUSED_PARAMETER") idx: Int, column: String, colIndex: Int) {
         val nivelOptions = listOf(
             "Básico" to getString(R.string.nivel_basico),
             "Intermedio" to getString(R.string.nivel_intermedio),
@@ -454,9 +481,10 @@ class EditorDialogFragment : DialogFragment() {
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
         autoComplete.setAdapter(adapter)
 
-        autoComplete.setOnTouchListener { v, event ->
+        autoComplete.setOnTouchListener { _, event ->
             if (event.action == android.view.MotionEvent.ACTION_UP) {
                 autoComplete.showDropDown()
+                autoComplete.performClick()
             }
             true
         }
@@ -484,7 +512,7 @@ class EditorDialogFragment : DialogFragment() {
         dropDownFields[colIndex] = Pair(column, autoComplete)
     }
 
-    private fun createEstadoProcesoDropdown(idx: Int, column: String, colIndex: Int) {
+    private fun createEstadoProcesoDropdown(@Suppress("UNUSED_PARAMETER") idx: Int, column: String, colIndex: Int) {
         val estadoOptions = listOf(
             "activo" to getString(R.string.estado_activo),
             "en proceso" to getString(R.string.estado_en_proceso),
@@ -534,9 +562,10 @@ class EditorDialogFragment : DialogFragment() {
             }
             til.helperText = getString(R.string.solo_empresa_cambiar_estado)
         } else {
-            autoComplete.setOnTouchListener { v, event ->
+            autoComplete.setOnTouchListener { _, event ->
                 if (event.action == android.view.MotionEvent.ACTION_UP) {
                     autoComplete.showDropDown()
+                    autoComplete.performClick()
                 }
                 true
             }
@@ -591,9 +620,10 @@ class EditorDialogFragment : DialogFragment() {
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayRoles)
         autoComplete.setAdapter(adapter)
 
-        autoComplete.setOnTouchListener { v, event ->
+        autoComplete.setOnTouchListener { _, event ->
             if (event.action == android.view.MotionEvent.ACTION_UP) {
                 autoComplete.showDropDown()
+                autoComplete.performClick()
             }
             true
         }
@@ -613,97 +643,6 @@ class EditorDialogFragment : DialogFragment() {
         til.addView(autoComplete)
         tilFieldsContainer.addView(til)
         dropDownFields[colIndex] = Pair(column, autoComplete)
-    }
-
-    private fun createDistritoDepartamentoField() {
-        val departamentoOptions = viewModel.getDropdownOptions("DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
-
-        val til = TextInputLayout(requireContext()).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                setMargins(0, 0, 0, 24)
-            }
-            hint = getString(R.string.hint_departamento)
-        }
-
-        val autoComplete = MaterialAutoCompleteTextView(requireContext()).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            setTextColor(getThemeColor(android.R.attr.textColorPrimary))
-            keyListener = null
-        }
-
-        val displayOptions = departamentoOptions.map { it.second }
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
-        autoComplete.setAdapter(adapter)
-
-        autoComplete.setOnTouchListener { v, event ->
-            if (event.action == android.view.MotionEvent.ACTION_UP) {
-                autoComplete.showDropDown()
-            }
-            true
-        }
-
-        if ((isEditMode || isViewMode) && itemData.size >= 2) {
-            var currentMunicipioId = itemData[1].trim()
-            val currentDeptoId = itemData[0].trim()
-            val departamentoId = viewModel.getDepartamentoByMunicipio(currentDeptoId, currentMunicipioId)
-            if (departamentoId != null) {
-                val deptOptionIndex = departamentoOptions.indexOfFirst { it.first == departamentoId }
-                if (deptOptionIndex >= 0) {
-                    autoComplete.setText(displayOptions[deptOptionIndex], false)
-                }
-                post {
-                    prefillDistritoMunicipio(currentMunicipioId)
-                }
-            }
-        }
-
-        autoComplete.setOnItemClickListener { _, _, _, _ ->
-            refreshDistritoMunicipioDropdown()
-        }
-
-        til.addView(autoComplete)
-        tilFieldsContainer.addView(til)
-        distritoDepartamentoAutoComplete = autoComplete
-    }
-
-    private fun refreshDistritoMunicipioDropdown() {
-        val departamentoAutoComplete = distritoDepartamentoAutoComplete ?: return
-        val municipioAutoComplete = distritoMunicipioAutoComplete ?: return
-
-        val deptText = departamentoAutoComplete.text?.toString()?.trim() ?: return
-        val departamentoOptions = viewModel.getDropdownOptions("DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
-        val departamentoId = departamentoOptions.find { it.second == deptText }?.first ?: return
-
-        val municipioOptions = viewModel.getFilteredOptions("MUNICIPIO", "ID_DEPARTAMENTO", departamentoId, "NOMBRE_MUNICIPIO")
-        val displayOptions = municipioOptions.map { it.second }
-
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
-        municipioAutoComplete.setAdapter(adapter)
-        municipioAutoComplete.setText("", false)
-    }
-
-    private fun prefillDistritoMunicipio(municipioId: String) {
-        val municipioAutoComplete = distritoMunicipioAutoComplete ?: return
-        val deptText = distritoDepartamentoAutoComplete?.text?.toString()?.trim() ?: return
-        val departamentoOptions = viewModel.getDropdownOptions("DEPARTAMENTO", "NOMBRE_DEPARTAMENTO")
-        val departamentoId = departamentoOptions.find { it.second == deptText }?.first ?: return
-
-        val municipioOptions = viewModel.getFilteredOptions("MUNICIPIO", "ID_DEPARTAMENTO", departamentoId, "NOMBRE_MUNICIPIO")
-        val displayOptions = municipioOptions.map { it.second }
-
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
-        municipioAutoComplete.setAdapter(adapter)
-
-        val optionIndex = municipioOptions.indexOfFirst { it.first == municipioId }
-        if (optionIndex >= 0) {
-            municipioAutoComplete.setText(displayOptions[optionIndex], false)
-        }
     }
 
     private fun post(action: () -> Unit) {
@@ -736,9 +675,10 @@ class EditorDialogFragment : DialogFragment() {
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
         autoComplete.setAdapter(adapter)
 
-        autoComplete.setOnTouchListener { v, event ->
+        autoComplete.setOnTouchListener { _, event ->
             if (event.action == android.view.MotionEvent.ACTION_UP) {
                 autoComplete.showDropDown()
+                autoComplete.performClick()
             }
             true
         }
@@ -796,9 +736,10 @@ class EditorDialogFragment : DialogFragment() {
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
         autoComplete.setAdapter(adapter)
 
-        autoComplete.setOnTouchListener { v, event ->
+        autoComplete.setOnTouchListener { _, event ->
             if (event.action == android.view.MotionEvent.ACTION_UP) {
                 autoComplete.showDropDown()
+                autoComplete.performClick()
             }
             true
         }
@@ -923,9 +864,10 @@ class EditorDialogFragment : DialogFragment() {
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
         autoComplete.setAdapter(adapter)
 
-        autoComplete.setOnTouchListener { v, event ->
+        autoComplete.setOnTouchListener { _, event ->
             if (event.action == android.view.MotionEvent.ACTION_UP) {
                 autoComplete.showDropDown()
+                autoComplete.performClick()
             }
             true
         }
@@ -966,9 +908,10 @@ class EditorDialogFragment : DialogFragment() {
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, displayOptions)
         autoComplete.setAdapter(adapter)
 
-        autoComplete.setOnTouchListener { v, event ->
+        autoComplete.setOnTouchListener { _, event ->
             if (event.action == android.view.MotionEvent.ACTION_UP) {
                 autoComplete.showDropDown()
+                autoComplete.performClick()
             }
             true
         }
@@ -1087,7 +1030,7 @@ class EditorDialogFragment : DialogFragment() {
     private fun getSelectedDropdownValue(autoComplete: MaterialAutoCompleteTextView?): String? {
         if (autoComplete == null) return null
         val text = autoComplete.text.toString()
-        for ((idx, pair) in dropDownFields) {
+        for ((_, pair) in dropDownFields) {
             if (pair.second == autoComplete) {
                 val fkRef = fkRefs[pair.first] ?: continue
                 val options = viewModel.getDropdownOptions(fkRef.refTable, fkRef.refDisplayColumn)
@@ -1144,8 +1087,9 @@ class EditorDialogFragment : DialogFragment() {
         // 3. Aplicar Filtros estrictos de caracteres y longitud
         val filters = mutableListOf<InputFilter>()
         val maxLength = when (tipo) {
-            "DUI" -> 10 // 8 digitos + guion + 1 digito
-            "NIT" -> 17 // Formato completo con guiones
+            "DUI" -> 10
+            "NIT" -> 17
+            "PASAPORTE" -> 15
             else -> 17
         }
         filters.add(InputFilter.LengthFilter(maxLength))
@@ -1170,6 +1114,30 @@ class EditorDialogFragment : DialogFragment() {
             }
             val error = getFieldValidationError("NUM_DOCUMENTO", formatted)
             til.error = error
+        }
+    }
+
+    private fun getCategoriaHabilidadAutoComplete(): MaterialAutoCompleteTextView? {
+        if (tableName != Constants.TABLE_HABILIDAD_POSTULANTE) return null
+        return dropDownFields.values.find { it.first == "ID_CATEGORIA_HABILIDAD" }?.second
+    }
+
+    private fun isCategoriaHabilidadSelected(): Boolean {
+        return getSelectedDropdownValue(getCategoriaHabilidadAutoComplete()) != null
+    }
+
+    private fun updateHabilidadPostulanteDropdownState() {
+        if (tableName != Constants.TABLE_HABILIDAD_POSTULANTE) return
+        val habilidadAutoComplete = dropDownFields.values.find { it.first == "ID_HABILIDAD" }?.second ?: return
+        val categorySelected = isCategoriaHabilidadSelected()
+        habilidadAutoComplete.isEnabled = categorySelected
+        habilidadAutoComplete.isFocusable = categorySelected
+        habilidadAutoComplete.isClickable = categorySelected
+        if (!categorySelected) {
+            habilidadAutoComplete.setText("", false)
+            habilidadAutoComplete.setAdapter(
+                ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, emptyList<String>())
+            )
         }
     }
 
@@ -1206,13 +1174,20 @@ class EditorDialogFragment : DialogFragment() {
         }
 
         val parentAutoComplete = dropDownFields.values.find { it.first == parentFkColumn }?.second
-        var parentId = getSelectedDropdownValue(parentAutoComplete) ?: return
+        val parentId = getSelectedDropdownValue(parentAutoComplete)
+        if (parentId == null) {
+            if (tableName == Constants.TABLE_HABILIDAD_POSTULANTE && childColumn == "ID_HABILIDAD") {
+                updateHabilidadPostulanteDropdownState()
+            }
+            return
+        }
 
+        var filterParentId = parentId
         if (childColumn == "ID_DISTRITO_ID") {
             val deptoAutoComplete = dropDownFields.values.find { it.first == "ID_DISTRITO_DEPTO" }?.second
             val deptoId = getSelectedDropdownValue(deptoAutoComplete)
             if (deptoId != null) {
-                parentId = "$deptoId|$parentId"
+                filterParentId = "$deptoId|$parentId"
             }
         }
 
@@ -1220,7 +1195,7 @@ class EditorDialogFragment : DialogFragment() {
         val newOptions = viewModel.getFilteredOptions(
             childFkRef.refTable,
             actualFilterColumn,
-            parentId,
+            filterParentId,
             childFkRef.refDisplayColumn,
             includeExpired
         )
@@ -1231,6 +1206,10 @@ class EditorDialogFragment : DialogFragment() {
         )
         childAutoComplete.setText("", false)
         childTil.hint = getHintText(childColumn)
+
+        if (tableName == Constants.TABLE_HABILIDAD_POSTULANTE && childColumn == "ID_HABILIDAD") {
+            updateHabilidadPostulanteDropdownState()
+        }
     }
 
     private fun createTextInputField(idx: Int, column: String, colIndex: Int) {
@@ -1320,7 +1299,7 @@ class EditorDialogFragment : DialogFragment() {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply { timeZone = utc }
         val currentText = editText.text?.toString() ?: ""
         val initialMillis = if (currentText.isNotEmpty()) {
-            try { dateFormat.parse(currentText)?.time ?: System.currentTimeMillis() } catch (e: Exception) { System.currentTimeMillis() }
+            try { dateFormat.parse(currentText)?.time ?: System.currentTimeMillis() } catch (_: Exception) { System.currentTimeMillis() }
         } else { System.currentTimeMillis() }
 
         var til: TextInputLayout? = null
@@ -1393,7 +1372,7 @@ class EditorDialogFragment : DialogFragment() {
                 null
             })
         }
-        if (column == "CONTACTO_DIRECTO") {
+        if (column == "CONTACTO_DIRECTO" || column == "CONTACTO_REFERENCIA" || column.contains("TELEFONO") || column.contains("TEL")) {
             filters.add(InputFilter { source, start, end, _, _, _ ->
                 for (i in start until end) { if (!source[i].isDigit() && source[i] != '-') return@InputFilter "" }
                 null
@@ -1438,9 +1417,10 @@ class EditorDialogFragment : DialogFragment() {
     }
 
     private fun getThemeColor(attr: Int): Int {
-        return requireContext().obtainStyledAttributes(intArrayOf(attr)).use { ta ->
-            ta.getColor(0, android.graphics.Color.BLACK)
-        }
+        val ta = requireContext().obtainStyledAttributes(intArrayOf(attr))
+        val color = ta.getColor(0, Color.BLACK)
+        ta.recycle()
+        return color
     }
 
     private fun getHintResId(column: String): Int {
@@ -1518,6 +1498,7 @@ class EditorDialogFragment : DialogFragment() {
 
     private fun getHintText(column: String): String {
         val tableHint = when {
+            tableName == "DISTRITO" && column == "ID_DISTRITO" -> R.string.hint_distrito_id
             tableName == "EMPRESA" && column == "NIT" -> R.string.hint_nit_empresa
             tableName == "DETALLE_REQUISITO" && column == "NIT" -> R.string.hint_empresa
             tableName == "DETALLE_REQUISITO" && column == "ID_OFERTA" -> R.string.hint_titulo_puesto
@@ -1566,6 +1547,10 @@ class EditorDialogFragment : DialogFragment() {
             column.contains("EMAIL") -> InputMaskUtils.validateEmail(requireContext(), value)
             column.contains("PASSWORD") || column.contains("CONTRA") -> InputMaskUtils.validatePassword(requireContext(), value)
             column.contains("FECHA") -> InputMaskUtils.validateFecha(requireContext(), value)
+            column.contains("NUM_DOCUMENTO") || column.contains("DOCUMENTO") -> {
+                val docType = getSelectedDocType()
+                if (docType != null) InputMaskUtils.validateNumDocumento(requireContext(), value, docType) else null
+            }
             else -> null
         }
     }
@@ -1584,7 +1569,7 @@ class EditorDialogFragment : DialogFragment() {
     private fun setupViewMode() {
         for (i in 0 until tilFieldsContainer.childCount) {
             val child = tilFieldsContainer.getChildAt(i)
-            if (child is com.google.android.material.textfield.TextInputLayout) {
+            if (child is TextInputLayout) {
                 val editText = child.editText
                 if (editText != null) {
                     editText.isEnabled = false
@@ -1598,7 +1583,7 @@ class EditorDialogFragment : DialogFragment() {
     private fun disableNonEstadoFields() {
         for (i in 0 until tilFieldsContainer.childCount) {
             val child = tilFieldsContainer.getChildAt(i)
-            if (child is com.google.android.material.textfield.TextInputLayout) {
+            if (child is TextInputLayout) {
                 val hint = child.hint?.toString()?.lowercase() ?: ""
                 val col = dropDownFields.values.find { it.second == child.editText }?.first?.lowercase() ?: ""
                 val isEstadoColumn = col.contains("estado_proceso") || hint.contains("estado del proceso")
@@ -1617,7 +1602,7 @@ class EditorDialogFragment : DialogFragment() {
     private fun disableAllFields() {
         for (i in 0 until tilFieldsContainer.childCount) {
             val child = tilFieldsContainer.getChildAt(i)
-            if (child is com.google.android.material.textfield.TextInputLayout) {
+            if (child is TextInputLayout) {
                 val editText = child.editText
                 if (editText != null) {
                     editText.isEnabled = false
@@ -1737,6 +1722,24 @@ class EditorDialogFragment : DialogFragment() {
                     val et = textFields.values.find { it.first == col }?.second
                     val textValue = et?.text?.toString()?.trim() ?: ""
 
+                    if (col.contains("NUM_DOCUMENTO") || col.contains("DOCUMENTO")) {
+                        val docType = getSelectedDocType()
+                        if (docType != null) {
+                            val docError = InputMaskUtils.validateNumDocumento(requireContext(), textValue, docType)
+                            if (docError != null) {
+                                var parent = et?.parent
+                                while (parent != null && parent !is TextInputLayout) {
+                                    parent = parent.parent
+                                }
+                                if (parent is TextInputLayout) {
+                                    parent.error = docError
+                                }
+                                StyledToast.show(requireContext(), docError)
+                                return
+                            }
+                        }
+                    }
+
                     val errorMsg = ValidationRules.validate(requireContext(), tableName, col, textValue)
 
                     if (errorMsg != null) {
@@ -1756,14 +1759,14 @@ class EditorDialogFragment : DialogFragment() {
             }
         }
 
-        val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
-        dateFormat.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        dateFormat.timeZone = TimeZone.getTimeZone("UTC")
 
         fun validatePeriodDates(inicioIdx: Int, finIdx: Int, fechaRefIdx: Int, fechaRefName: String): Boolean {
             if (inicioIdx < 0 || finIdx < 0 || fechaRefIdx < 0) return true
-            val fechaInicio = values.getOrNull(inicioIdx)?.toString()?.trim() ?: ""
-            val fechaFin = values.getOrNull(finIdx)?.toString()?.trim() ?: ""
-            val fechaRef = values.getOrNull(fechaRefIdx)?.toString()?.trim() ?: ""
+            val fechaInicio = (values.getOrNull(inicioIdx) ?: "").trim()
+            val fechaFin = (values.getOrNull(finIdx) ?: "").trim()
+            val fechaRef = (values.getOrNull(fechaRefIdx) ?: "").trim()
             if (fechaInicio.isBlank() || fechaFin.isBlank() || fechaRef.isBlank()) return true
             try {
                 val dInicio = dateFormat.parse(fechaInicio)!!
@@ -1777,9 +1780,9 @@ class EditorDialogFragment : DialogFragment() {
                     StyledToast.show(requireContext(), getString(R.string.fecha_ref_menor_periodo, fechaRefName))
                     btnSave.isEnabled = true; return false
                 }
-                val cal = java.util.Calendar.getInstance()
+                val cal = Calendar.getInstance()
                 cal.time = dFin
-                cal.add(java.util.Calendar.YEAR, 1)
+                cal.add(Calendar.YEAR, 1)
                 if (dRef.after(cal.time)) {
                     StyledToast.show(requireContext(), getString(R.string.fecha_ref_excede_anio, fechaRefName))
                     btnSave.isEnabled = true; return false
@@ -1815,10 +1818,10 @@ class EditorDialogFragment : DialogFragment() {
         btnSave.isEnabled = false
         if (isEditMode) {
             val pkCols = getPrimaryKeyColumns(tableName)
-            val pkString = pkCols.map { col ->
+            val pkString = pkCols.joinToString("|") { col ->
                 val idx = columns.indexOf(col)
                 if (idx >= 0 && idx < itemData.size) itemData[idx].trim() else ""
-            }.joinToString("|")
+            }
             viewModel.updateRecord(tableName, pkString, values)
         } else {
             viewModel.insertRecord(tableName, values)

@@ -1,7 +1,5 @@
 package sv.ues.fia.eisi.bt.ui.crud
 
-import android.content.Context
-import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import androidx.core.content.ContextCompat
@@ -67,8 +65,10 @@ class TableAdapter(
                 itemView.setOnClickListener {
                     val pos = bindingAdapterPosition
                     if (pos != RecyclerView.NO_POSITION) {
+                        val oldPos = selectedPosition
                         selectedPosition = if (selectedPosition == pos) -1 else pos
-                        notifyDataSetChanged()
+                        if (oldPos != -1) notifyItemChanged(oldPos)
+                        if (selectedPosition != -1) notifyItemChanged(selectedPosition)
                         onItemSelected(if (selectedPosition >= 0) getItem(pos) else emptyList(), selectedPosition)
                     }
                 }
@@ -107,8 +107,8 @@ class TableAdapter(
                 val nombre = getStringSafely(item, 8)
                 val apellido = getStringSafely(item, 9)
                 val puesto = getStringSafely(item, 3)
-                tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)}, ${getStringSafely(item, 2)})"
-                tvPrimary.text = "$nombre $apellido".trim().ifBlank { ctx.getString(R.string.fallback_sin_nombre) }
+                tvId.text = String.format("(%s, %s, %s)", getStringSafely(item, 0), getStringSafely(item, 1), getStringSafely(item, 2))
+                tvPrimary.text = String.format("%s %s", nombre, apellido).trim().ifBlank { ctx.getString(R.string.fallback_sin_nombre) }
                 tvSecondary.text = puesto.ifBlank { ctx.getString(R.string.fallback_sin_puesto) }
             } else if (tableName == "HABILIDAD_POSTULANTE") {
                 val nombre = getStringSafely(item, 4)
@@ -116,46 +116,46 @@ class TableAdapter(
                 val habilidad = getStringSafely(item, 6)
                 val nivelText = getStringSafely(item, 3)
 
-                tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)}, ${getStringSafely(item, 2)})"
-                tvPrimary.text = "$nombre $apellido".trim().ifBlank { ctx.getString(R.string.fallback_sin_nombre) }
+                tvId.text = String.format("(%s, %s, %s)", getStringSafely(item, 0), getStringSafely(item, 1), getStringSafely(item, 2))
+                tvPrimary.text = String.format("%s %s", nombre, apellido).trim().ifBlank { ctx.getString(R.string.fallback_sin_nombre) }
                 tvSecondary.text = if (nivelText.isNotBlank()) "$habilidad • $nivelText" else habilidad
             } else if (tableName == "POSTULACION") {
                 val nombre = getStringSafely(item, 6)
                 val apellido = getStringSafely(item, 7)
                 val puesto = getStringSafely(item, 8)
                 tvId.text = field0
-                tvPrimary.text = "$nombre $apellido".trim().ifBlank { ctx.getString(R.string.fallback_sin_nombre) }
+                tvPrimary.text = String.format("%s %s", nombre, apellido).trim().ifBlank { ctx.getString(R.string.fallback_sin_nombre) }
                 tvSecondary.text = puesto.ifBlank { ctx.getString(R.string.fallback_sin_puesto) }
             } else if (tableName == "RED_SOCIAL_POSTULANTE") {
                 val nombre = getStringSafely(item, 3)
                 val apellido = getStringSafely(item, 4)
                 val redSocial = getStringSafely(item, 5)
-                tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)})"
-                tvPrimary.text = "$nombre $apellido".trim().ifBlank { ctx.getString(R.string.fallback_sin_nombre) }
+                tvId.text = String.format("(%s, %s)", getStringSafely(item, 0), getStringSafely(item, 1))
+                tvPrimary.text = String.format("%s %s", nombre, apellido).trim().ifBlank { ctx.getString(R.string.fallback_sin_nombre) }
                 tvSecondary.text = redSocial.ifBlank { ctx.getString(R.string.fallback_sin_red_social) }
             } else if (tableName == "MUNICIPIO") {
                 val deptoNombre = getStringSafely(item, 3)
                 val munNombre = getStringSafely(item, 2)
-                tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)})"
+                tvId.text = String.format("(%s, %s)", getStringSafely(item, 0), getStringSafely(item, 1))
                 tvPrimary.text = deptoNombre.ifBlank { ctx.getString(R.string.fallback_sin_departamento) }
                 tvSecondary.text = munNombre.ifBlank { ctx.getString(R.string.fallback_sin_municipio) }
             } else if (tableName == "DISTRITO") {
                 val munNombre = getStringSafely(item, 4)
                 val distNombre = getStringSafely(item, 3)
-                tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)}, ${getStringSafely(item, 2)})"
+                tvId.text = String.format("(%s, %s, %s)", getStringSafely(item, 0), getStringSafely(item, 1), getStringSafely(item, 2))
                 tvPrimary.text = munNombre.ifBlank { ctx.getString(R.string.fallback_sin_municipio) }
                 tvSecondary.text = distNombre.ifBlank { ctx.getString(R.string.fallback_sin_distrito) }
             } else if (tableName == "HABILIDAD") {
                 val nombre = getStringSafely(item, 2)
                 val categoria = getStringSafely(item, 3)
-                tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)})"
+                tvId.text = String.format("(%s, %s)", getStringSafely(item, 0), getStringSafely(item, 1))
                 tvPrimary.text = nombre.ifBlank { ctx.getString(R.string.fallback_sin_habilidad) }
                 tvSecondary.text = categoria.ifBlank { ctx.getString(R.string.fallback_sin_categoria) }
             } else if (tableName == "OFERTA_TRABAJO") {
                 val titulo = getStringSafely(item, 3)
                 val empresa = getStringSafely(item, 10)
                 val fechaCad = getStringSafely(item, 5)
-                tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)})"
+                tvId.text = String.format("(%s, %s)", getStringSafely(item, 0), getStringSafely(item, 1))
                 tvPrimary.text = titulo.ifBlank { ctx.getString(R.string.fallback_sin_titulo) }
                 tvSecondary.text = empresa.ifBlank { ctx.getString(R.string.fallback_sin_empresa) }
 
@@ -174,7 +174,7 @@ class TableAdapter(
                 val descripcion = getStringSafely(item, 3)
                 val titulo = getStringSafely(item, 4)
                 val fechaCad = getStringSafely(item, 6)
-                tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)}, ${getStringSafely(item, 2)})"
+                tvId.text = String.format("(%s, %s, %s)", getStringSafely(item, 0), getStringSafely(item, 1), getStringSafely(item, 2))
                 tvPrimary.text = descripcion.ifBlank { ctx.getString(R.string.fallback_sin_descripcion) }
                 tvSecondary.text = titulo.ifBlank { ctx.getString(R.string.fallback_sin_puesto) }
 
@@ -199,14 +199,14 @@ class TableAdapter(
                 val nombre = getStringSafely(item, 4)
                 val fechaInicio = getStringSafely(item, 5)
                 val fechaFin = getStringSafely(item, 6)
-                tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)}, ${getStringSafely(item, 2)})"
+                tvId.text = String.format("(%s, %s, %s)", getStringSafely(item, 0), getStringSafely(item, 1), getStringSafely(item, 2))
                 tvPrimary.text = nombre.ifBlank { ctx.getString(R.string.fallback_sin_certificacion) }
                 tvSecondary.text = if (fechaInicio.isNotBlank() && fechaFin.isNotBlank()) "$fechaInicio → $fechaFin" else ctx.getString(R.string.fallback_sin_periodo)
             } else if (tableName == "FORMACION_ACADEMICA") {
                 val titulo = getStringSafely(item, 3)
                 val fechaInicio = getStringSafely(item, 4)
                 val fechaFin = getStringSafely(item, 5)
-                tvId.text = "(${getStringSafely(item, 0)}, ${getStringSafely(item, 1)})"
+                tvId.text = String.format("(%s, %s)", getStringSafely(item, 0), getStringSafely(item, 1))
                 tvPrimary.text = titulo.ifBlank { ctx.getString(R.string.fallback_sin_titulo) }
                 tvSecondary.text = if (fechaInicio.isNotBlank() && fechaFin.isNotBlank()) "$fechaInicio → $fechaFin" else ctx.getString(R.string.fallback_sin_periodo)
             } else if (tableName == "USUARIO") {
@@ -233,7 +233,7 @@ class TableAdapter(
         private fun getStringSafely(list: List<Any>, index: Int): String {
             return try {
                 list.getOrNull(index)?.toString()?.trim() ?: ""
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 ""
             }
         }
@@ -241,11 +241,11 @@ class TableAdapter(
 
     class RowDiffCallback : DiffUtil.ItemCallback<List<Any>>() {
         override fun areItemsTheSame(oldItem: List<Any>, newItem: List<Any>): Boolean {
-            return oldItem == newItem
+            return oldItem.firstOrNull() == newItem.firstOrNull()
         }
 
         override fun areContentsTheSame(oldItem: List<Any>, newItem: List<Any>): Boolean {
-            return oldItem == newItem
+            return oldItem.size == newItem.size && oldItem.zip(newItem).all { (a, b) -> a == b }
         }
     }
 }

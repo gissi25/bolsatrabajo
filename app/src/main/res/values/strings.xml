@@ -185,13 +185,14 @@
     <string name="hint_telefono_casa">Teléfono casa</string>
     <string name="hint_telefono_celular">Teléfono celular</string>
     <string name="hint_correo_electronico">Correo electrónico</string>
-    <string name="hint_id_municipio">Id Municipio</string>
+    <string name="hint_id_municipio">Municipio</string>
     <string name="hint_nombre_categoria">Nombre de categoría</string>
     <string name="hint_nombre_genero">Nombre de género</string>
     <string name="hint_nombre_tipo">Nombre de tipo</string>
     <string name="hint_nombre_departamento">Nombre de departamento</string>
     <string name="hint_nombre_municipio">Nombre de municipio</string>
     <string name="hint_nombre_distrito">Nombre de distrito</string>
+    <string name="hint_distrito_id">ID Distrito</string>
     <string name="hint_nombre_habilidad">Nombre de habilidad</string>
     <string name="hint_categoria_habilidad">Categoría de habilidad</string>
     <string name="hint_nombre_empresa">Nombre de empresa</string>
@@ -222,7 +223,7 @@
     <string name="hint_codigo_oferta_academica">Código oferta académica</string>
     <string name="hint_titulo_obtenido">Título obtenido</string>
     <string name="hint_fecha_obtencion">Fecha de obtención</string>
-    <string name="hint_codigo_habilidad">Código habilidad</string>
+    <string name="hint_codigo_habilidad">Habilidad</string>
     <string name="hint_nivel_destreza">Nivel de destreza</string>
     <string name="hint_codigo_postulacion">Código postulación</string>
     <string name="hint_fecha_aplicacion">Fecha de aplicación</string>
@@ -409,6 +410,9 @@
     <string name="validation_password_min" formatted="false">Mínimo %1$d caracteres</string>
     <string name="validation_email_invalid">Correo electrónico inválido</string>
     <string name="validation_date_format">Formato: AAAA-MM-DD</string>
+    <string name="validation_dui_format">El DUI debe tener el formato ########-#</string>
+    <string name="validation_nit_format">El NIT debe tener el formato ####-######-###-#</string>
+    <string name="validation_pasaporte_format">El pasaporte debe tener entre 6 y 15 caracteres alfanumericos</string>
 
     <!-- Seed data messages -->
     <string name="seed_inserted">Datos insertados correctamente</string>

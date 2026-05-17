@@ -61,6 +61,19 @@ object InputMaskUtils {
         return if (!value.matches(Regex("""\d{4}-\d{2}-\d{2}""")))
             context.getString(R.string.validation_date_format) else null
     }
+
+    fun validateNumDocumento(context: Context, value: String, docType: String): String? {
+        if (value.isBlank()) return null
+        return when (docType.uppercase()) {
+            "DUI" -> if (!value.matches(Regex("""^\d{8}-\d{1}$""")))
+                context.getString(R.string.validation_dui_format) else null
+            "NIT" -> if (!value.matches(Regex("""^\d{4}-\d{6}-\d{3}-\d{1}$""")))
+                context.getString(R.string.validation_nit_format) else null
+            "PASAPORTE" -> if (!value.matches(Regex("""^[a-zA-Z0-9]{6,15}$""")))
+                context.getString(R.string.validation_pasaporte_format) else null
+            else -> null
+        }
+    }
 }
 
 fun String.removeAccents(): String {
