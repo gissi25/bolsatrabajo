@@ -1,0 +1,4 @@
+codigo,titulo,nit,grado,experiencia_anios,edad_minima,edad_maxima,fecha_publicacion,fecha_caducidad,descripcion_oferta,req_codigo,req_descripcion
+OF013,Desarrollador Android Kotlin,06141234560101,5,2,22,38,2026-06-05,2026-07-05,Dev Android con experiencia en Kotlin y Jetpack Compose,D1,Experiencia minima 2 anios en Kotlin
+OF014,Analista de Datos,06141234560104,4,3,23,40,2026-06-05,2026-07-10,Analista con conocimientos en SQL y Python,D2,Manejo avanzado de SQL
+OF015,Ingeniero de Redes,06141234560107,3,4,24,45,2026-06-05,2026-07-15,Ingeniero con experiencia en Cisco y subnetting,D3,Certificacion CCNA deseable

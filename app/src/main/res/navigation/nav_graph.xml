@@ -58,6 +58,12 @@
             app:destination="@id/loginFragment"
             app:popUpTo="@id/dashboardFragment"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_dashboard_to_bulkOferta"
+            app:destination="@id/servicio1Fragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left" />
     </fragment>
 
     <fragment
@@ -90,5 +96,11 @@
             app:argType="string"
             android:defaultValue="" />
     </dialog>
+
+    <fragment
+        android:id="@+id/servicio1Fragment"
+        android:name="sv.ues.fia.eisi.bt.ui.servicios.Servicio1Fragment"
+        android:label="@string/oferta_titulo_seccion"
+        tools:layout="@layout/fragment_servicio1" />
 
 </navigation>

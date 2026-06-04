@@ -59,6 +59,9 @@ dependencies {
     // Material Design 3
     implementation(libs.androidx.recyclerview)
 
+    // HTTP client (OkHttp) for API calls
+    implementation(libs.okhttp)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
