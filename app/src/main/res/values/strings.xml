@@ -534,7 +534,7 @@
     <string name="oferta_hint_edad_min">Edad mín</string>
     <string name="oferta_hint_edad_max">Edad máx</string>
     <string name="oferta_hint_desc">Descripción de la oferta</string>
-    <string name="csv_btn_cargar">📂 Cargar desde CSV</string>
+    <string name="csv_btn_cargar">Cargar desde archivo</string>
     <string name="req_hint_id">Código (D1)</string>
     <string name="req_hint_desc">Descripción del requisito</string>
     <string name="req_btn_agregar">+ Agregar requisito</string>
@@ -543,4 +543,15 @@
     <string name="oferta_btn_insertar">Insertar todas</string>
     <string name="oferta_btn_insertar_n">Insertar todas (%d)</string>
     <string name="oferta_insertando">Insertando…</string>
+    <string name="s3_titulo">Sincronizar Postulantes</string>
+    <string name="s3_btn_recuperar">Recuperar de BD local</string>
+    <string name="s3_btn_sincronizar">Subir al servidor</string>
+    <string name="s3_ver_detalle">Ver detalle ></string>
+    <string name="s3_datos_personales">Datos personales</string>
+    <string name="s3_formacion">Formacion Academica</string>
+    <string name="s3_experiencia">Experiencia Laboral</string>
+    <string name="s3_certificaciones">Certificaciones</string>
+    <string name="s3_habilidades">Habilidades</string>
+    <string name="s3_redes">Redes Sociales</string>
+    <string name="s3_sin_datos">Sin datos</string>
 </resources>

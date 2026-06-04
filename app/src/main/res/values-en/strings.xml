@@ -539,7 +539,7 @@
     <string name="oferta_btn_insertar">Insert all</string>
     <string name="oferta_btn_insertar_n">Insert all (%d)</string>
     <string name="oferta_insertando">Inserting…</string>
-    <string name="csv_btn_cargar">📂 Load from CSV</string>
+    <string name="csv_btn_cargar">Load from file</string>
     <string name="req_titulo">Requirements for this offer</string>
     <string name="req_hint_id">Code (D1)</string>
     <string name="req_hint_desc">Description</string>

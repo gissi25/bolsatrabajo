@@ -2,16 +2,24 @@ package sv.ues.fia.eisi.bt.service
 
 import android.os.Handler
 import android.os.Looper
+import android.util.Base64
 import android.util.Log
+import android.webkit.CookieManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 object ApiService {
 
@@ -65,13 +73,16 @@ object ApiService {
         val wv = webView ?: throw Exception("initChallenge() no llamado aún")
 
         val jsCode = when (method) {
-            "POST" -> """
+            "POST" -> {
+                val b64 = Base64.encodeToString((body ?: "{}").toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
+                """
                 (async function() {
                     try {
+                        let bodyStr = atob('$b64');
                         let r = await fetch('${BASE_URL}$action', {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
-                            body: '${body?.replace("'", "\\'") ?: "{}"}'
+                            body: bodyStr
                         });
                         let t = await r.text();
                         BTBridge.onResult(t);
@@ -80,6 +91,7 @@ object ApiService {
                     }
                 })();
             """
+            }
             else -> """
                 (async function() {
                     try {
@@ -94,28 +106,36 @@ object ApiService {
         }
 
         return suspendCancellableCoroutine { cont ->
+            var done = false
             pendingCallback = { json ->
-                if (json.has("_error")) {
-                    cont.resume(throw Exception("Respuesta inválida"))
-                } else if (json.has("error")) {
-                    cont.resume(throw Exception(json.getString("error")))
-                } else {
-                    cont.resume(json)
+                if (!done) {
+                    done = true
+                    try {
+                        if (json.has("_error")) {
+                            cont.resumeWithException(Exception("Respuesta inválida: ${json.optString("_error")}"))
+                        } else if (json.has("error")) {
+                            cont.resumeWithException(Exception(json.getString("error")))
+                        } else {
+                            cont.resume(json)
+                        }
+                    } catch (_: Exception) {}
                 }
             }
 
             Handler(Looper.getMainLooper()).post {
                 wv.evaluateJavascript(jsCode, null)
-                Log.d(TAG, "JS code injected for action: $action")
+                Log.d(TAG, "JS injected: $action")
             }
 
+            cont.invokeOnCancellation { done = true }
+
             Handler(Looper.getMainLooper()).postDelayed({
-                if (pendingCallback != null) {
-                    Log.w(TAG, "Timeout esperando respuesta JS para: $action")
+                if (!done) {
+                    done = true
                     pendingCallback = null
-                    cont.resume(throw Exception("Timeout - JS no respondió"))
+                    cont.resumeWithException(Exception("Timeout - JS no respondió"))
                 }
-            }, 15000)
+            }, 60000)
         }
     }
 
@@ -136,5 +156,9 @@ object ApiService {
         for (of in ofertas) arr.put(of)
         val body = JSONObject().apply { put("ofertas", arr) }
         fetch("insertar_ofertas", "POST", body.toString())
+    }
+
+    suspend fun sincronizarUnPostulante(postulante: JSONObject): JSONObject = withContext(Dispatchers.Main) {
+        fetch("sincronizar_postulantes", "POST", postulante.toString())
     }
 }
