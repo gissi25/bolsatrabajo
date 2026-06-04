@@ -160,6 +160,9 @@
     <string name="section_empresa">Empresa</string>
     <string name="section_postulante">Postulante</string>
     <string name="section_otras">Otras</string>
+    <string name="section_servicios_web">Consumo Servicios Web</string>
+    <string name="service_icon">~</string>
+    <string name="service_pending">Pendiente</string>
 
     <!-- Field hints for editor dialog -->
     <string name="hint_nit_empresa">NIT EMPRESA</string>
@@ -518,4 +521,37 @@
     <string name="error_duplicado_postulante_nup">Ya existe un postulante con ese NUP</string>
     <string name="error_duplicado_formacion_academica">Ya existe una formación académica con ese título en el mismo periodo para el postulante</string>
     <string name="error_duplicado_certificacion_nombre">Ya existe una certificación con ese nombre para el postulante</string>
+
+    <!-- Bulk offer insertion -->
+    <string name="oferta_titulo_seccion">Carga Masiva Ofertas Trabajo</string>
+    <string name="oferta_hint_empresa">Empresa</string>
+    <string name="oferta_hint_id">Código de Oferta (ej. OF003)</string>
+    <string name="oferta_hint_titulo">Título del Puesto</string>
+    <string name="oferta_hint_grado">Grado Académico</string>
+    <string name="oferta_hint_fecha_pub">Fecha Publicación</string>
+    <string name="oferta_hint_fecha_cad">Fecha Caducidad</string>
+    <string name="oferta_hint_exp">Exp. años</string>
+    <string name="oferta_hint_edad_min">Edad mín</string>
+    <string name="oferta_hint_edad_max">Edad máx</string>
+    <string name="oferta_hint_desc">Descripción de la oferta</string>
+    <string name="csv_btn_cargar">Cargar desde archivo</string>
+    <string name="req_hint_id">Código (D1)</string>
+    <string name="req_hint_desc">Descripción del requisito</string>
+    <string name="req_btn_agregar">+ Agregar requisito</string>
+    <string name="oferta_btn_agregar">+ Agregar otra oferta</string>
+    <string name="oferta_lista_pendientes">Ofertas pendientes de insertar</string>
+    <string name="oferta_btn_insertar">Insertar todas</string>
+    <string name="oferta_btn_insertar_n">Insertar todas (%d)</string>
+    <string name="oferta_insertando">Insertando…</string>
+    <string name="s3_titulo">Sincronizar Postulantes</string>
+    <string name="s3_btn_recuperar">Recuperar de BD local</string>
+    <string name="s3_btn_sincronizar">Subir al servidor</string>
+    <string name="s3_ver_detalle">Ver detalle ></string>
+    <string name="s3_datos_personales">Datos personales</string>
+    <string name="s3_formacion">Formacion Academica</string>
+    <string name="s3_experiencia">Experiencia Laboral</string>
+    <string name="s3_certificaciones">Certificaciones</string>
+    <string name="s3_habilidades">Habilidades</string>
+    <string name="s3_redes">Redes Sociales</string>
+    <string name="s3_sin_datos">Sin datos</string>
 </resources>

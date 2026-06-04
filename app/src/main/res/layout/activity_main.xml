@@ -17,4 +17,10 @@
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/nav_graph" />
 
+    <WebView
+        android:id="@+id/wvChallenge"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:visibility="invisible" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -15,18 +15,21 @@ import sv.ues.fia.eisi.bt.viewmodel.DashboardViewModel
 
 class DashboardAdapter(
     private val onItemClick: (DashboardItem.Table) -> Unit,
-    private val onSectionClick: (String) -> Unit
+    private val onSectionClick: (String) -> Unit,
+    private val onServiceClick: (DashboardItem.WebService) -> Unit = {}
 ) : ListAdapter<DashboardItem, RecyclerView.ViewHolder>(DashboardDiffCallback()) {
 
     companion object {
         private const val TYPE_SECTION = 0
         private const val TYPE_TABLE = 1
+        private const val TYPE_WEB_SERVICE = 2
     }
 
     override fun getItemViewType(position: Int): Int {
         return when (getItem(position)) {
             is DashboardItem.Section -> TYPE_SECTION
             is DashboardItem.Table -> TYPE_TABLE
+            is DashboardItem.WebService -> TYPE_WEB_SERVICE
         }
     }
 
@@ -36,6 +39,11 @@ class DashboardAdapter(
                 val view = LayoutInflater.from(parent.context)
                     .inflate(R.layout.item_section_header, parent, false)
                 SectionViewHolder(view)
+            }
+            TYPE_WEB_SERVICE -> {
+                val view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.item_web_service_card, parent, false) as MaterialCardView
+                WebServiceViewHolder(view)
             }
             else -> {
                 val view = LayoutInflater.from(parent.context)
@@ -49,6 +57,7 @@ class DashboardAdapter(
         when (val item = getItem(position)) {
             is DashboardItem.Section -> (holder as SectionViewHolder).bind(item)
             is DashboardItem.Table -> (holder as TableViewHolder).bind(item)
+            is DashboardItem.WebService -> (holder as WebServiceViewHolder).bind(item)
         }
     }
 
@@ -58,6 +67,7 @@ class DashboardAdapter(
             DashboardViewModel.SECTION_EMPRESA -> R.string.section_empresa
             DashboardViewModel.SECTION_POSTULANTE -> R.string.section_postulante
             DashboardViewModel.SECTION_OTRAS -> R.string.section_otras
+            DashboardItem.SECTION_SERVICIOS_WEB -> R.string.section_servicios_web
             else -> R.string.section_otras
         }
     }
@@ -109,12 +119,32 @@ class DashboardAdapter(
         }
     }
 
+    inner class WebServiceViewHolder(itemView: MaterialCardView) : RecyclerView.ViewHolder(itemView) {
+        private val tvServiceTitle: TextView = itemView.findViewById(R.id.tvServiceTitle)
+
+        init {
+            itemView.setOnClickListener {
+                val pos = bindingAdapterPosition
+                if (pos != RecyclerView.NO_POSITION) {
+                    val item = getItem(pos)
+                    if (item is DashboardItem.WebService) {
+                        onServiceClick(item)
+                    }
+                }
+            }
+        }
+
+        fun bind(service: DashboardItem.WebService) {
+            tvServiceTitle.text = service.title
+        }
+    }
+
     class DashboardDiffCallback : DiffUtil.ItemCallback<DashboardItem>() {
         override fun areItemsTheSame(oldItem: DashboardItem, newItem: DashboardItem): Boolean {
             return when (oldItem) {
                 is DashboardItem.Section -> newItem is DashboardItem.Section && oldItem.sectionKey == newItem.sectionKey
                 is DashboardItem.Table -> newItem is DashboardItem.Table && oldItem.info.name == newItem.info.name
-                else -> false
+                is DashboardItem.WebService -> newItem is DashboardItem.WebService && oldItem.id == newItem.id
             }
         }
 

@@ -1,0 +1,678 @@
+<?php
+// ============================================================
+// SETUP BOLSA DE TRABAJO - InfinityFree
+// 1. Sube este archivo a tu hosting InfinityFree via cPanel
+// 2. Edita los datos de conexión abajo (host, user, pass, db)
+// 3. Ábrelo en el navegador: tudominio.com/setup_bolsatrabajo.php
+// 4. Borra el archivo después de ejecutarlo por seguridad
+// ============================================================
+
+$host = 'localhost';       // Generalmente localhost en InfinityFree
+$user = 'tu_usuario';      // Reemplaza con tu usuario MySQL
+$pass = 'tu_contraseña';   // Reemplaza con tu contraseña MySQL
+$db   = 'tu_base_datos';   // Reemplaza con el nombre de tu BD
+
+// ============================================================
+// NO EDITES DE AQUÍ EN ADELANTE
+// ============================================================
+
+echo "<h2>🚀 Setup Bolsa de Trabajo</h2>";
+echo "<pre>";
+
+$conn = new mysqli($host, $user, $pass, $db);
+if ($conn->connect_error) {
+    die("❌ Error de conexión: " . $conn->connect_error);
+}
+echo "✅ Conectado a MySQL<br>";
+
+$conn->begin_transaction();
+
+try {
+    // ---- 1. DROP TRIGGERS ----
+    $drops = [
+        "DROP TRIGGER IF EXISTS TR_POSTULANTE_EDAD",
+        "DROP TRIGGER IF EXISTS TR_POSTULANTE_EDAD_UPD",
+        "DROP TRIGGER IF EXISTS TR_POSTULANTE_GRADO",
+        "DROP TRIGGER IF EXISTS TR_POSTULANTE_GRADO_UPD",
+        "DROP TRIGGER IF EXISTS TR_OFERTA_RANGO_EDAD",
+        "DROP TRIGGER IF EXISTS TR_OFERTA_RANGO_EDAD_UPD",
+        "DROP TRIGGER IF EXISTS TR_OFERTA_VIGENCIA",
+        "DROP TRIGGER IF EXISTS TR_OFERTA_VIGENCIA_UPD",
+        "DROP TRIGGER IF EXISTS TR_POSTULACION_VIGENCIA",
+        "DROP TRIGGER IF EXISTS TR_EXP_LABORAL_FECHAS",
+        "DROP TRIGGER IF EXISTS TR_EXP_LABORAL_FECHAS_UPD",
+        "DROP TRIGGER IF EXISTS TR_CERTIFICACION_FECHAS",
+        "DROP TRIGGER IF EXISTS TR_CERTIFICACION_FECHAS_UPD",
+        "DROP TRIGGER IF EXISTS TR_FORMACION_FECHAS",
+        "DROP TRIGGER IF EXISTS TR_FORMACION_FECHAS_UPD",
+        "DROP TRIGGER IF EXISTS TR_HABILIDAD_NIVEL",
+        "DROP TRIGGER IF EXISTS TR_HABILIDAD_NIVEL_UPD",
+        "DROP TRIGGER IF EXISTS TR_MUNICIPIO_DEPTO",
+        "DROP TRIGGER IF EXISTS TR_MUNICIPIO_DEPTO_UPD",
+        "DROP TRIGGER IF EXISTS TR_DISTRITO_MUNICIPIO",
+        "DROP TRIGGER IF EXISTS TR_DISTRITO_MUNICIPIO_UPD",
+        "DROP TRIGGER IF EXISTS TR_HABILIDAD_CATEGORIA",
+        "DROP TRIGGER IF EXISTS TR_HABILIDAD_CATEGORIA_UPD",
+        "DROP TRIGGER IF EXISTS TR_EMPRESA_DISTRITO",
+        "DROP TRIGGER IF EXISTS TR_EMPRESA_DISTRITO_UPD",
+        "DROP TRIGGER IF EXISTS TR_POSTULANTE_FK",
+        "DROP TRIGGER IF EXISTS TR_POSTULANTE_FK_UPD"
+    ];
+    foreach ($drops as $sql) {
+        $conn->query($sql);
+    }
+    echo "✅ 27 DROP TRIGGER ejecutados<br>";
+
+    // ---- 2. DROP TABLES ----
+    $conn->query("SET FOREIGN_KEY_CHECKS = 0");
+    $tables = [
+        "RED_SOCIAL_POSTULANTE", "POSTULACION", "HABILIDAD_POSTULANTE",
+        "FORMACION_ACADEMICA", "EXPERIENCIA_LABORAL", "CERTIFICACION",
+        "OFERTA_ACADEMICA", "DETALLE_REQUISITO", "OFERTA_TRABAJO",
+        "HABILIDAD", "USUARIO", "POSTULANTE", "EMPRESA",
+        "RED_SOCIAL", "TIPO_CERTIFICACION", "GRADO_ACADEMICO", "INSTITUCION",
+        "DISTRITO", "MUNICIPIO", "DEPARTAMENTO",
+        "TIPO_DOCUMENTO", "GENERO", "CATEGORIA_HABILIDAD"
+    ];
+    foreach ($tables as $t) {
+        $conn->query("DROP TABLE IF EXISTS $t");
+    }
+    $conn->query("SET FOREIGN_KEY_CHECKS = 1");
+    echo "✅ 23 DROP TABLE ejecutados<br>";
+
+    // ---- 3. CREATE TABLES ----
+    $createTableSQL = "
+        CREATE TABLE CATEGORIA_HABILIDAD (
+            ID_CATEGORIA_HABILIDAD INT AUTO_INCREMENT PRIMARY KEY,
+            NOMBRE_CATEGORIA VARCHAR(50) UNIQUE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE GENERO (
+            ID_GENERO INT AUTO_INCREMENT PRIMARY KEY,
+            NOMBRE_GENERO VARCHAR(20) UNIQUE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE TIPO_DOCUMENTO (
+            ID_TIPO_DOCUMENTO INT AUTO_INCREMENT PRIMARY KEY,
+            NOMBRE_TIPO VARCHAR(25) UNIQUE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE DEPARTAMENTO (
+            ID_DEPARTAMENTO INT AUTO_INCREMENT PRIMARY KEY,
+            NOMBRE_DEPARTAMENTO VARCHAR(50) UNIQUE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE GRADO_ACADEMICO (
+            ID_GRADO_ACADEMICO INT AUTO_INCREMENT PRIMARY KEY,
+            NOMBRE_GRADO VARCHAR(50) UNIQUE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE RED_SOCIAL (
+            ID_RED_SOCIAL INT AUTO_INCREMENT PRIMARY KEY,
+            NOMBRE_RED VARCHAR(50) UNIQUE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE TIPO_CERTIFICACION (
+            ID_TIPO_CERTIFICACION INT AUTO_INCREMENT PRIMARY KEY,
+            NOMBRE_TIPO VARCHAR(100) UNIQUE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE USUARIO (
+            ID_USUARIO INT AUTO_INCREMENT PRIMARY KEY,
+            USERNAME VARCHAR(30) UNIQUE COLLATE utf8mb4_unicode_ci,
+            PASSWORD VARCHAR(128),
+            ROL VARCHAR(20)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE MUNICIPIO (
+            ID_DEPARTAMENTO INT NOT NULL,
+            ID_MUNICIPIO INT NOT NULL,
+            NOMBRE_MUNICIPIO VARCHAR(50),
+            PRIMARY KEY (ID_DEPARTAMENTO, ID_MUNICIPIO),
+            FOREIGN KEY (ID_DEPARTAMENTO) REFERENCES DEPARTAMENTO(ID_DEPARTAMENTO),
+            UNIQUE (ID_DEPARTAMENTO, NOMBRE_MUNICIPIO)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE DISTRITO (
+            ID_DEPARTAMENTO INT NOT NULL,
+            ID_MUNICIPIO INT NOT NULL,
+            ID_DISTRITO INT NOT NULL,
+            NOMBRE_DISTRITO VARCHAR(50),
+            PRIMARY KEY (ID_DEPARTAMENTO, ID_MUNICIPIO, ID_DISTRITO),
+            FOREIGN KEY (ID_DEPARTAMENTO, ID_MUNICIPIO) REFERENCES MUNICIPIO(ID_DEPARTAMENTO, ID_MUNICIPIO),
+            UNIQUE (ID_DEPARTAMENTO, ID_MUNICIPIO, NOMBRE_DISTRITO)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE INSTITUCION (
+            ID_INSTITUCION VARCHAR(20) PRIMARY KEY,
+            NOMBRE_INSTITUCION VARCHAR(150) UNIQUE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE HABILIDAD (
+            ID_CATEGORIA_HABILIDAD INT NOT NULL,
+            ID_HABILIDAD VARCHAR(10) NOT NULL,
+            NOMBRE_HABILIDAD VARCHAR(100) UNIQUE,
+            PRIMARY KEY (ID_CATEGORIA_HABILIDAD, ID_HABILIDAD),
+            FOREIGN KEY (ID_CATEGORIA_HABILIDAD) REFERENCES CATEGORIA_HABILIDAD(ID_CATEGORIA_HABILIDAD)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE EMPRESA (
+            NIT VARCHAR(20) PRIMARY KEY,
+            ID_DISTRITO_DEPTO INT NOT NULL,
+            ID_DISTRITO_MUNICIPIO INT NOT NULL,
+            ID_DISTRITO_ID INT NOT NULL,
+            NOMBRE_EMPRESA VARCHAR(150) UNIQUE,
+            CONTACTO_DIRECTO VARCHAR(100),
+            FOREIGN KEY (ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID) REFERENCES DISTRITO(ID_DEPARTAMENTO, ID_MUNICIPIO, ID_DISTRITO)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE OFERTA_ACADEMICA (
+            ID_OFERTA_ACADEMICA VARCHAR(10) PRIMARY KEY,
+            ID_GRADO_ACADEMICO INT,
+            ID_INSTITUCION VARCHAR(20),
+            FOREIGN KEY (ID_INSTITUCION) REFERENCES INSTITUCION(ID_INSTITUCION),
+            FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO(ID_GRADO_ACADEMICO),
+            UNIQUE (ID_INSTITUCION, ID_GRADO_ACADEMICO)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE POSTULANTE (
+            ID_POSTULANTE VARCHAR(20) PRIMARY KEY,
+            ID_GENERO INT NOT NULL,
+            ID_TIPO_DOCUMENTO INT NOT NULL,
+            NUM_DOCUMENTO VARCHAR(20) UNIQUE,
+            ID_GRADO_ACADEMICO INT NOT NULL,
+            ID_DISTRITO_DEPTO INT,
+            ID_DISTRITO_MUNICIPIO INT,
+            ID_DISTRITO_ID INT,
+            NOMBRE VARCHAR(100),
+            APELLIDO VARCHAR(100),
+            FECHA_NACIMIENTO DATE,
+            NUP VARCHAR(20) UNIQUE,
+            DIRECCION_DETALLE VARCHAR(250),
+            TELEFONO_CASA VARCHAR(15),
+            TELEFONO_CELULAR VARCHAR(15),
+            EMAIL VARCHAR(100) UNIQUE COLLATE utf8mb4_unicode_ci,
+            FOREIGN KEY (ID_GENERO) REFERENCES GENERO(ID_GENERO),
+            FOREIGN KEY (ID_TIPO_DOCUMENTO) REFERENCES TIPO_DOCUMENTO(ID_TIPO_DOCUMENTO),
+            FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO(ID_GRADO_ACADEMICO),
+            FOREIGN KEY (ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID) REFERENCES DISTRITO(ID_DEPARTAMENTO, ID_MUNICIPIO, ID_DISTRITO)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE OFERTA_TRABAJO (
+            NIT VARCHAR(20) NOT NULL,
+            ID_OFERTA VARCHAR(10) NOT NULL,
+            ID_GRADO_ACADEMICO INT,
+            TITULO_PUESTO VARCHAR(150),
+            FECHA_PUBLICACION DATE,
+            FECHA_CADUCIDAD DATE,
+            EXPERIENCIA_ANIOS INT,
+            EDAD_MINIMA INT,
+            EDAD_MAXIMA INT,
+            DESCRIPCION_OFERTA_TRABAJO VARCHAR(5000),
+            PRIMARY KEY (NIT, ID_OFERTA),
+            FOREIGN KEY (NIT) REFERENCES EMPRESA(NIT),
+            FOREIGN KEY (ID_GRADO_ACADEMICO) REFERENCES GRADO_ACADEMICO(ID_GRADO_ACADEMICO),
+            UNIQUE (NIT, TITULO_PUESTO)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE DETALLE_REQUISITO (
+            NIT VARCHAR(20) NOT NULL,
+            ID_OFERTA VARCHAR(10) NOT NULL,
+            ID_DETALLE VARCHAR(10) NOT NULL,
+            DESCRIPCION_REQUISITO VARCHAR(100),
+            PRIMARY KEY (NIT, ID_OFERTA, ID_DETALLE),
+            FOREIGN KEY (NIT, ID_OFERTA) REFERENCES OFERTA_TRABAJO(NIT, ID_OFERTA),
+            UNIQUE (NIT, ID_OFERTA, DESCRIPCION_REQUISITO)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE EXPERIENCIA_LABORAL (
+            ID_POSTULANTE VARCHAR(20) NOT NULL,
+            NIT VARCHAR(20) NOT NULL,
+            ID_EXPERIENCIA VARCHAR(10) NOT NULL,
+            PUESTO_TRABAJO VARCHAR(100),
+            FECHA_INICIO DATE,
+            FECHA_FIN DATE,
+            DESCP_EXPERIENCIA_LABORAL VARCHAR(500),
+            CONTACTO_REFERENCIA VARCHAR(100),
+            PRIMARY KEY (ID_POSTULANTE, NIT, ID_EXPERIENCIA),
+            FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE(ID_POSTULANTE),
+            FOREIGN KEY (NIT) REFERENCES EMPRESA(NIT),
+            UNIQUE (ID_POSTULANTE, NIT, PUESTO_TRABAJO)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE CERTIFICACION (
+            ID_CERTIFICACION VARCHAR(10) NOT NULL,
+            ID_INSTITUCION VARCHAR(20) NOT NULL,
+            ID_POSTULANTE VARCHAR(20) NOT NULL,
+            ID_TIPO_CERTIFICACION INT,
+            NOMBRE_CERTIFICACION VARCHAR(150),
+            FECHA_CERTIFICACION DATE,
+            FECHA_INICIO DATE NOT NULL,
+            FECHA_FIN DATE NOT NULL,
+            PRIMARY KEY (ID_CERTIFICACION, ID_INSTITUCION, ID_POSTULANTE),
+            FOREIGN KEY (ID_INSTITUCION) REFERENCES INSTITUCION(ID_INSTITUCION),
+            FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE(ID_POSTULANTE),
+            FOREIGN KEY (ID_TIPO_CERTIFICACION) REFERENCES TIPO_CERTIFICACION(ID_TIPO_CERTIFICACION),
+            UNIQUE (ID_POSTULANTE, NOMBRE_CERTIFICACION)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE FORMACION_ACADEMICA (
+            ID_FORMACION VARCHAR(10) NOT NULL,
+            ID_POSTULANTE VARCHAR(20) NOT NULL,
+            ID_OFERTA_ACADEMICA VARCHAR(10),
+            TITULO_OBTENIDO VARCHAR(150),
+            FECHA_INICIO DATE NOT NULL,
+            FECHA_FIN DATE NOT NULL,
+            FECHA_OBTENCION DATE,
+            PRIMARY KEY (ID_FORMACION, ID_POSTULANTE),
+            FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE(ID_POSTULANTE),
+            FOREIGN KEY (ID_OFERTA_ACADEMICA) REFERENCES OFERTA_ACADEMICA(ID_OFERTA_ACADEMICA)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE HABILIDAD_POSTULANTE (
+            ID_CATEGORIA_HABILIDAD INT NOT NULL,
+            ID_HABILIDAD VARCHAR(10) NOT NULL,
+            ID_POSTULANTE VARCHAR(20) NOT NULL,
+            NIVEL_DESTREZA VARCHAR(12),
+            PRIMARY KEY (ID_CATEGORIA_HABILIDAD, ID_HABILIDAD, ID_POSTULANTE),
+            FOREIGN KEY (ID_CATEGORIA_HABILIDAD, ID_HABILIDAD) REFERENCES HABILIDAD(ID_CATEGORIA_HABILIDAD, ID_HABILIDAD),
+            FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE(ID_POSTULANTE)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE POSTULACION (
+            ID_POSTULACION VARCHAR(10) NOT NULL,
+            NIT VARCHAR(20) NOT NULL,
+            ID_OFERTA VARCHAR(10) NOT NULL,
+            ID_POSTULANTE VARCHAR(20) NOT NULL,
+            FECHA_APLICACION DATE,
+            ESTADO_PROCESO VARCHAR(50),
+            PRIMARY KEY (ID_POSTULACION),
+            FOREIGN KEY (NIT, ID_OFERTA) REFERENCES OFERTA_TRABAJO(NIT, ID_OFERTA),
+            FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE(ID_POSTULANTE),
+            UNIQUE (ID_POSTULANTE, NIT, ID_OFERTA)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE RED_SOCIAL_POSTULANTE (
+            ID_POSTULANTE VARCHAR(20) NOT NULL,
+            ID_RED_SOCIAL INT NOT NULL,
+            URL_PERFIL VARCHAR(100),
+            PRIMARY KEY (ID_POSTULANTE, ID_RED_SOCIAL),
+            FOREIGN KEY (ID_POSTULANTE) REFERENCES POSTULANTE(ID_POSTULANTE),
+            FOREIGN KEY (ID_RED_SOCIAL) REFERENCES RED_SOCIAL(ID_RED_SOCIAL)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ";
+
+    $statements = explode(";\n", $createTableSQL);
+    foreach ($statements as $stmt) {
+        $stmt = trim($stmt);
+        if (!empty($stmt)) {
+            $conn->query($stmt);
+        }
+    }
+    echo "✅ 23 CREATE TABLE ejecutados<br>";
+
+    // ---- 4. INDEXES ----
+    $indexes = [
+        "CREATE INDEX IDX_MUNICIPIO_DEPTO ON MUNICIPIO (ID_DEPARTAMENTO)",
+        "CREATE INDEX IDX_DISTRITO_MUNICIPIO ON DISTRITO (ID_DEPARTAMENTO, ID_MUNICIPIO)",
+        "CREATE INDEX IDX_HABILIDAD_CATEGORIA ON HABILIDAD (ID_CATEGORIA_HABILIDAD)",
+        "CREATE INDEX IDX_EMPRESA_DISTRITO ON EMPRESA (ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID)",
+        "CREATE INDEX IDX_POSTULANTE_GENERO ON POSTULANTE (ID_GENERO)",
+        "CREATE INDEX IDX_POSTULANTE_TIPO_DOC ON POSTULANTE (ID_TIPO_DOCUMENTO)",
+        "CREATE INDEX IDX_POSTULANTE_DISTRITO ON POSTULANTE (ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID)",
+        "CREATE INDEX IDX_OFERTA_GRADO ON OFERTA_TRABAJO (ID_GRADO_ACADEMICO)",
+        "CREATE INDEX IDX_DETALLE_OFERTA ON DETALLE_REQUISITO (NIT, ID_OFERTA)",
+        "CREATE INDEX IDX_EXP_POSTULANTE ON EXPERIENCIA_LABORAL (ID_POSTULANTE)",
+        "CREATE INDEX IDX_EXP_EMPRESA ON EXPERIENCIA_LABORAL (NIT)",
+        "CREATE INDEX IDX_CERT_POSTULANTE ON CERTIFICACION (ID_POSTULANTE)",
+        "CREATE INDEX IDX_CERT_INSTITUCION ON CERTIFICACION (ID_INSTITUCION)",
+        "CREATE INDEX IDX_FORM_POSTULANTE ON FORMACION_ACADEMICA (ID_POSTULANTE)",
+        "CREATE INDEX IDX_HAB_POST_POSTULANTE ON HABILIDAD_POSTULANTE (ID_POSTULANTE)",
+        "CREATE INDEX IDX_HAB_POST_HABILIDAD ON HABILIDAD_POSTULANTE (ID_HABILIDAD)",
+        "CREATE INDEX IDX_POSTULACION_POSTULANTE ON POSTULACION (ID_POSTULANTE)",
+        "CREATE INDEX IDX_POSTULACION_OFERTA ON POSTULACION (NIT, ID_OFERTA)",
+        "CREATE INDEX IDX_RED_POST_POSTULANTE ON RED_SOCIAL_POSTULANTE (ID_POSTULANTE)",
+        "CREATE INDEX IDX_OA_INSTITUCION ON OFERTA_ACADEMICA (ID_INSTITUCION)",
+        "CREATE INDEX IDX_OA_GRADO ON OFERTA_ACADEMICA (ID_GRADO_ACADEMICO)"
+    ];
+    foreach ($indexes as $sql) {
+        $conn->query($sql);
+    }
+    echo "✅ 21 CREATE INDEX ejecutados<br>";
+
+    // ---- 5. TRIGGERS ----
+    $triggers = [
+        // 5.1 TR_POSTULANTE_EDAD
+        "CREATE TRIGGER TR_POSTULANTE_EDAD BEFORE INSERT ON POSTULANTE
+        FOR EACH ROW
+        BEGIN
+            IF NEW.FECHA_NACIMIENTO > CURDATE() THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La fecha de nacimiento no puede ser futura';
+            END IF;
+            IF DATE_ADD(NEW.FECHA_NACIMIENTO, INTERVAL 18 YEAR) > CURDATE() THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El postulante debe ser mayor de edad';
+            END IF;
+        END",
+
+        "CREATE TRIGGER TR_POSTULANTE_EDAD_UPD BEFORE UPDATE ON POSTULANTE
+        FOR EACH ROW
+        BEGIN
+            IF NEW.FECHA_NACIMIENTO > CURDATE() THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La fecha de nacimiento no puede ser futura';
+            END IF;
+            IF DATE_ADD(NEW.FECHA_NACIMIENTO, INTERVAL 18 YEAR) > CURDATE() THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El postulante debe ser mayor de edad';
+            END IF;
+        END",
+
+        // 5.2 TR_POSTULANTE_GRADO
+        "CREATE TRIGGER TR_POSTULANTE_GRADO BEFORE INSERT ON POSTULANTE
+        FOR EACH ROW
+        BEGIN
+            IF (SELECT LOWER(NOMBRE_GRADO) FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO) IN ('bachiller') THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El postulante debe tener un grado academico superior a Bachiller';
+            END IF;
+        END",
+
+        "CREATE TRIGGER TR_POSTULANTE_GRADO_UPD BEFORE UPDATE ON POSTULANTE
+        FOR EACH ROW
+        BEGIN
+            IF (SELECT LOWER(NOMBRE_GRADO) FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO) IN ('bachiller') THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El postulante debe tener un grado academico superior a Bachiller';
+            END IF;
+        END",
+
+        // 5.3 TR_OFERTA_RANGO_EDAD
+        "CREATE TRIGGER TR_OFERTA_RANGO_EDAD BEFORE INSERT ON OFERTA_TRABAJO
+        FOR EACH ROW
+        BEGIN
+            IF NEW.EDAD_MINIMA < 18 THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Edad minima debe ser mayor o igual a 18';
+            END IF;
+            IF NEW.EDAD_MINIMA > NEW.EDAD_MAXIMA THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Edad minima no puede ser mayor a la maxima';
+            END IF;
+        END",
+
+        "CREATE TRIGGER TR_OFERTA_RANGO_EDAD_UPD BEFORE UPDATE ON OFERTA_TRABAJO
+        FOR EACH ROW
+        BEGIN
+            IF NEW.EDAD_MINIMA < 18 THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Edad minima debe ser mayor o igual a 18';
+            END IF;
+            IF NEW.EDAD_MINIMA > NEW.EDAD_MAXIMA THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Edad minima no puede ser mayor a la maxima';
+            END IF;
+        END",
+
+        // 5.4 TR_OFERTA_VIGENCIA
+        "CREATE TRIGGER TR_OFERTA_VIGENCIA BEFORE INSERT ON OFERTA_TRABAJO
+        FOR EACH ROW
+        BEGIN
+            IF NEW.FECHA_CADUCIDAD <= NEW.FECHA_PUBLICACION THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La oferta ya caduco o fecha invalida';
+            END IF;
+        END",
+
+        "CREATE TRIGGER TR_OFERTA_VIGENCIA_UPD BEFORE UPDATE ON OFERTA_TRABAJO
+        FOR EACH ROW
+        BEGIN
+            IF NEW.FECHA_CADUCIDAD <= NEW.FECHA_PUBLICACION THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La oferta ya caduco o fecha invalida';
+            END IF;
+        END",
+
+        // 5.5 TR_POSTULACION_VIGENCIA
+        "CREATE TRIGGER TR_POSTULACION_VIGENCIA BEFORE INSERT ON POSTULACION
+        FOR EACH ROW
+        BEGIN
+            IF (SELECT FECHA_CADUCIDAD FROM OFERTA_TRABAJO WHERE NIT = NEW.NIT AND ID_OFERTA = NEW.ID_OFERTA) < CURDATE() THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La oferta de trabajo ha vencido';
+            END IF;
+        END",
+
+        // 5.6 TR_EXP_LABORAL_FECHAS
+        "CREATE TRIGGER TR_EXP_LABORAL_FECHAS BEFORE INSERT ON EXPERIENCIA_LABORAL
+        FOR EACH ROW
+        BEGIN
+            IF NEW.FECHA_INICIO >= NEW.FECHA_FIN THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha inicio debe ser menor a fecha fin';
+            END IF;
+        END",
+
+        "CREATE TRIGGER TR_EXP_LABORAL_FECHAS_UPD BEFORE UPDATE ON EXPERIENCIA_LABORAL
+        FOR EACH ROW
+        BEGIN
+            IF NEW.FECHA_INICIO >= NEW.FECHA_FIN THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha inicio debe ser menor a fecha fin';
+            END IF;
+        END",
+
+        // 5.7 TR_CERTIFICACION_FECHAS
+        "CREATE TRIGGER TR_CERTIFICACION_FECHAS BEFORE INSERT ON CERTIFICACION
+        FOR EACH ROW
+        BEGIN
+            IF NEW.FECHA_INICIO >= NEW.FECHA_FIN THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha inicio debe ser menor a fecha fin';
+            END IF;
+            IF NEW.FECHA_INICIO > CURDATE() THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha inicio no puede ser una fecha futura';
+            END IF;
+            IF NEW.FECHA_FIN > CURDATE() THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha fin no puede ser una fecha futura';
+            END IF;
+            IF NEW.FECHA_CERTIFICACION < NEW.FECHA_FIN THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha de certificacion no puede ser menor a la fecha fin del periodo';
+            END IF;
+            IF NEW.FECHA_CERTIFICACION > DATE_ADD(NEW.FECHA_FIN, INTERVAL 1 YEAR) THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha de certificacion no puede exceder un año despues de la fecha fin del periodo';
+            END IF;
+            IF NEW.FECHA_CERTIFICACION > CURDATE() THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha de certificacion no puede ser una fecha futura';
+            END IF;
+        END",
+
+        "CREATE TRIGGER TR_CERTIFICACION_FECHAS_UPD BEFORE UPDATE ON CERTIFICACION
+        FOR EACH ROW
+        BEGIN
+            IF NEW.FECHA_INICIO >= NEW.FECHA_FIN THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha inicio debe ser menor a fecha fin';
+            END IF;
+            IF NEW.FECHA_INICIO > CURDATE() THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha inicio no puede ser una fecha futura';
+            END IF;
+            IF NEW.FECHA_FIN > CURDATE() THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha fin no puede ser una fecha futura';
+            END IF;
+            IF NEW.FECHA_CERTIFICACION < NEW.FECHA_FIN THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha de certificacion no puede ser menor a la fecha fin del periodo';
+            END IF;
+            IF NEW.FECHA_CERTIFICACION > DATE_ADD(NEW.FECHA_FIN, INTERVAL 1 YEAR) THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha de certificacion no puede exceder un año despues de la fecha fin del periodo';
+            END IF;
+            IF NEW.FECHA_CERTIFICACION > CURDATE() THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha de certificacion no puede ser una fecha futura';
+            END IF;
+        END",
+
+        // 5.8 TR_FORMACION_FECHAS
+        "CREATE TRIGGER TR_FORMACION_FECHAS BEFORE INSERT ON FORMACION_ACADEMICA
+        FOR EACH ROW
+        BEGIN
+            IF NEW.FECHA_INICIO >= NEW.FECHA_FIN THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha inicio debe ser menor a fecha fin';
+            END IF;
+            IF NEW.FECHA_INICIO > CURDATE() THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha inicio no puede ser una fecha futura';
+            END IF;
+            IF NEW.FECHA_FIN > CURDATE() THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha fin no puede ser una fecha futura';
+            END IF;
+            IF NEW.FECHA_OBTENCION < NEW.FECHA_FIN THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha de obtencion no puede ser menor a la fecha fin del periodo';
+            END IF;
+            IF NEW.FECHA_OBTENCION > DATE_ADD(NEW.FECHA_FIN, INTERVAL 1 YEAR) THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha de obtencion no puede exceder un año despues de la fecha fin del periodo';
+            END IF;
+            IF NEW.FECHA_OBTENCION > CURDATE() THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha de obtencion no puede ser una fecha futura';
+            END IF;
+        END",
+
+        "CREATE TRIGGER TR_FORMACION_FECHAS_UPD BEFORE UPDATE ON FORMACION_ACADEMICA
+        FOR EACH ROW
+        BEGIN
+            IF NEW.FECHA_INICIO >= NEW.FECHA_FIN THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha inicio debe ser menor a fecha fin';
+            END IF;
+            IF NEW.FECHA_INICIO > CURDATE() THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha inicio no puede ser una fecha futura';
+            END IF;
+            IF NEW.FECHA_FIN > CURDATE() THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha fin no puede ser una fecha futura';
+            END IF;
+            IF NEW.FECHA_OBTENCION < NEW.FECHA_FIN THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha de obtencion no puede ser menor a la fecha fin del periodo';
+            END IF;
+            IF NEW.FECHA_OBTENCION > DATE_ADD(NEW.FECHA_FIN, INTERVAL 1 YEAR) THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha de obtencion no puede exceder un año despues de la fecha fin del periodo';
+            END IF;
+            IF NEW.FECHA_OBTENCION > CURDATE() THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fecha de obtencion no puede ser una fecha futura';
+            END IF;
+        END",
+
+        // 5.9 TR_HABILIDAD_NIVEL
+        "CREATE TRIGGER TR_HABILIDAD_NIVEL BEFORE INSERT ON HABILIDAD_POSTULANTE
+        FOR EACH ROW
+        BEGIN
+            IF NEW.NIVEL_DESTREZA NOT IN ('Básico', 'Intermedio', 'Avanzado') THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Nivel de destreza debe ser Basico, Intermedio o Avanzado';
+            END IF;
+        END",
+
+        "CREATE TRIGGER TR_HABILIDAD_NIVEL_UPD BEFORE UPDATE ON HABILIDAD_POSTULANTE
+        FOR EACH ROW
+        BEGIN
+            IF NEW.NIVEL_DESTREZA NOT IN ('Básico', 'Intermedio', 'Avanzado') THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Nivel de destreza debe ser Basico, Intermedio o Avanzado';
+            END IF;
+        END",
+
+        // 6.1 TR_MUNICIPIO_DEPTO
+        "CREATE TRIGGER TR_MUNICIPIO_DEPTO BEFORE INSERT ON MUNICIPIO
+        FOR EACH ROW
+        BEGIN
+            IF (SELECT 1 FROM DEPARTAMENTO WHERE ID_DEPARTAMENTO = NEW.ID_DEPARTAMENTO) IS NULL THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El departamento asociado no existe';
+            END IF;
+        END",
+
+        "CREATE TRIGGER TR_MUNICIPIO_DEPTO_UPD BEFORE UPDATE ON MUNICIPIO
+        FOR EACH ROW
+        BEGIN
+            IF (SELECT 1 FROM DEPARTAMENTO WHERE ID_DEPARTAMENTO = NEW.ID_DEPARTAMENTO) IS NULL THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El departamento asociado no existe';
+            END IF;
+        END",
+
+        // 6.2 TR_DISTRITO_MUNICIPIO
+        "CREATE TRIGGER TR_DISTRITO_MUNICIPIO BEFORE INSERT ON DISTRITO
+        FOR EACH ROW
+        BEGIN
+            IF (SELECT 1 FROM MUNICIPIO WHERE ID_DEPARTAMENTO = NEW.ID_DEPARTAMENTO AND ID_MUNICIPIO = NEW.ID_MUNICIPIO) IS NULL THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El municipio asociado no existe';
+            END IF;
+        END",
+
+        "CREATE TRIGGER TR_DISTRITO_MUNICIPIO_UPD BEFORE UPDATE ON DISTRITO
+        FOR EACH ROW
+        BEGIN
+            IF (SELECT 1 FROM MUNICIPIO WHERE ID_DEPARTAMENTO = NEW.ID_DEPARTAMENTO AND ID_MUNICIPIO = NEW.ID_MUNICIPIO) IS NULL THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El municipio asociado no existe';
+            END IF;
+        END",
+
+        // 6.3 TR_HABILIDAD_CATEGORIA
+        "CREATE TRIGGER TR_HABILIDAD_CATEGORIA BEFORE INSERT ON HABILIDAD
+        FOR EACH ROW
+        BEGIN
+            IF (SELECT 1 FROM CATEGORIA_HABILIDAD WHERE ID_CATEGORIA_HABILIDAD = NEW.ID_CATEGORIA_HABILIDAD) IS NULL THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La categoria asociada no existe';
+            END IF;
+        END",
+
+        "CREATE TRIGGER TR_HABILIDAD_CATEGORIA_UPD BEFORE UPDATE ON HABILIDAD
+        FOR EACH ROW
+        BEGIN
+            IF (SELECT 1 FROM CATEGORIA_HABILIDAD WHERE ID_CATEGORIA_HABILIDAD = NEW.ID_CATEGORIA_HABILIDAD) IS NULL THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La categoria asociada no existe';
+            END IF;
+        END",
+
+        // 6.4 TR_EMPRESA_DISTRITO
+        "CREATE TRIGGER TR_EMPRESA_DISTRITO BEFORE INSERT ON EMPRESA
+        FOR EACH ROW
+        BEGIN
+            IF (SELECT 1 FROM DISTRITO WHERE ID_DEPARTAMENTO = NEW.ID_DISTRITO_DEPTO AND ID_MUNICIPIO = NEW.ID_DISTRITO_MUNICIPIO AND ID_DISTRITO = NEW.ID_DISTRITO_ID) IS NULL THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El distrito asociado no existe';
+            END IF;
+        END",
+
+        "CREATE TRIGGER TR_EMPRESA_DISTRITO_UPD BEFORE UPDATE ON EMPRESA
+        FOR EACH ROW
+        BEGIN
+            IF (SELECT 1 FROM DISTRITO WHERE ID_DEPARTAMENTO = NEW.ID_DISTRITO_DEPTO AND ID_MUNICIPIO = NEW.ID_DISTRITO_MUNICIPIO AND ID_DISTRITO = NEW.ID_DISTRITO_ID) IS NULL THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El distrito asociado no existe';
+            END IF;
+        END",
+
+        // 6.5 TR_POSTULANTE_FK
+        "CREATE TRIGGER TR_POSTULANTE_FK BEFORE INSERT ON POSTULANTE
+        FOR EACH ROW
+        BEGIN
+            IF (SELECT 1 FROM GENERO WHERE ID_GENERO = NEW.ID_GENERO) IS NULL THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El genero asociado no existe';
+            END IF;
+            IF (SELECT 1 FROM TIPO_DOCUMENTO WHERE ID_TIPO_DOCUMENTO = NEW.ID_TIPO_DOCUMENTO) IS NULL THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El tipo de documento asociado no existe';
+            END IF;
+            IF NEW.ID_GRADO_ACADEMICO IS NOT NULL AND (SELECT 1 FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO) IS NULL THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El grado academico asociado no existe';
+            END IF;
+        END",
+
+        "CREATE TRIGGER TR_POSTULANTE_FK_UPD BEFORE UPDATE ON POSTULANTE
+        FOR EACH ROW
+        BEGIN
+            IF (SELECT 1 FROM GENERO WHERE ID_GENERO = NEW.ID_GENERO) IS NULL THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El genero asociado no existe';
+            END IF;
+            IF (SELECT 1 FROM TIPO_DOCUMENTO WHERE ID_TIPO_DOCUMENTO = NEW.ID_TIPO_DOCUMENTO) IS NULL THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El tipo de documento asociado no existe';
+            END IF;
+            IF NEW.ID_GRADO_ACADEMICO IS NOT NULL AND (SELECT 1 FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO) IS NULL THEN
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El grado academico asociado no existe';
+            END IF;
+        END"
+    ];
+
+    foreach ($triggers as $sql) {
+        if (!$conn->query($sql)) {
+            throw new Exception("Error en trigger: " . $conn->error);
+        }
+    }
+    echo "✅ 27 CREATE TRIGGER ejecutados<br>";
+
+    $conn->commit();
+    echo "<br>🎉 <b>BASE DE DATOS CONFIGURADA EXITOSAMENTE</b><br>";
+    echo "23 tablas + 21 índices + 27 triggers creados.";
+
+} catch (Exception $e) {
+    $conn->rollback();
+    echo "❌ Error: " . $e->getMessage() . "<br>";
+    echo "<b>Rollback ejecutado - no se realizaron cambios.</b>";
+}
+
+$conn->close();
+echo "</pre>";

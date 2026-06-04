@@ -160,6 +160,9 @@
     <string name="section_empresa">Empresa</string>
     <string name="section_postulante">Candidato</string>
     <string name="section_otras">Outras</string>
+    <string name="section_servicios_web">Consumo de Serviços Web</string>
+    <string name="service_icon">~</string>
+    <string name="service_pending">Pendente</string>
 
     <!-- Field hints for editor dialog -->
     <string name="hint_nit_empresa">NIT EMPRESA</string>
@@ -518,4 +521,27 @@
     <string name="error_duplicado_postulante_nup">Já existe um candidato com esse NUP</string>
     <string name="error_duplicado_formacion_academica">Já existe uma formação acadêmica com esse título no mesmo período para o candidato</string>
     <string name="error_duplicado_certificacion_nombre">Já existe uma certificação com esse nome para o candidato</string>
+
+    <!-- Bulk offer insertion -->
+    <string name="oferta_titulo_seccion">Nova Oferta de Trabalho</string>
+    <string name="oferta_hint_empresa">Empresa</string>
+    <string name="oferta_hint_id">Código da Oferta (ex. OF003)</string>
+    <string name="oferta_hint_titulo">Título do Cargo</string>
+    <string name="oferta_hint_grado">Grau Acadêmico</string>
+    <string name="oferta_hint_fecha_pub">Data Publicação</string>
+    <string name="oferta_hint_fecha_cad">Data Validade</string>
+    <string name="oferta_hint_exp">Exp. anos</string>
+    <string name="oferta_hint_edad_min">Idade mín</string>
+    <string name="oferta_hint_edad_max">Idade máx</string>
+    <string name="oferta_hint_desc">Descrição</string>
+    <string name="oferta_btn_agregar">+ Adicionar outra oferta</string>
+    <string name="oferta_lista_pendientes">Ofertas pendentes</string>
+    <string name="oferta_btn_insertar">Inserir todas</string>
+    <string name="oferta_btn_insertar_n">Inserir todas (%d)</string>
+    <string name="oferta_insertando">Inserindo…</string>
+    <string name="csv_btn_cargar">Carregar de arquivo</string>
+    <string name="req_titulo">Requisitos desta oferta</string>
+    <string name="req_hint_id">Código (D1)</string>
+    <string name="req_hint_desc">Descrição</string>
+    <string name="req_btn_agregar">+ Adicionar requisito</string>
 </resources>

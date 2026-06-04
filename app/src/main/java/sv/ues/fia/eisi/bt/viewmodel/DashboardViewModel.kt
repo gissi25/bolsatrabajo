@@ -17,6 +17,17 @@ import sv.ues.fia.eisi.bt.utils.removeAccents
 sealed class DashboardItem {
     data class Section(val sectionKey: String, val isExpanded: Boolean = false) : DashboardItem()
     data class Table(val info: MainRepository.TableInfo, val isReadOnly: Boolean = false, val sectionKey: String = "") : DashboardItem()
+    data class WebService(val id: Int, val title: String) : DashboardItem()
+
+    val contentSectionKey: String? get() = when (this) {
+        is Section -> null
+        is Table -> sectionKey
+        is WebService -> DashboardItem.SECTION_SERVICIOS_WEB
+    }
+
+    companion object {
+        const val SECTION_SERVICIOS_WEB = "servicios_web"
+    }
 }
 
 class DashboardViewModel(application: Application) : AndroidViewModel(application) {
@@ -35,6 +46,8 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     private val _seedResult = MutableLiveData<Resource?>()
     val seedResult: LiveData<Resource?> get() = _seedResult
+
+    private val webServices = (1..10).map { DashboardItem.WebService(it, "Servicio $it") }
 
     private val catalogTables = setOf(
         "CATEGORIA_HABILIDAD", "GENERO", "TIPO_DOCUMENTO", "DEPARTAMENTO",
@@ -57,9 +70,9 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 }
                 val roleTables = Constants.getRoleTables(currentRole)
                 val filtered = all.filter { roleTables.containsKey(it.name) }
-                allItemsOriginal = buildSectionedList(filtered)
+                allItemsOriginal = buildSectionedList(filtered) + buildWebServiceSection()
                 _items.postValue(allItemsOriginal.filter { item ->
-                    item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionKey in expandedSections
+                    item is DashboardItem.Section || item.contentSectionKey in expandedSections
                 })
             } catch (e: Exception) {
             } finally {
@@ -117,6 +130,13 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         return result
     }
 
+    private fun buildWebServiceSection(): List<DashboardItem> {
+        val result = mutableListOf<DashboardItem>()
+        result.add(DashboardItem.Section(DashboardItem.SECTION_SERVICIOS_WEB, DashboardItem.SECTION_SERVICIOS_WEB in expandedSections))
+        result.addAll(webServices)
+        return result
+    }
+
     fun toggleSection(key: String) {
         if (key in expandedSections) expandedSections.remove(key) else expandedSections.add(key)
         allItemsOriginal = allItemsOriginal.map { item ->
@@ -126,6 +146,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             when (item) {
                 is DashboardItem.Section -> true
                 is DashboardItem.Table -> item.sectionKey in expandedSections
+                is DashboardItem.WebService -> item.contentSectionKey in expandedSections
             }
         }
     }
@@ -138,9 +159,9 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 }
                 val roleTables = Constants.getRoleTables(currentRole)
                 val filtered = all.filter { roleTables.containsKey(it.name) }
-                allItemsOriginal = buildSectionedList(filtered)
+                allItemsOriginal = buildSectionedList(filtered) + buildWebServiceSection()
                 _items.postValue(allItemsOriginal.filter { item ->
-                    item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionKey in expandedSections
+                    item is DashboardItem.Section || item.contentSectionKey in expandedSections
                 })
             } catch (e: Exception) {
             }
@@ -151,7 +172,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         val q = query.removeAccents()
         if (q.isBlank()) {
             _items.value = allItemsOriginal.filter { item ->
-                item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionKey in expandedSections
+                item is DashboardItem.Section || item.contentSectionKey in expandedSections
             }
         } else {
             val matchingKeys = allItemsOriginal.filterIsInstance<DashboardItem.Table>()
@@ -160,6 +181,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             val filtered = allItemsOriginal.filter { item ->
                 when (item) {
                     is DashboardItem.Section -> item.sectionKey in matchingKeys
+                    is DashboardItem.WebService -> false
                     is DashboardItem.Table ->
                         (item.info.displayName.removeAccents().contains(q, ignoreCase = true) || item.info.name.removeAccents().contains(q, ignoreCase = true))
                 }
@@ -170,7 +192,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun loadOriginalTables() {
         _items.value = allItemsOriginal.filter { item ->
-            item is DashboardItem.Section || (item as? DashboardItem.Table)?.sectionKey in expandedSections
+            item is DashboardItem.Section || item.contentSectionKey in expandedSections
         }
     }
 

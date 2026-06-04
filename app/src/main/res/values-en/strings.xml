@@ -160,6 +160,9 @@
     <string name="section_empresa">Company</string>
     <string name="section_postulante">Applicant</string>
     <string name="section_otras">Others</string>
+    <string name="section_servicios_web">Web Services</string>
+    <string name="service_icon">~</string>
+    <string name="service_pending">Pending</string>
 
     <!-- Field hints for editor dialog -->
     <string name="hint_nit_empresa">COMPANY NIT</string>
@@ -518,4 +521,27 @@
     <string name="error_duplicado_postulante_nup">An applicant with that NUP already exists</string>
     <string name="error_duplicado_formacion_academica">An academic education with that title already exists in the same period for the applicant</string>
     <string name="error_duplicado_certificacion_nombre">A certification with that name already exists for the applicant</string>
+
+    <!-- Bulk offer insertion -->
+    <string name="oferta_titulo_seccion">New Job Offer</string>
+    <string name="oferta_hint_empresa">Company</string>
+    <string name="oferta_hint_id">Offer Code (e.g. OF003)</string>
+    <string name="oferta_hint_titulo">Job Title</string>
+    <string name="oferta_hint_grado">Academic Degree</string>
+    <string name="oferta_hint_fecha_pub">Publication Date</string>
+    <string name="oferta_hint_fecha_cad">Expiration Date</string>
+    <string name="oferta_hint_exp">Exp. years</string>
+    <string name="oferta_hint_edad_min">Min age</string>
+    <string name="oferta_hint_edad_max">Max age</string>
+    <string name="oferta_hint_desc">Description</string>
+    <string name="oferta_btn_agregar">+ Add another offer</string>
+    <string name="oferta_lista_pendientes">Pending offers</string>
+    <string name="oferta_btn_insertar">Insert all</string>
+    <string name="oferta_btn_insertar_n">Insert all (%d)</string>
+    <string name="oferta_insertando">Inserting…</string>
+    <string name="csv_btn_cargar">Load from file</string>
+    <string name="req_titulo">Requirements for this offer</string>
+    <string name="req_hint_id">Code (D1)</string>
+    <string name="req_hint_desc">Description</string>
+    <string name="req_btn_agregar">+ Add requirement</string>
 </resources>

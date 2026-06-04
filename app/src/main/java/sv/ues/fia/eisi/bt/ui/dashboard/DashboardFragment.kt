@@ -14,7 +14,9 @@ import android.widget.TextView
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import kotlinx.coroutines.launch
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
@@ -201,6 +203,12 @@ class DashboardFragment : Fragment() {
             },
             onSectionClick = { title ->
                 viewModel.toggleSection(title)
+            },
+            onServiceClick = { service ->
+                when (service.id) {
+                    1 -> findNavController().navigate(R.id.action_dashboard_to_bulkOferta)
+                    3 -> findNavController().navigate(R.id.action_dashboard_to_servicio3)
+                }
             }
         )
 
@@ -210,6 +218,7 @@ class DashboardFragment : Fragment() {
                 return when (adapter.currentList.getOrNull(position)) {
                     is DashboardItem.Section -> 2
                     is DashboardItem.Table -> 1
+                    is DashboardItem.WebService -> 1
                     null -> 1
                 }
             }
