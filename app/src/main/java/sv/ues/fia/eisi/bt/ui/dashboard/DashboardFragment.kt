@@ -208,6 +208,7 @@ class DashboardFragment : Fragment() {
                 when (service.id) {
                     1 -> findNavController().navigate(R.id.action_dashboard_to_bulkOferta)
                     3 -> findNavController().navigate(R.id.action_dashboard_to_servicio3)
+                    7 -> findNavController().navigate(R.id.action_dashboard_to_servicio7)
                 }
             }
         )

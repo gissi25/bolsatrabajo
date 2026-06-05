@@ -554,4 +554,16 @@
     <string name="s3_habilidades">Habilidades</string>
     <string name="s3_redes">Redes Sociales</string>
     <string name="s3_sin_datos">Sin datos</string>
+    <string name="s7_titulo">Buscar ofertas por edad</string>
+    <string name="s7_hint_edad">Tu edad</string>
+    <string name="s7_btn_buscar">Buscar ofertas</string>
+    <string name="s7_buscando">Buscando ofertas…</string>
+    <string name="s7_sin_resultados">No se encontraron ofertas para tu edad</string>
+    <string name="s7_error_edad">Ingresa una edad válida</string>
+    <string name="s7_edad_minima">Edad min</string>
+    <string name="s7_edad_maxima">Edad max</string>
+    <string name="s7_experiencia">Experiencia</string>
+    <string name="s7_publicacion">Publicación</string>
+    <string name="s7_caducidad">Caducidad</string>
+    <string name="s7_grado">Grado requerido</string>
 </resources>

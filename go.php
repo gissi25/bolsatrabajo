@@ -19,7 +19,9 @@ $route = [
     // Servicio 2: (disponible)
     // Servicio 3: sincronizar postulantes
     'sincronizar_postulantes' => 3,
-    // Servicios 4-10: (disponibles)
+    // Servicio 7: busqueda de ofertas
+    'ofertas_por_edad' => 7,
+    // Servicios 4-6, 8-10: (disponibles)
 ];
 
 if (!array_key_exists($action, $route)) {

@@ -161,4 +161,10 @@ object ApiService {
     suspend fun sincronizarUnPostulante(postulante: JSONObject): JSONObject = withContext(Dispatchers.Main) {
         fetch("sincronizar_postulantes", "POST", postulante.toString())
     }
+
+    suspend fun buscarOfertasPorEdad(edad: Int): List<JSONObject> = withContext(Dispatchers.Main) {
+        val json = fetch("ofertas_por_edad&edad=$edad")
+        val arr = json.getJSONArray("data")
+        (0 until arr.length()).map { arr.getJSONObject(it) }
+    }
 }
