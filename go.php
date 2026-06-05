@@ -19,6 +19,8 @@ $route = [
     // Servicio 2: (disponible)
     // Servicio 3: sincronizar postulantes
     'sincronizar_postulantes' => 3,
+    // Servicio 4: buscar certificaciones
+    'tipos_certificacion' => 4, 'buscar_certificaciones' => 4, 'sincronizar_certificaciones' => 4,
     // Servicios 4-10: (disponibles)
 ];
 
