@@ -161,4 +161,22 @@ object ApiService {
     suspend fun sincronizarUnPostulante(postulante: JSONObject): JSONObject = withContext(Dispatchers.Main) {
         fetch("sincronizar_postulantes", "POST", postulante.toString())
     }
+
+    suspend fun sincronizarCertificaciones(body: JSONObject): JSONObject = withContext(Dispatchers.Main) {
+        fetch("sincronizar_certificaciones", "POST", body.toString())
+    }
+
+    suspend fun getTiposCertificacion(): List<JSONObject> = withContext(Dispatchers.Main) {
+        val json = fetch("tipos_certificacion")
+        val arr = json.getJSONArray("data")
+        (0 until arr.length()).map { arr.getJSONObject(it) }
+    }
+
+    suspend fun buscarCertificaciones(tipo: Int, nombre: String?, anio: Int?): JSONObject = withContext(Dispatchers.Main) {
+        val params = mutableListOf<String>()
+        params.add("tipo=$tipo")
+        if (!nombre.isNullOrBlank()) params.add("nombre=${java.net.URLEncoder.encode(nombre, "UTF-8")}")
+        if (anio != null && anio > 0) params.add("anio=$anio")
+        fetch("buscar_certificaciones&${params.joinToString("&")}")
+    }
 }

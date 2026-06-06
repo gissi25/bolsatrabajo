@@ -554,4 +554,20 @@
     <string name="s3_habilidades">Habilidades</string>
     <string name="s3_redes">Redes Sociales</string>
     <string name="s3_sin_datos">Sin datos</string>
+
+    <!-- Servicio 4 - Buscar por Certificaciones -->
+    <string name="s4_titulo">Buscar por Certificaciones</string>
+    <string name="s4_hint_tipo">Tipo de certificación</string>
+    <string name="s4_hint_nombre">Nombre (opcional)</string>
+    <string name="s4_hint_anio">Año (opcional)</string>
+    <string name="s4_btn_buscar">Buscar</string>
+    <string name="s4_resultados">%d postulante(s) encontrado(s)</string>
+    <string name="s4_sin_resultados">No se encontraron resultados</string>
+    <string name="s4_total_cert">%d certificación(es)</string>
+    <string name="s4_error_tipo">Debe seleccionar un tipo de certificación</string>
+    <string name="s4_cargando">Buscando…</string>
+    <string name="s4_sincronizar">Sincronizar con servidor</string>
+    <string name="s4_sincronizando">Sincronizando…</string>
+    <string name="s4_sincronizado_ok">Sincronizado correctamente</string>
+    <string name="s4_btn_remoto">Ver en servidor</string>
 </resources>

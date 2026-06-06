@@ -70,6 +70,12 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left" />
+        <action
+            android:id="@+id/action_dashboard_to_servicio4"
+            app:destination="@id/servicio4Fragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left" />
     </fragment>
 
     <fragment
@@ -114,5 +120,11 @@
         android:name="sv.ues.fia.eisi.bt.ui.servicios.Servicio3Fragment"
         android:label="@string/s3_titulo"
         tools:layout="@layout/fragment_servicio3" />
+
+    <fragment
+        android:id="@+id/servicio4Fragment"
+        android:name="sv.ues.fia.eisi.bt.ui.servicios.Servicio4Fragment"
+        android:label="@string/s4_titulo"
+        tools:layout="@layout/fragment_servicio4" />
 
 </navigation>
