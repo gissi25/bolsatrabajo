@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -35,6 +36,7 @@ class Servicio4Fragment : Fragment() {
     private lateinit var etNombre: TextInputEditText
     private lateinit var etAnio: TextInputEditText
     private lateinit var btnBuscar: MaterialButton
+    private lateinit var btnRemoto: MaterialButton
     private lateinit var rvResultados: RecyclerView
     private lateinit var progressBar: ProgressBar
     private lateinit var tvResultado: TextView
@@ -58,6 +60,7 @@ class Servicio4Fragment : Fragment() {
         etNombre = view.findViewById(R.id.etNombre)
         etAnio = view.findViewById(R.id.etAnio)
         btnBuscar = view.findViewById(R.id.btnBuscar)
+        btnRemoto = view.findViewById(R.id.btnRemoto)
         rvResultados = view.findViewById(R.id.rvResultados)
         progressBar = view.findViewById(R.id.progressBar)
         tvResultado = view.findViewById(R.id.tvResultado)
@@ -73,6 +76,7 @@ class Servicio4Fragment : Fragment() {
         }
 
         btnBuscar.setOnClickListener { buscar() }
+        btnRemoto.setOnClickListener { buscarRemoto() }
 
         lifecycleScope.launch {
             for (attempt in 1..3) {
@@ -129,46 +133,75 @@ class Servicio4Fragment : Fragment() {
         btnBuscar.isEnabled = false; btnBuscar.text = getString(R.string.s4_cargando)
         progressBar.visibility = View.VISIBLE
         tvResultado.visibility = View.GONE
+        btnRemoto.visibility = View.GONE
 
         lifecycleScope.launch {
             try {
-                // Paso 1: leer datos locales que coinciden con el filtro
                 val locales = withContext(Dispatchers.IO) { queryLocales(tipoId, nombre, anio) }
 
-                if (locales.isNotEmpty()) {
-                    // Paso 2: sincronizar al servidor
-                    val body = JSONObject().apply { put("postulantes", JSONArray(locales)) }
-                    try {
-                        ApiService.sincronizarCertificaciones(body)
-                    } catch (_: Exception) { }
-                }
-
-                // Paso 3: intentar consultar servidor remoto
-                var datosMostrar = locales
-                try {
-                    val result = ApiService.buscarCertificaciones(tipoId, nombre, anio)
-                    val arr = result.optJSONArray("data")
-                    if (arr != null && arr.length() > 0) {
-                        datosMostrar = (0 until arr.length()).map { arr.getJSONObject(it) }
-                    }
-                } catch (_: Exception) { }
-
                 resultados.clear()
-                resultados.addAll(datosMostrar)
+                resultados.addAll(locales)
                 adapter.notifyDataSetChanged()
 
                 if (resultados.isNotEmpty()) {
                     tvResultado.text = getString(R.string.s4_resultados, resultados.size)
                     tvResultado.visibility = View.VISIBLE
+                    btnRemoto.visibility = View.VISIBLE
                 } else {
                     tvResultado.text = getString(R.string.s4_sin_resultados)
                     tvResultado.visibility = View.VISIBLE
+                }
+
+                // Sincronizar en segundo plano
+                if (locales.isNotEmpty()) {
+                    launch {
+                        val body = JSONObject().apply { put("postulantes", JSONArray(locales)) }
+                        try {
+                            ApiService.sincronizarCertificaciones(body)
+                            Log.d("Servicio4", "Sincronización completada")
+                        } catch (e: Exception) {
+                            Log.e("Servicio4", "Error al sincronizar certificaciones", e)
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 Snackbar.make(requireView(), "Error: ${e.message}", Snackbar.LENGTH_LONG).show()
             }
             progressBar.visibility = View.GONE
             btnBuscar.isEnabled = true; btnBuscar.text = getString(R.string.s4_btn_buscar)
+        }
+    }
+
+    private fun buscarRemoto() {
+        val tipoId = spTipo.tag?.toString()?.toIntOrNull()
+        if (tipoId == null) return
+
+        val nombre = etNombre.text?.toString()?.trim()
+        val anio = etAnio.text?.toString()?.toIntOrNull()
+
+        btnRemoto.isEnabled = false
+        progressBar.visibility = View.VISIBLE
+        tvResultado.visibility = View.GONE
+
+        lifecycleScope.launch {
+            try {
+                val result = ApiService.buscarCertificaciones(tipoId, nombre, anio)
+                val arr = result.optJSONArray("data")
+                if (arr != null && arr.length() > 0) {
+                    val remotos = (0 until arr.length()).map { arr.getJSONObject(it) }
+                    resultados.clear()
+                    resultados.addAll(remotos)
+                    adapter.notifyDataSetChanged()
+                    tvResultado.text = getString(R.string.s4_resultados, resultados.size)
+                } else {
+                    tvResultado.text = getString(R.string.s4_sin_resultados)
+                }
+                tvResultado.visibility = View.VISIBLE
+            } catch (e: Exception) {
+                Snackbar.make(requireView(), "Error al consultar servidor: ${e.message}", Snackbar.LENGTH_LONG).show()
+            }
+            progressBar.visibility = View.GONE
+            btnRemoto.isEnabled = true
         }
     }
 
@@ -262,7 +295,7 @@ class Servicio4Fragment : Fragment() {
 
     private fun mostrarDetalle(postulante: JSONObject) {
         val context = requireContext()
-        val view = LayoutInflater.from(context).inflate(R.layout.dialog_postulante_detalle, null)
+        val view = LayoutInflater.from(context).inflate(R.layout.dialog_certificacion_detalle, null)
 
         view.findViewById<TextView>(R.id.tvDialogTitle).text = "${postulante.optString("nombre")} ${postulante.optString("apellido")}"
         view.findViewById<TextView>(R.id.tvDialogNombre).text = "${postulante.optString("nombre")} ${postulante.optString("apellido")}"
@@ -285,11 +318,6 @@ class Servicio4Fragment : Fragment() {
         }
         view.findViewById<TextView>(R.id.tvDialogCert).text =
             if (certText.isNotEmpty()) certText.trim().toString() else getString(R.string.s3_sin_datos)
-
-        view.findViewById<TextView>(R.id.tvDialogFormacion).visibility = View.GONE
-        view.findViewById<TextView>(R.id.tvDialogExp).visibility = View.GONE
-        view.findViewById<TextView>(R.id.tvDialogHabilidades).visibility = View.GONE
-        view.findViewById<TextView>(R.id.tvDialogRedes).visibility = View.GONE
 
         androidx.appcompat.app.AlertDialog.Builder(context)
             .setView(view)

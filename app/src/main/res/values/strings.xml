@@ -569,4 +569,5 @@
     <string name="s4_sincronizar">Sincronizar con servidor</string>
     <string name="s4_sincronizando">Sincronizando…</string>
     <string name="s4_sincronizado_ok">Sincronizado correctamente</string>
+    <string name="s4_btn_remoto">Ver en servidor</string>
 </resources>

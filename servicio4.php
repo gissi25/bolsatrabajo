@@ -62,7 +62,9 @@ switch ($action) {
                 ON DUPLICATE KEY UPDATE
                     NOMBRE_CERTIFICACION=VALUES(NOMBRE_CERTIFICACION),
                     ID_TIPO_CERTIFICACION=VALUES(ID_TIPO_CERTIFICACION),
-                    FECHA_CERTIFICACION=VALUES(FECHA_CERTIFICACION)
+                    FECHA_CERTIFICACION=VALUES(FECHA_CERTIFICACION),
+                    FECHA_INICIO=VALUES(FECHA_INICIO),
+                    FECHA_FIN=VALUES(FECHA_FIN)
             ");
 
             $insertados = 0;
@@ -83,10 +85,9 @@ switch ($action) {
                 $direccion = trim($p['direccion'] ?? '');
                 $telCasa = trim($p['telefono_casa'] ?? '');
                 $telCel = trim($p['telefono_celular'] ?? '');
-
                 if ($idPost === '' || $nombre === '' || $email === '') continue;
 
-                $stmtPost->bind_param("siisssssssiiisss",
+                $stmtPost->bind_param("siiissssssssssss",
                     $idPost, $idGenero, $idTipoDoc, $numDoc, $idGrado,
                     $nombre, $apellido, $fechaNac, $nup, $email,
                     $distDepto, $distMuni, $distId,
@@ -100,9 +101,21 @@ switch ($action) {
                     $idInst = trim($c['id_institucion'] ?? '');
                     $idTipoCert = intval($c['id_tipo_certificacion'] ?? 0);
                     $nomCert = trim($c['nombre'] ?? '');
-                    $fechaCert = !empty($c['fecha_certificacion']) ? $c['fecha_certificacion'] : null;
-                    $fechaIni = !empty($c['fecha_inicio']) ? $c['fecha_inicio'] : null;
-                    $fechaFin = !empty($c['fecha_fin']) ? $c['fecha_fin'] : null;
+                    $fechaCert = !empty($c['fecha_certificacion']) ? $c['fecha_certificacion'] : date('Y-m-d');
+                    $fechaIni = !empty($c['fecha_inicio']) ? $c['fecha_inicio'] : date('Y-m-d', strtotime('-2 years'));
+                    $fechaFin = !empty($c['fecha_fin']) ? $c['fecha_fin'] : date('Y-m-d', strtotime('-1 year'));
+
+                    // Ajustar para cumplir trigger TR_CERTIFICACION_FECHAS
+                    if ($fechaIni >= $fechaFin) {
+                        $fechaFin = date('Y-m-d', strtotime($fechaIni . ' +1 day'));
+                    }
+                    if ($fechaCert < $fechaFin) {
+                        $fechaCert = $fechaFin;
+                    }
+                    $maxCert = date('Y-m-d', strtotime($fechaFin . ' +1 year'));
+                    if ($fechaCert > $maxCert) {
+                        $fechaCert = $maxCert;
+                    }
 
                     if ($idCert === '' || $idInst === '' || $idTipoCert <= 0 || $nomCert === '') continue;
 
