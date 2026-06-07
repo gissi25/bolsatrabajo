@@ -22,7 +22,6 @@ import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import sv.ues.fia.eisi.bt.R
-import sv.ues.fia.eisi.bt.data.repository.MainRepository
 import sv.ues.fia.eisi.bt.service.ApiService
 import sv.ues.fia.eisi.bt.utils.Constants
 
@@ -87,13 +86,45 @@ class Servicio9Fragment : Fragment() {
         rvResultados.adapter = adapter
 
         loadDropdownData()
+    }
 
+    private fun loadDropdownData() {
+        progressBar.visibility = View.VISIBLE
+        lifecycleScope.launch {
+            try {
+                val postulantesRaw = ApiService.getPostulantes()
+                val empresasRaw = ApiService.getEmpresas()
+
+                postulantes = postulantesRaw.map {
+                    PostulanteItem(
+                        it.getString("ID_POSTULANTE"),
+                        "${it.optString("NOMBRE", "")} ${it.optString("APELLIDO", "")}".trim()
+                    )
+                }
+                empresas = empresasRaw.map { EmpresaItem(it.getString("NIT"), it.getString("NOMBRE_EMPRESA")) }
+
+                spPostulante.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, postulantes))
+                spPostulante.setThreshold(0); tilPostulante.setOnClickListener { spPostulante.showDropDown() }
+
+                spEmpresa.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, empresas))
+                spEmpresa.setThreshold(0); tilEmpresa.setOnClickListener { spEmpresa.showDropDown() }
+
+                setupRoleAndListeners()
+            } catch (e: Exception) {
+                Snackbar.make(requireView(), "Error al cargar datos: ${e.message}", Snackbar.LENGTH_LONG).show()
+            } finally {
+                progressBar.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun setupRoleAndListeners() {
         val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
         val role = prefs.getString(Constants.KEY_USER_ROLE, "") ?: ""
 
         when (role) {
             Constants.ROLE_POSTULANTE -> {
-                view.findViewById<View>(R.id.layoutToggle).visibility = View.GONE
+                requireView().findViewById<View>(R.id.layoutToggle).visibility = View.GONE
                 setModo(true)
                 val savedId = prefs.getString(Constants.KEY_POSTULANTE_ID, null)
                 if (savedId != null) {
@@ -103,10 +134,9 @@ class Servicio9Fragment : Fragment() {
                         spPostulante.setTag(savedId)
                     }
                 }
-
             }
             Constants.ROLE_EMPRESA -> {
-                view.findViewById<View>(R.id.layoutToggle).visibility = View.GONE
+                requireView().findViewById<View>(R.id.layoutToggle).visibility = View.GONE
                 setModo(false)
             }
             else -> {
@@ -123,7 +153,7 @@ class Servicio9Fragment : Fragment() {
             if (pos >= 0 && pos < empresas.size) {
                 spEmpresa.setTag(empresas[pos].nit)
                 spOferta.setText("", false); spOferta.setTag(null)
-                cargarOfertasLocales(empresas[pos].nit)
+                cargarOfertasRemotas(empresas[pos].nit)
             }
         }
         spOferta.setOnItemClickListener { _, _, pos, _ ->
@@ -149,26 +179,17 @@ class Servicio9Fragment : Fragment() {
         ofertasTemp = emptyList()
     }
 
-    private fun loadDropdownData() {
-        val repo = MainRepository(requireContext())
-
-        val postulantesRaw = repo.getDropdownOptions("POSTULANTE", "NOMBRE")
-        postulantes = postulantesRaw.map { PostulanteItem(it.first, it.second) }
-        spPostulante.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, postulantes))
-        spPostulante.setThreshold(0); tilPostulante.setOnClickListener { spPostulante.showDropDown() }
-
-        val empresasRaw = repo.getDropdownOptions("EMPRESA", "NOMBRE_EMPRESA")
-        empresas = empresasRaw.map { EmpresaItem(it.first, it.second) }
-        spEmpresa.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, empresas))
-        spEmpresa.setThreshold(0); tilEmpresa.setOnClickListener { spEmpresa.showDropDown() }
-    }
-
-    private fun cargarOfertasLocales(nit: String) {
-        val repo = MainRepository(requireContext())
-        val raw = repo.getFilteredOptions("OFERTA_TRABAJO", "NIT", nit, "TITULO_PUESTO")
-        ofertasTemp = raw.map { OfertaItem(it.first, it.second) }
-        spOferta.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, ofertasTemp))
-        spOferta.setThreshold(0); tilOferta.setOnClickListener { spOferta.showDropDown() }
+    private fun cargarOfertasRemotas(nit: String) {
+        lifecycleScope.launch {
+            try {
+                val raw = ApiService.getOfertasVigentes(nit)
+                ofertasTemp = raw.map { OfertaItem(it.getString("ID_OFERTA"), it.getString("TITULO_PUESTO")) }
+                spOferta.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, ofertasTemp))
+                spOferta.setThreshold(0); tilOferta.setOnClickListener { spOferta.showDropDown() }
+            } catch (e: Exception) {
+                Snackbar.make(requireView(), "Error al cargar ofertas: ${e.message}", Snackbar.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun buscar() {

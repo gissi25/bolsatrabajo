@@ -14,6 +14,15 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($action) {
 
+    case 'postulantes':
+        $res = $conn->query("SELECT ID_POSTULANTE, NOMBRE, APELLIDO FROM POSTULANTE ORDER BY APELLIDO, NOMBRE");
+        $data = [];
+        while ($row = $res->fetch_assoc()) {
+            $data[] = $row;
+        }
+        echo json_encode(["exito" => true, "data" => $data]);
+        break;
+
     case 'ofertas_vigentes':
         $nit = $_GET['nit'] ?? '';
         if ($nit) {
@@ -48,7 +57,6 @@ switch ($action) {
             break;
         }
 
-        // Datos del postulante
         $stmt = $conn->prepare("SELECT p.*, TIMESTAMPDIFF(YEAR, p.FECHA_NACIMIENTO, CURDATE()) as edad
             FROM POSTULANTE p WHERE p.ID_POSTULANTE = ?");
         $stmt->bind_param("s", $idPost);
@@ -63,7 +71,6 @@ switch ($action) {
         $idGradoPost = isset($postulante['ID_GRADO_ACADEMICO']) ? (int)$postulante['ID_GRADO_ACADEMICO'] : 0;
         $edad = isset($postulante['edad']) ? (int)$postulante['edad'] : 0;
 
-        // Habilidades del postulante
         $stmt = $conn->prepare("SELECT hp.NIVEL_DESTREZA, h.NOMBRE_HABILIDAD
             FROM HABILIDAD_POSTULANTE hp
             JOIN HABILIDAD h ON hp.ID_CATEGORIA_HABILIDAD = h.ID_CATEGORIA_HABILIDAD AND hp.ID_HABILIDAD = h.ID_HABILIDAD
@@ -77,15 +84,16 @@ switch ($action) {
         }
         $stmt->close();
 
-        // Experiencia total del postulante
-        $stmt = $conn->prepare("SELECT COALESCE(SUM(DATEDIFF(COALESCE(FECHA_FIN, CURDATE()), FECHA_INICIO)) / 365.0, 0) as total_exp
-            FROM EXPERIENCIA_LABORAL WHERE ID_POSTULANTE = ?");
-        $stmt->bind_param("s", $idPost);
-        $stmt->execute();
-        $totalExp = (float)$stmt->get_result()->fetch_assoc()['total_exp'];
-        $stmt->close();
+        $expStmt = $conn->prepare("SELECT PUESTO_TRABAJO, FECHA_INICIO, FECHA_FIN FROM EXPERIENCIA_LABORAL WHERE ID_POSTULANTE = ?");
+        $expStmt->bind_param("s", $idPost);
+        $expStmt->execute();
+        $expRes = $expStmt->get_result();
+        $expRecords = [];
+        while ($e = $expRes->fetch_assoc()) {
+            $expRecords[] = $e;
+        }
+        $expStmt->close();
 
-        // Todas las ofertas activas
         $ofertasRes = $conn->query("SELECT o.*, e.NOMBRE_EMPRESA
             FROM OFERTA_TRABAJO o
             JOIN EMPRESA e ON o.NIT = e.NIT
@@ -97,7 +105,6 @@ switch ($action) {
             $nitO = $oferta['NIT'];
             $idOf = $oferta['ID_OFERTA'];
 
-            // Requisitos de la oferta (descripciones)
             $reqStmt = $conn->prepare("SELECT DESCRIPCION_REQUISITO FROM DETALLE_REQUISITO WHERE NIT = ? AND ID_OFERTA = ?");
             $reqStmt->bind_param("ss", $nitO, $idOf);
             $reqStmt->execute();
@@ -109,9 +116,6 @@ switch ($action) {
             $reqStmt->close();
             $totalRequeridas = count($reqDescriptions);
 
-            // --- Scoring ---
-
-            // 1. Grado Academico (30 pts)
             $idGradoOferta = isset($oferta['ID_GRADO_ACADEMICO']) ? (int)$oferta['ID_GRADO_ACADEMICO'] : 0;
             if ($idGradoPost >= $idGradoOferta) {
                 $puntajeGrado = 30;
@@ -121,7 +125,6 @@ switch ($action) {
                 $puntajeGrado = 0;
             }
 
-            // 2. Habilidades (30 pts)
             $coincidencias = 0;
             $tieneAvanzado = false;
             if ($totalRequeridas > 0) {
@@ -143,8 +146,17 @@ switch ($action) {
                 $puntajeHabilidades = 0;
             }
 
-            // 3. Experiencia (25 pts)
             $expRequerida = isset($oferta['EXPERIENCIA_ANIOS']) ? (int)$oferta['EXPERIENCIA_ANIOS'] : 0;
+            $totalExp = 0;
+            $tituloLower = mb_strtolower(trim($oferta['TITULO_PUESTO']));
+            foreach ($expRecords as $e) {
+                $puestoLower = mb_strtolower(trim($e['PUESTO_TRABAJO']));
+                if (mb_strpos($tituloLower, $puestoLower) !== false || mb_strpos($puestoLower, $tituloLower) !== false) {
+                    $inicio = new DateTime($e['FECHA_INICIO']);
+                    $fin = $e['FECHA_FIN'] ? new DateTime($e['FECHA_FIN']) : new DateTime();
+                    $totalExp += $inicio->diff($fin)->days / 365.0;
+                }
+            }
             if ($expRequerida <= 0) {
                 $puntajeExperiencia = 25;
             } elseif ($totalExp >= $expRequerida) {
@@ -155,7 +167,6 @@ switch ($action) {
                 $puntajeExperiencia = 0;
             }
 
-            // 4. Edad (15 pts)
             $edadMin = isset($oferta['EDAD_MINIMA']) ? (int)$oferta['EDAD_MINIMA'] : 0;
             $edadMax = isset($oferta['EDAD_MAXIMA']) ? (int)$oferta['EDAD_MAXIMA'] : 0;
             if ($edadMin > 0 && $edadMax > 0) {
@@ -205,7 +216,6 @@ switch ($action) {
             break;
         }
 
-        // Datos de la oferta
         $stmt = $conn->prepare("SELECT o.*, e.NOMBRE_EMPRESA
             FROM OFERTA_TRABAJO o
             JOIN EMPRESA e ON o.NIT = e.NIT
@@ -224,7 +234,6 @@ switch ($action) {
         $edadMax = (int)$oferta['EDAD_MAXIMA'];
         $expRequerida = (int)$oferta['EXPERIENCIA_ANIOS'];
 
-        // Requisitos de la oferta
         $reqStmt = $conn->prepare("SELECT DESCRIPCION_REQUISITO FROM DETALLE_REQUISITO WHERE NIT = ? AND ID_OFERTA = ?");
         $reqStmt->bind_param("ss", $nit, $idOferta);
         $reqStmt->execute();
@@ -236,7 +245,6 @@ switch ($action) {
         $reqStmt->close();
         $totalRequeridas = count($reqDescriptions);
 
-        // Todos los postulantes
         $postulantesRes = $conn->query("SELECT p.*, TIMESTAMPDIFF(YEAR, p.FECHA_NACIMIENTO, CURDATE()) as edad
             FROM POSTULANTE p ORDER BY p.APELLIDO, p.NOMBRE");
 
@@ -246,7 +254,6 @@ switch ($action) {
             $idGradoPost = isset($postulante['ID_GRADO_ACADEMICO']) ? (int)$postulante['ID_GRADO_ACADEMICO'] : 0;
             $edad = isset($postulante['edad']) ? (int)$postulante['edad'] : 0;
 
-            // Habilidades del postulante
             $sStmt = $conn->prepare("SELECT hp.NIVEL_DESTREZA, h.NOMBRE_HABILIDAD
                 FROM HABILIDAD_POSTULANTE hp
                 JOIN HABILIDAD h ON hp.ID_CATEGORIA_HABILIDAD = h.ID_CATEGORIA_HABILIDAD AND hp.ID_HABILIDAD = h.ID_HABILIDAD
@@ -260,15 +267,27 @@ switch ($action) {
             }
             $sStmt->close();
 
-            // Experiencia total
-            $eStmt = $conn->prepare("SELECT COALESCE(SUM(DATEDIFF(COALESCE(FECHA_FIN, CURDATE()), FECHA_INICIO)) / 365.0, 0) as total_exp
-                FROM EXPERIENCIA_LABORAL WHERE ID_POSTULANTE = ?");
+            $eStmt = $conn->prepare("SELECT PUESTO_TRABAJO, FECHA_INICIO, FECHA_FIN FROM EXPERIENCIA_LABORAL WHERE ID_POSTULANTE = ?");
             $eStmt->bind_param("s", $idPost);
             $eStmt->execute();
-            $totalExp = (float)$eStmt->get_result()->fetch_assoc()['total_exp'];
+            $eRes = $eStmt->get_result();
+            $expRecords = [];
+            while ($ev = $eRes->fetch_assoc()) {
+                $expRecords[] = $ev;
+            }
             $eStmt->close();
 
-            // --- Scoring (misma logica) ---
+            $totalExp = 0;
+            $tituloLower = mb_strtolower(trim($oferta['TITULO_PUESTO']));
+            foreach ($expRecords as $ev) {
+                $puestoLower = mb_strtolower(trim($ev['PUESTO_TRABAJO']));
+                if (mb_strpos($tituloLower, $puestoLower) !== false || mb_strpos($puestoLower, $tituloLower) !== false) {
+                    $inicio = new DateTime($ev['FECHA_INICIO']);
+                    $fin = $ev['FECHA_FIN'] ? new DateTime($ev['FECHA_FIN']) : new DateTime();
+                    $totalExp += $inicio->diff($fin)->days / 365.0;
+                }
+            }
+
             if ($idGradoPost >= $idGradoOferta) $puntajeGrado = 30;
             elseif ($idGradoPost == $idGradoOferta - 1) $puntajeGrado = 15;
             else $puntajeGrado = 0;

@@ -180,6 +180,18 @@ object ApiService {
         fetch("buscar_certificaciones&${params.joinToString("&")}")
     }
 
+    suspend fun getPostulantes(): List<JSONObject> = withContext(Dispatchers.Main) {
+        val json = fetch("postulantes")
+        val arr = json.getJSONArray("data")
+        (0 until arr.length()).map { arr.getJSONObject(it) }
+    }
+
+    suspend fun getOfertasVigentes(nit: String): List<JSONObject> = withContext(Dispatchers.Main) {
+        val json = fetch("ofertas_vigentes&nit=${java.net.URLEncoder.encode(nit, "UTF-8")}")
+        val arr = json.getJSONArray("data")
+        (0 until arr.length()).map { arr.getJSONObject(it) }
+    }
+
     suspend fun matchingPostulante(idPostulante: String): JSONObject = withContext(Dispatchers.Main) {
         val body = JSONObject().apply { put("id_postulante", idPostulante) }
         fetch("matching_postulante", "POST", body.toString())

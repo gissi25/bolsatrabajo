@@ -24,18 +24,10 @@
 
         <TextView
             android:id="@+id/tvSelectorLabel"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:text="@string/s9_seleccionar_postulante"
             android:visibility="gone" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSincronizar"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/s10_btn_sincronizar" />
     </LinearLayout>
 
     <com.google.android.material.textfield.TextInputLayout
