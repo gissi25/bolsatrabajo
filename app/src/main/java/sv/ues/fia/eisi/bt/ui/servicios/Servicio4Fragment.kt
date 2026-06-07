@@ -36,7 +36,6 @@ class Servicio4Fragment : Fragment() {
     private lateinit var etNombre: TextInputEditText
     private lateinit var etAnio: TextInputEditText
     private lateinit var btnBuscar: MaterialButton
-    private lateinit var btnRemoto: MaterialButton
     private lateinit var rvResultados: RecyclerView
     private lateinit var progressBar: ProgressBar
     private lateinit var tvResultado: TextView
@@ -60,7 +59,6 @@ class Servicio4Fragment : Fragment() {
         etNombre = view.findViewById(R.id.etNombre)
         etAnio = view.findViewById(R.id.etAnio)
         btnBuscar = view.findViewById(R.id.btnBuscar)
-        btnRemoto = view.findViewById(R.id.btnRemoto)
         rvResultados = view.findViewById(R.id.rvResultados)
         progressBar = view.findViewById(R.id.progressBar)
         tvResultado = view.findViewById(R.id.tvResultado)
@@ -76,7 +74,6 @@ class Servicio4Fragment : Fragment() {
         }
 
         btnBuscar.setOnClickListener { buscar() }
-        btnRemoto.setOnClickListener { buscarRemoto() }
 
         lifecycleScope.launch {
             for (attempt in 1..3) {
@@ -133,7 +130,6 @@ class Servicio4Fragment : Fragment() {
         btnBuscar.isEnabled = false; btnBuscar.text = getString(R.string.s4_cargando)
         progressBar.visibility = View.VISIBLE
         tvResultado.visibility = View.GONE
-        btnRemoto.visibility = View.GONE
 
         lifecycleScope.launch {
             try {
@@ -146,19 +142,17 @@ class Servicio4Fragment : Fragment() {
                 if (resultados.isNotEmpty()) {
                     tvResultado.text = getString(R.string.s4_resultados, resultados.size)
                     tvResultado.visibility = View.VISIBLE
-                    btnRemoto.visibility = View.VISIBLE
                 } else {
                     tvResultado.text = getString(R.string.s4_sin_resultados)
                     tvResultado.visibility = View.VISIBLE
                 }
 
-                // Sincronizar en segundo plano
+                // Sincronizar en segundo plano (sin notificacion)
                 if (locales.isNotEmpty()) {
                     launch {
-                        val body = JSONObject().apply { put("postulantes", JSONArray(locales)) }
                         try {
+                            val body = JSONObject().apply { put("postulantes", JSONArray(locales)) }
                             ApiService.sincronizarCertificaciones(body)
-                            Log.d("Servicio4", "Sincronización completada")
                         } catch (e: Exception) {
                             Log.e("Servicio4", "Error al sincronizar certificaciones", e)
                         }
@@ -169,39 +163,6 @@ class Servicio4Fragment : Fragment() {
             }
             progressBar.visibility = View.GONE
             btnBuscar.isEnabled = true; btnBuscar.text = getString(R.string.s4_btn_buscar)
-        }
-    }
-
-    private fun buscarRemoto() {
-        val tipoId = spTipo.tag?.toString()?.toIntOrNull()
-        if (tipoId == null) return
-
-        val nombre = etNombre.text?.toString()?.trim()
-        val anio = etAnio.text?.toString()?.toIntOrNull()
-
-        btnRemoto.isEnabled = false
-        progressBar.visibility = View.VISIBLE
-        tvResultado.visibility = View.GONE
-
-        lifecycleScope.launch {
-            try {
-                val result = ApiService.buscarCertificaciones(tipoId, nombre, anio)
-                val arr = result.optJSONArray("data")
-                if (arr != null && arr.length() > 0) {
-                    val remotos = (0 until arr.length()).map { arr.getJSONObject(it) }
-                    resultados.clear()
-                    resultados.addAll(remotos)
-                    adapter.notifyDataSetChanged()
-                    tvResultado.text = getString(R.string.s4_resultados, resultados.size)
-                } else {
-                    tvResultado.text = getString(R.string.s4_sin_resultados)
-                }
-                tvResultado.visibility = View.VISIBLE
-            } catch (e: Exception) {
-                Snackbar.make(requireView(), "Error al consultar servidor: ${e.message}", Snackbar.LENGTH_LONG).show()
-            }
-            progressBar.visibility = View.GONE
-            btnRemoto.isEnabled = true
         }
     }
 
