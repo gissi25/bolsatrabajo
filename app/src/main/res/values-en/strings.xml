@@ -544,4 +544,37 @@
     <string name="req_hint_id">Code (D1)</string>
     <string name="req_hint_desc">Description</string>
     <string name="req_btn_agregar">+ Add requirement</string>
+
+    <!-- Servicio 9: Matching -->
+    <string name="s9_titulo">Offer Matching</string>
+    <string name="s9_modo_postulante">Applicant → Offers</string>
+    <string name="s9_modo_oferta">Offer → Applicants</string>
+    <string name="s9_btn_buscar">Search</string>
+    <string name="s9_seleccionar_postulante">Select applicant</string>
+    <string name="s9_seleccionar_empresa">Select company</string>
+    <string name="s9_seleccionar_oferta">Select offer</string>
+    <string name="s9_error_seleccionar">You must select an item</string>
+    <string name="s9_resultados">%d result(s) found</string>
+    <string name="s9_desglose" formatted="false">Degree: %d | Skills: %d | Exp: %d | Age: %d</string>
+
+    <!-- Servicio 10: My Applications -->
+    <string name="s10_titulo">My Applications</string>
+    <string name="s10_filtro_todos">All</string>
+    <string name="s10_filtro_activo">Active</string>
+    <string name="s10_filtro_en_proceso">In Process</string>
+    <string name="s10_filtro_contratado">Hired</string>
+    <string name="s10_filtro_rechazado">Rejected</string>
+    <string name="s10_btn_sincronizar">Sync</string>
+    <string name="s10_btn_ver_detalle">View details</string>
+    <string name="s10_vencida">Expired</string>
+    <string name="s10_aplicado">Applied on</string>
+    <string name="s10_vencimiento">Expires on</string>
+    <string name="s10_estado">Status</string>
+    <string name="s10_sin_postulaciones">No applications found</string>
+    <string name="s10_sincronizado_ok" formatted="false">%d inserted, %d updated</string>
+    <string name="s10_sincronizar_vacio">No remote data to sync</string>
+    <string name="s10_estado_activo">Active</string>
+    <string name="s10_estado_en_proceso">In Process</string>
+    <string name="s10_estado_contratado">Hired</string>
+    <string name="s10_estado_rechazado">Rejected</string>
 </resources>
