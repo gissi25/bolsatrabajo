@@ -126,14 +126,6 @@ class Servicio9Fragment : Fragment() {
             Constants.ROLE_POSTULANTE -> {
                 requireView().findViewById<View>(R.id.layoutToggle).visibility = View.GONE
                 setModo(true)
-                val savedId = prefs.getString(Constants.KEY_POSTULANTE_ID, null)
-                if (savedId != null) {
-                    val idx = postulantes.indexOfFirst { it.id == savedId }
-                    if (idx >= 0) {
-                        spPostulante.setText(postulantes[idx].nombre, false)
-                        spPostulante.setTag(savedId)
-                    }
-                }
             }
             Constants.ROLE_EMPRESA -> {
                 requireView().findViewById<View>(R.id.layoutToggle).visibility = View.GONE

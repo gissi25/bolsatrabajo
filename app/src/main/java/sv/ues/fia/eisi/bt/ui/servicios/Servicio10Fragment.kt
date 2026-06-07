@@ -1,6 +1,5 @@
 package sv.ues.fia.eisi.bt.ui.servicios
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -28,7 +27,6 @@ import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.data.local.ConnectionHelper
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
 import sv.ues.fia.eisi.bt.service.ApiService
-import sv.ues.fia.eisi.bt.utils.Constants
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -76,23 +74,15 @@ class Servicio10Fragment : Fragment() {
         rvPostulaciones.layoutManager = LinearLayoutManager(requireContext())
         rvPostulaciones.adapter = adapter
 
-        val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
-        idPostulante = prefs.getString(Constants.KEY_POSTULANTE_ID, null)
-
-        if (idPostulante == null) {
-            tvSelectorLabel.visibility = View.VISIBLE
-            tilPostulante.visibility = View.VISIBLE
-            cargarPostulantesLocal()
-            spPostulante.setOnItemClickListener { _, _, pos, _ ->
-                if (pos >= 0 && pos < postulantes.size) {
-                    spPostulante.setTag(postulantes[pos].id)
-                    idPostulante = postulantes[pos].id
-                    cargarPostulaciones()
-                }
+        tvSelectorLabel.visibility = View.VISIBLE
+        tilPostulante.visibility = View.VISIBLE
+        cargarPostulantesLocal()
+        spPostulante.setOnItemClickListener { _, _, pos, _ ->
+            if (pos >= 0 && pos < postulantes.size) {
+                spPostulante.setTag(postulantes[pos].id)
+                idPostulante = postulantes[pos].id
+                cargarPostulaciones()
             }
-        } else {
-            tvSelectorLabel.visibility = View.GONE
-            tilPostulante.visibility = View.GONE
         }
 
         chipGroup.setOnCheckedStateChangeListener { _, checkedIds ->

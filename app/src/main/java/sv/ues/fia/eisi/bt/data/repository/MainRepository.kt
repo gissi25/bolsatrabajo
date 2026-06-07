@@ -1339,16 +1339,4 @@ class MainRepository(private val context: Context) {
         } catch (_: Exception) {}
         return results
     }
-
-    fun findPostulanteIdByEmail(email: String): String? {
-        return try {
-            val cursor = getDb().rawQuery(
-                "SELECT ID_POSTULANTE FROM POSTULANTE WHERE LOWER(EMAIL) = LOWER(?) LIMIT 1",
-                arrayOf(email)
-            )
-            val result = if (cursor.moveToFirst()) cursor.getString(0) else null
-            cursor.close()
-            result
-        } catch (_: Exception) { null }
-    }
 }
