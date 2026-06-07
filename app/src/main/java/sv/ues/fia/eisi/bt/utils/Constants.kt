@@ -12,6 +12,7 @@ object Constants {
     const val KEY_USER_ID = "user_id"
     const val KEY_USERNAME = "username"
     const val KEY_USER_ROLE = "user_role"
+    const val KEY_POSTULANTE_ID = "postulante_id"
 
     const val ROLE_ADMIN = "administrador"
     const val ROLE_POSTULANTE = "postulante"

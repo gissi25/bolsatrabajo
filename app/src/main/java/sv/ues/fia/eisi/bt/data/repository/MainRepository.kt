@@ -1296,4 +1296,59 @@ class MainRepository(private val context: Context) {
         } catch (_: Exception) {}
         return results
     }
+
+    data class PostulacionCompleta(
+        val idPostulacion: String,
+        val fechaAplicacion: String,
+        val estadoProceso: String,
+        val tituloPuesto: String,
+        val fechaPublicacion: String,
+        val fechaCaducidad: String,
+        val nombreEmpresa: String,
+        val nit: String,
+        val idOferta: String
+    )
+
+    fun getPostulacionesPorPostulante(idPostulante: String): List<PostulacionCompleta> {
+        val results = mutableListOf<PostulacionCompleta>()
+        try {
+            val cursor = getDb().rawQuery("""
+                SELECT po.ID_POSTULACION, po.FECHA_APLICACION, po.ESTADO_PROCESO,
+                       of.TITULO_PUESTO, of.FECHA_PUBLICACION, of.FECHA_CADUCIDAD,
+                       em.NOMBRE_EMPRESA, em.NIT, of.ID_OFERTA
+                FROM POSTULACION po
+                INNER JOIN OFERTA_TRABAJO of ON po.NIT = of.NIT AND po.ID_OFERTA = of.ID_OFERTA
+                INNER JOIN EMPRESA em ON of.NIT = em.NIT
+                WHERE po.ID_POSTULANTE = ?
+                ORDER BY po.FECHA_APLICACION DESC
+            """.trimIndent(), arrayOf(idPostulante))
+            while (cursor.moveToNext()) {
+                results.add(PostulacionCompleta(
+                    idPostulacion = cursor.getString(0) ?: "",
+                    fechaAplicacion = cursor.getString(1) ?: "",
+                    estadoProceso = cursor.getString(2) ?: "",
+                    tituloPuesto = cursor.getString(3) ?: "",
+                    fechaPublicacion = cursor.getString(4) ?: "",
+                    fechaCaducidad = cursor.getString(5) ?: "",
+                    nombreEmpresa = cursor.getString(6) ?: "",
+                    nit = cursor.getString(7) ?: "",
+                    idOferta = cursor.getString(8) ?: ""
+                ))
+            }
+            cursor.close()
+        } catch (_: Exception) {}
+        return results
+    }
+
+    fun findPostulanteIdByEmail(email: String): String? {
+        return try {
+            val cursor = getDb().rawQuery(
+                "SELECT ID_POSTULANTE FROM POSTULANTE WHERE LOWER(EMAIL) = LOWER(?) LIMIT 1",
+                arrayOf(email)
+            )
+            val result = if (cursor.moveToFirst()) cursor.getString(0) else null
+            cursor.close()
+            result
+        } catch (_: Exception) { null }
+    }
 }

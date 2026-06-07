@@ -179,4 +179,19 @@ object ApiService {
         if (anio != null && anio > 0) params.add("anio=$anio")
         fetch("buscar_certificaciones&${params.joinToString("&")}")
     }
+
+    suspend fun matchingPostulante(idPostulante: String): JSONObject = withContext(Dispatchers.Main) {
+        val body = JSONObject().apply { put("id_postulante", idPostulante) }
+        fetch("matching_postulante", "POST", body.toString())
+    }
+
+    suspend fun matchingOferta(nit: String, idOferta: String): JSONObject = withContext(Dispatchers.Main) {
+        val body = JSONObject().apply { put("nit", nit); put("id_oferta", idOferta) }
+        fetch("matching_oferta", "POST", body.toString())
+    }
+
+    suspend fun getMisPostulaciones(idPostulante: String): JSONObject = withContext(Dispatchers.Main) {
+        val body = JSONObject().apply { put("id_postulante", idPostulante) }
+        fetch("mis_postulaciones", "POST", body.toString())
+    }
 }
