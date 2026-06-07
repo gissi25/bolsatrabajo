@@ -60,8 +60,8 @@ switch ($action) {
             break;
         }
 
-        $idGradoPost = (int)$postulante['ID_GRADO_ACADEMICO'];
-        $edad = (int)$postulante['edad'];
+        $idGradoPost = isset($postulante['ID_GRADO_ACADEMICO']) ? (int)$postulante['ID_GRADO_ACADEMICO'] : 0;
+        $edad = isset($postulante['edad']) ? (int)$postulante['edad'] : 0;
 
         // Habilidades del postulante
         $stmt = $conn->prepare("SELECT hp.NIVEL_DESTREZA, h.NOMBRE_HABILIDAD
@@ -112,7 +112,7 @@ switch ($action) {
             // --- Scoring ---
 
             // 1. Grado Academico (30 pts)
-            $idGradoOferta = (int)$oferta['ID_GRADO_ACADEMICO'];
+            $idGradoOferta = isset($oferta['ID_GRADO_ACADEMICO']) ? (int)$oferta['ID_GRADO_ACADEMICO'] : 0;
             if ($idGradoPost >= $idGradoOferta) {
                 $puntajeGrado = 30;
             } elseif ($idGradoPost == $idGradoOferta - 1) {
@@ -144,7 +144,7 @@ switch ($action) {
             }
 
             // 3. Experiencia (25 pts)
-            $expRequerida = (int)$oferta['EXPERIENCIA_ANIOS'];
+            $expRequerida = isset($oferta['EXPERIENCIA_ANIOS']) ? (int)$oferta['EXPERIENCIA_ANIOS'] : 0;
             if ($expRequerida <= 0) {
                 $puntajeExperiencia = 25;
             } elseif ($totalExp >= $expRequerida) {
@@ -156,8 +156,8 @@ switch ($action) {
             }
 
             // 4. Edad (15 pts)
-            $edadMin = (int)$oferta['EDAD_MINIMA'];
-            $edadMax = (int)$oferta['EDAD_MAXIMA'];
+            $edadMin = isset($oferta['EDAD_MINIMA']) ? (int)$oferta['EDAD_MINIMA'] : 0;
+            $edadMax = isset($oferta['EDAD_MAXIMA']) ? (int)$oferta['EDAD_MAXIMA'] : 0;
             if ($edadMin > 0 && $edadMax > 0) {
                 if ($edad >= $edadMin && $edad <= $edadMax) {
                     $puntajeEdad = 15;
@@ -243,8 +243,8 @@ switch ($action) {
         $results = [];
         while ($postulante = $postulantesRes->fetch_assoc()) {
             $idPost = $postulante['ID_POSTULANTE'];
-            $idGradoPost = (int)$postulante['ID_GRADO_ACADEMICO'];
-            $edad = (int)$postulante['edad'];
+            $idGradoPost = isset($postulante['ID_GRADO_ACADEMICO']) ? (int)$postulante['ID_GRADO_ACADEMICO'] : 0;
+            $edad = isset($postulante['edad']) ? (int)$postulante['edad'] : 0;
 
             // Habilidades del postulante
             $sStmt = $conn->prepare("SELECT hp.NIVEL_DESTREZA, h.NOMBRE_HABILIDAD

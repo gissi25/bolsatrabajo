@@ -30,6 +30,7 @@ import sv.ues.fia.eisi.bt.data.local.ConnectionHelper
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
 import sv.ues.fia.eisi.bt.service.ApiService
 import sv.ues.fia.eisi.bt.utils.Constants
+import sv.ues.fia.eisi.bt.utils.TriggerErrorTranslator
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -164,28 +165,36 @@ class Servicio10Fragment : Fragment() {
                     val dbHelper = ConnectionHelper(requireContext())
                     val db = dbHelper.writableDb
 
+                    val estadosValidos = setOf("activo", "en proceso", "contratado", "rechazado")
+
                     for (i in 0 until data.length()) {
                         val item = data.getJSONObject(i)
-                        val idPostulacion = item.optString("ID_POSTULACION", "")
+                        val idPostulacion = item.optString("ID_POSTULACION", "").trim()
+                        val nit = item.optString("NIT", "").trim()
+                        val idOferta = item.optString("ID_OFERTA", "").trim()
+                        val estado = item.optString("ESTADO_PROCESO", "activo").trim().lowercase()
 
-                        val cursor = db.rawQuery("SELECT COUNT(*) FROM POSTULACION WHERE ID_POSTULACION = ?", arrayOf(idPostulacion))
-                        cursor.moveToFirst()
-                        val exists = cursor.getInt(0) > 0
-                        cursor.close()
+                        if (idPostulacion.isEmpty() || nit.isEmpty() || idOferta.isEmpty()) continue
+                        if (estado !in estadosValidos) continue
 
-                        if (exists) {
-                            val estado = item.optString("ESTADO_PROCESO", "activo")
-                            db.execSQL("UPDATE POSTULACION SET ESTADO_PROCESO = ? WHERE ID_POSTULACION = ?", arrayOf(estado, idPostulacion))
-                            actualizados++
-                        } else {
-                            val nit = item.optString("NIT", "")
-                            val idOferta = item.optString("ID_OFERTA", "")
-                            val idPost = item.optString("ID_POSTULANTE", id)
-                            val fecha = item.optString("FECHA_APLICACION", "")
-                            val estado = item.optString("ESTADO_PROCESO", "activo")
-                            db.execSQL("INSERT OR IGNORE INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO) VALUES (?, ?, ?, ?, ?, ?)",
-                                arrayOf(idPostulacion, nit, idOferta, idPost, fecha, estado))
-                            insertados++
+                        try {
+                            val cursor = db.rawQuery("SELECT COUNT(*) FROM POSTULACION WHERE ID_POSTULACION = ?", arrayOf(idPostulacion))
+                            cursor.moveToFirst()
+                            val exists = cursor.getInt(0) > 0
+                            cursor.close()
+
+                            if (exists) {
+                                db.execSQL("UPDATE POSTULACION SET ESTADO_PROCESO = ? WHERE ID_POSTULACION = ?", arrayOf(estado, idPostulacion))
+                                actualizados++
+                            } else {
+                                val idPost = item.optString("ID_POSTULANTE", id).trim()
+                                val fecha = item.optString("FECHA_APLICACION", "").trim()
+                                db.execSQL("INSERT INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO) VALUES (?, ?, ?, ?, ?, ?)",
+                                    arrayOf(idPostulacion, nit, idOferta, idPost, fecha, estado))
+                                insertados++
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.w("S10Sync", "Error en postulacion $idPostulacion: ${e.message}")
                         }
                     }
                     db.close()

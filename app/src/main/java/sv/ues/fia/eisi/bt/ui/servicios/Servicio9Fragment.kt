@@ -20,7 +20,6 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
-import org.json.JSONArray
 import org.json.JSONObject
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
@@ -58,6 +57,7 @@ class Servicio9Fragment : Fragment() {
 
     private var postulantes = listOf<PostulanteItem>()
     private var empresas = listOf<EmpresaItem>()
+    private var ofertasTemp = listOf<OfertaItem>()
     private var resultados = mutableListOf<JSONObject>()
     private lateinit var adapter: MatchAdapter
 
@@ -88,17 +88,31 @@ class Servicio9Fragment : Fragment() {
 
         loadDropdownData()
 
-        btnModoPostulante.setOnClickListener { setModo(true) }
-        btnModoOferta.setOnClickListener { setModo(false) }
-        setModo(true)
-
         val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
-        val savedId = prefs.getString(Constants.KEY_POSTULANTE_ID, null)
-        if (savedId != null) {
-            val idx = postulantes.indexOfFirst { it.id == savedId }
-            if (idx >= 0) {
-                spPostulante.setText(postulantes[idx].nombre, false)
-                spPostulante.setTag(savedId)
+        val role = prefs.getString(Constants.KEY_USER_ROLE, "") ?: ""
+
+        when (role) {
+            Constants.ROLE_POSTULANTE -> {
+                view.findViewById<View>(R.id.layoutToggle).visibility = View.GONE
+                setModo(true)
+                val savedId = prefs.getString(Constants.KEY_POSTULANTE_ID, null)
+                if (savedId != null) {
+                    val idx = postulantes.indexOfFirst { it.id == savedId }
+                    if (idx >= 0) {
+                        spPostulante.setText(postulantes[idx].nombre, false)
+                        spPostulante.setTag(savedId)
+                    }
+                }
+
+            }
+            Constants.ROLE_EMPRESA -> {
+                view.findViewById<View>(R.id.layoutToggle).visibility = View.GONE
+                setModo(false)
+            }
+            else -> {
+                btnModoPostulante.setOnClickListener { setModo(true) }
+                btnModoOferta.setOnClickListener { setModo(false) }
+                setModo(true)
             }
         }
 
@@ -119,14 +133,20 @@ class Servicio9Fragment : Fragment() {
         btnBuscar.setOnClickListener { buscar() }
     }
 
-    private var ofertasTemp = listOf<OfertaItem>()
-
     private fun setModo(postulante: Boolean) {
         modoPostulante = postulante
         btnModoPostulante.isEnabled = !postulante
         btnModoOferta.isEnabled = postulante
         layoutPostulante.visibility = if (postulante) View.VISIBLE else View.GONE
         layoutOferta.visibility = if (postulante) View.GONE else View.VISIBLE
+
+        resultados.clear(); adapter.notifyDataSetChanged()
+        tvResultado.visibility = View.GONE
+
+        spPostulante.setText("", false); spPostulante.setTag(null)
+        spEmpresa.setText("", false); spEmpresa.setTag(null)
+        spOferta.setText("", false); spOferta.setTag(null)
+        ofertasTemp = emptyList()
     }
 
     private fun loadDropdownData() {
@@ -200,11 +220,10 @@ class Servicio9Fragment : Fragment() {
             val total = item.optDouble("puntaje_total", 0.0).toInt().coerceIn(0, 100)
 
             val titulo = if (item.has("titulo_puesto"))
-                item.optString("titulo_puesto", "")
+                "${item.optString("titulo_puesto", "")} - ${item.optString("nombre_empresa", "")}"
             else
                 "${item.optString("nombre", "")} ${item.optString("apellido", "")}".trim()
             h.tvTitulo.text = titulo
-            h.tvEmpresa.text = item.optString("nombre_empresa", item.optString("id_postulante", ""))
             h.tvPuntaje.text = "$total/100"
             h.progressMatch.progress = total
 
@@ -214,25 +233,23 @@ class Servicio9Fragment : Fragment() {
                 total >= 30 -> android.R.color.holo_orange_light
                 else -> android.R.color.holo_red_dark
             }
-            val c = ContextCompat.getColor(h.itemView.context, color)
-            h.progressMatch.progressTintList = android.content.res.ColorStateList.valueOf(c)
+            h.progressMatch.progressTintList = android.content.res.ColorStateList.valueOf(
+                ContextCompat.getColor(h.itemView.context, color)
+            )
 
-            val clasif = item.optString("clasificacion", "")
-            h.tvClasificacion.text = clasif
+            h.tvClasificacion.text = item.optString("clasificacion", "")
 
-            val desglose = h.itemView.context.getString(R.string.s9_desglose,
+            h.tvDesglose.text = h.itemView.context.getString(R.string.s9_desglose,
                 item.optInt("puntaje_grado", 0),
                 item.optInt("puntaje_habilidades", 0),
                 item.optInt("puntaje_experiencia", 0),
                 item.optInt("puntaje_edad", 0))
-            h.tvDesglose.text = desglose
         }
 
         override fun getItemCount() = items.size
 
         class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
             val tvTitulo: TextView = itemView.findViewById(R.id.tvTitulo)
-            val tvEmpresa: TextView = itemView.findViewById(R.id.tvEmpresa)
             val tvPuntaje: TextView = itemView.findViewById(R.id.tvPuntaje)
             val progressMatch: ProgressBar = itemView.findViewById(R.id.progressMatch)
             val tvClasificacion: TextView = itemView.findViewById(R.id.tvClasificacion)

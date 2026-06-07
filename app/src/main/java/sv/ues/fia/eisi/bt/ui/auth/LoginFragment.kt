@@ -13,10 +13,6 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
 import sv.ues.fia.eisi.bt.utils.Constants
@@ -80,16 +76,14 @@ class LoginFragment : Fragment() {
                 if (usuario != null) {
                     saveSession(usuario.idUsuario, usuario.username, usuario.rol)
                     if (usuario.rol == Constants.ROLE_POSTULANTE) {
-                        lifecycleScope.launch {
-                            val idPostulante = withContext(Dispatchers.IO) {
-                                val repo = MainRepository(requireContext())
-                                repo.findPostulanteIdByEmail(usuario.username)
-                            }
+                        try {
+                            val repo = MainRepository(requireContext())
+                            val idPostulante = repo.findPostulanteIdByEmail(usuario.username)
                             if (idPostulante != null) {
                                 requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
                                     .edit().putString(Constants.KEY_POSTULANTE_ID, idPostulante).apply()
                             }
-                        }
+                        } catch (_: Exception) {}
                     }
                     findNavController().navigate(R.id.action_login_to_dashboard)
                 } else {
@@ -136,6 +130,7 @@ class LoginFragment : Fragment() {
         } else {
             tilUsername.error = null
         }
+
 
         if (password.isBlank()) {
             tilPassword.error = getString(R.string.field_required)
