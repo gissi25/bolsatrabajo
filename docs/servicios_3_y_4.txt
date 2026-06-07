@@ -1,0 +1,227 @@
+SERVICIO 3: Sincronizacion de Perfiles de Postulantes
+====================================================
+
+Archivos:
+  - Android: app/src/main/java/sv/ues/fia/eisi/bt/ui/servicios/Servicio3Fragment.kt
+  - Servidor: servicio3.php
+  - Ruta API: go.php?action=sincronizar_postulantes
+
+A) En que consiste
+------------------
+Herramienta para recuperar todos los postulantes almacenados en la base de
+datos local (SQLite del dispositivo Android) y subirlos al servidor remoto
+InfinityFree (MySQL). Sube cada postulante con toda su informacion asociada:
+formacion academica, experiencia laboral, certificaciones, habilidades y redes
+sociales. El flujo es unidireccional: solo de local a remoto.
+
+B) Tablas que toca
+--------------------
+
+LOCAL (SQLite) - Solo lectura:
+  POSTULANTE                  - tabla principal con datos del postulante
+  GENERO                      - nombre del genero
+  TIPO_DOCUMENTO              - nombre del tipo de documento
+  GRADO_ACADEMICO             - nombre del grado academico
+  DEPARTAMENTO                - nombre del departamento (via distrito)
+  MUNICIPIO                   - nombre del municipio (via distrito)
+  DISTRITO                    - nombre del distrito
+  FORMACION_ACADEMICA         - formaciones academicas del postulante
+  OFERTA_ACADEMICA            - oferta asociada a la formacion
+  INSTITUCION                 - nombre de la institucion
+  EXPERIENCIA_LABORAL         - experiencias laborales del postulante
+  EMPRESA                     - nombre de la empresa
+  CERTIFICACION               - certificaciones del postulante
+  TIPO_CERTIFICACION          - nombre del tipo de certificacion
+  HABILIDAD_POSTULANTE        - habilidades del postulante
+  HABILIDAD                   - nombre de la habilidad
+  RED_SOCIAL_POSTULANTE       - redes sociales del postulante
+  RED_SOCIAL                  - nombre de la red social
+
+SERVIDOR (MySQL InfinityFree) - Escritura:
+  POSTULANTE                  - INSERT o UPDATE
+  DISTRITO                    - INSERT IGNORE (se crea si no existe)
+  MUNICIPIO                   - INSERT IGNORE (se crea si no existe)
+  DEPARTAMENTO                - INSERT IGNORE (se crea si no existe)
+  FORMACION_ACADEMICA         - DELETE + INSERT (reemplazo completo)
+  EXPERIENCIA_LABORAL         - DELETE + INSERT
+  CERTIFICACION               - DELETE + INSERT
+  HABILIDAD_POSTULANTE        - DELETE + INSERT
+  RED_SOCIAL_POSTULANTE       - DELETE + INSERT
+
+SERVIDOR (MySQL InfinityFree) - Solo lectura de validacion:
+  GENERO                      - verificar que exista el ID_GENERO
+  TIPO_DOCUMENTO              - verificar que exista el ID_TIPO_DOCUMENTO
+  GRADO_ACADEMICO             - verificar que exista y no sea "bachiller"
+
+C) Local vs Servidor
+---------------------
+Operacion                          | Lugar       | Tipo
+-----------------------------------|-------------|----------
+Lectura de todos los postulantes   | SQLite      | Local
+Construccion de JSON por c/u       | SQLite      | Local
+(5 subconsultas: formacion, exp,   |             |
+certificacion, habilidad, redes)   |             |
+Mostrar lista en RecyclerView      | Android UI  | Cliente
+Mostrar dialogo de detalle         | Android UI  | Cliente
+Validacion de edad >= 18           | MySQL       | Remoto
+Validacion de grado no bachiller   | MySQL       | Remoto
+Auto-creacion de distrito faltante | MySQL       | Remoto
+INSERT/UPDATE transaccional        | MySQL       | Remoto
+
+D) Flujo detallado
+-------------------
+1. El usuario abre la pantalla y ve dos botones: "Recuperar" y "Sincronizar".
+
+2. Toca "Recuperar":
+   a) La app abre SQLite y ejecuta: SELECT ID_POSTULANTE FROM POSTULANTE
+   b) Por cada ID, ejecuta una consulta JOIN gigante que trae:
+      - Datos del postulante + genero + tipo_documento + grado_academico
+      - Datos de ubicacion (depto + municipio + distrito)
+   c) Luego ejecuta 5 consultas independientes por postulante:
+      - FORMACION_ACADEMICA (con OFERTA_ACADEMICA e INSTITUCION)
+      - EXPERIENCIA_LABORAL (con EMPRESA)
+      - CERTIFICACION (con TIPO_CERTIFICACION)
+      - HABILIDAD_POSTULANTE (con HABILIDAD)
+      - RED_SOCIAL_POSTULANTE (con RED_SOCIAL)
+   d) Arma un JSONObject por postulante con toda la data anidada
+   e) Muestra la lista en pantalla con resumen por tarjeta
+   f) Habilita "Sincronizar" con el total: "Subir N postulante(s)"
+
+3. Toca una tarjeta "Ver detalle":
+   a) Dialogo con datos personales + listas formateadas de cada seccion
+
+4. Toca "Sincronizar":
+   a) Itera sobre cada postulante de la lista
+   b) Por cada uno, llama a go.php?action=sincronizar_postulantes via POST
+   c) El servidor PHP:
+      - Valida fecha de nacimiento no futura y edad >= 18
+      - Valida grado academico no sea "bachiller"
+      - Valida que GENERO, TIPO_DOCUMENTO y GRADO_ACADEMICO existan
+      - Si el distrito no existe, crea DEPARTAMENTO -> MUNICIPIO -> DISTRITO
+      - Inicia transaccion MySQL
+      - Si el postulante ya existe (por ID): hace UPDATE y reemplaza hijos
+      - Si es nuevo: hace INSERT de todo
+      - Por cada hijo: DELETE de todos los existentes + INSERT de los nuevos
+      - Commit o Rollback
+      - Retorna JSON: {"exito":true, "id_postulante":"...", "accion":"insertado"}
+   d) Acumula contadores de insertados y actualizados
+   e) Muestra dialogo final con resultados
+
+E) Por que es util
+-------------------
+- Permite captura offline de datos: los postulantes se registran sin internet
+  en SQLite, y un administrador sube todo en lote cuando hay conexion.
+- Validacion centralizada: el servidor aplica reglas de negocio (edad, grado)
+  que garantizan calidad de datos.
+- Sincroniza todo el perfil (5 tablas hijas) en una sola transaccion,
+  manteniendo integridad referencial.
+- Util para ferias de empleo, quioscos o zonas sin conectividad.
+
+F) Rol dirigido
+----------------
+Postulante (para crear su perfil) y Administrador (para subir lotes al servidor).
+
+================================================================================
+
+SERVICIO 4: Busqueda de Postulantes por Certificacion
+======================================================
+
+Archivos:
+  - Android: app/src/main/java/sv/ues/fia/eisi/bt/ui/servicios/Servicio4Fragment.kt
+  - Servidor: servicio4.php
+  - Rutas API: go.php?action=tipos_certificacion
+               go.php?action=buscar_certificaciones
+               go.php?action=sincronizar_certificaciones
+
+A) En que consiste
+------------------
+Buscador de postulantes que poseen un tipo especifico de certificacion, con
+filtros opcionales de nombre y ano. Busca primero en la base local SQLite,
+muestra los resultados al instante, y sincroniza automaticamente los datos
+encontrados al servidor InfinityFree en segundo plano. Soporta sincronizacion
+manual individual desde el detalle del postulante.
+
+B) Tablas que toca
+--------------------
+
+LOCAL (SQLite) - Solo lectura:
+  POSTULANTE                  - datos del postulante (SELECT con JOIN)
+  CERTIFICACION               - certificaciones (filtro principal)
+  TIPO_CERTIFICACION          - tipo (filtro y JOIN, tambien fallback dropdown)
+  GRADO_ACADEMICO             - nombre del grado (JOIN)
+  INSTITUCION                 - nombre de la institucion (JOIN)
+
+SERVIDOR (MySQL InfinityFree) - Lectura:
+  TIPO_CERTIFICACION          - SELECT para llenar dropdown de tipos
+
+SERVIDOR (MySQL InfinityFree) - Escritura:
+  POSTULANTE                  - INSERT ... ON DUPLICATE KEY UPDATE
+  CERTIFICACION               - INSERT ... ON DUPLICATE KEY UPDATE
+
+C) Local vs Servidor
+---------------------
+Operacion                        | Lugar       | Tipo
+---------------------------------|-------------|----------
+Cargar dropdown tipos (intento)  | MySQL       | Remoto
+Cargar dropdown tipos (fallback) | SQLite      | Local
+Buscar postulantes por filtros   | SQLite      | Local
+Mostrar resultados               | Android UI  | Cliente
+Sincronizar automatica (fondo)   | MySQL       | Remoto
+Sincronizar manual (desde dialogo)| MySQL      | Remoto
+
+D) Flujo detallado
+-------------------
+1. Al abrir la pantalla:
+   a) Se cargan los tipos de certificacion en el dropdown
+   b) Intenta 3 veces (con 3s de espera) obtenerlos del servidor:
+      GET go.php?action=tipos_certificacion -> SELECT ID_TIPO, NOMBRE_TIPO
+   c) Si falla, lee desde SQLite local: SELECT de TIPO_CERTIFICACION
+
+2. El usuario selecciona:
+   - Tipo de certificacion (requerido)
+   - Nombre de certificacion (opcional, busqueda LIKE %texto%)
+   - Ano (opcional, filtro por rango de fechas YYYY-01-01 a YYYY-12-31)
+
+3. Toca "Buscar":
+   a) Valida que haya seleccionado un tipo
+   b) Muestra ProgressBar y deshabilita boton
+   c) Ejecuta en SQLite:
+      SELECT p.*, ga.NOMBRE_GRADO, c.*, tc.NOMBRE_TIPO, i.NOMBRE_INSTITUCION
+      FROM POSTULANTE p
+      JOIN CERTIFICACION c ON p.ID_POSTULANTE = c.ID_POSTULANTE
+      LEFT JOIN TIPO_CERTIFICACION tc ON c.ID_TIPO_CERTIFICACION = tc.ID_TIPO_CERTIFICACION
+      LEFT JOIN INSTITUCION i ON c.ID_INSTITUCION = i.ID_INSTITUCION
+      LEFT JOIN GRADO_ACADEMICO ga ON p.ID_GRADO_ACADEMICO = ga.ID_GRADO_ACADEMICO
+      WHERE c.ID_TIPO_CERTIFICACION = ?
+        [AND c.NOMBRE_CERTIFICACION LIKE ?]
+        [AND c.FECHA_CERTIFICACION BETWEEN ? AND ?]
+      ORDER BY p.ID_POSTULANTE, c.FECHA_CERTIFICACION DESC
+   d) Agrupa resultados por postulante (linkedMapOf)
+   e) Arma JSON por postulante con array de certificaciones
+   f) Muestra resultados en RecyclerView (inmediato)
+   g) En segundo plano, si hay resultados:
+      - POST a go.php?action=sincronizar_certificaciones
+      - El servidor hace UPSERT (INSERT ON DUPLICATE KEY UPDATE)
+        en POSTULANTE y CERTIFICACION
+      - Ajusta fechas para cumplir triggers de MySQL
+      - Retorna {"nuevas": N, "actualizadas": M}
+
+4. Toca una tarjeta de resultado:
+   a) Dialogo con datos personales (nombre, email, ID, grado)
+   b) Lista de certificaciones del postulante
+   c) Boton "Sincronizar con servidor": sube solo ese postulante
+   d) Boton "Cerrar"
+
+E) Por que es util
+------------------
+- Las empresas pueden buscar candidatos por certificacion especifica
+  (ej: "Python", "Ingles", "Project Management").
+- Busqueda local-first: funciona sin internet.
+- Sincronizacion automatica al servidor mantiene datos actualizados.
+- Filtros combinados (tipo + nombre + ano) permiten busqueda precisa.
+- El servidor ajusta fechas automaticamente para cumplir restricciones
+  de la BD (triggers), evitando errores de insercion.
+
+F) Rol dirigido
+----------------
+Empresa (reclutador buscando candidatos) y Administrador (auditoria).

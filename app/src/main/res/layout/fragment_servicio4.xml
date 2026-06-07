@@ -136,15 +136,6 @@
                 android:layout_marginTop="8dp"
                 android:nestedScrollingEnabled="false" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnRemoto"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/s4_btn_remoto"
-                android:visibility="gone"
-                style="@style/Widget.Material3.Button.OutlinedButton" />
-
             <View
                 android:layout_width="match_parent"
                 android:layout_height="32dp" />

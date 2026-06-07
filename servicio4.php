@@ -67,7 +67,8 @@ switch ($action) {
                     FECHA_FIN=VALUES(FECHA_FIN)
             ");
 
-            $insertados = 0;
+            $nuevas = 0;
+            $actualizadas = 0;
             foreach ($postulantes as $p) {
                 $idPost = trim($p['id_postulante'] ?? '');
                 $idGenero = isset($p['id_genero']) ? intval($p['id_genero']) : 1;
@@ -124,15 +125,21 @@ switch ($action) {
                         $fechaCert, $fechaIni, $fechaFin
                     );
                     $stmtCert->execute();
-                    $insertados++;
+                    $afectadas = $stmtCert->affected_rows;
+                    if ($afectadas === 1) {
+                        $nuevas++;
+                    } elseif ($afectadas === 2) {
+                        $actualizadas++;
+                    }
                 }
             }
 
             $conn->commit();
             echo json_encode([
                 "exito" => true,
-                "mensaje" => "$insertados certificaciones sincronizadas",
-                "sincronizadas" => $insertados
+                "nuevas" => $nuevas,
+                "actualizadas" => $actualizadas,
+                "mensaje" => "$nuevas nueva(s), $actualizadas actualizada(s)"
             ], JSON_UNESCAPED_UNICODE);
         } catch (Exception $e) {
             $conn->rollback();
