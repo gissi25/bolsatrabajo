@@ -3,6 +3,9 @@ package sv.ues.fia.eisi.bt.data.repository
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
+import android.util.Log
+import org.json.JSONArray
+import org.json.JSONObject
 import sv.ues.fia.eisi.bt.data.local.ConnectionHelper
 import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.PasswordHasher
@@ -1175,6 +1178,67 @@ class MainRepository(private val context: Context) {
             cursor.close()
             data
         } catch (_: Exception) { null }
+    }
+
+    fun getOfertasLocales(): List<JSONObject> {
+        val ofertas = mutableListOf<JSONObject>()
+        try {
+            val cursor = getDb().rawQuery("""
+                SELECT NIT, ID_OFERTA, ID_GRADO_ACADEMICO, TITULO_PUESTO,
+                       FECHA_PUBLICACION, FECHA_CADUCIDAD, EXPERIENCIA_ANIOS,
+                       EDAD_MINIMA, EDAD_MAXIMA, DESCRIPCION_OFERTA_TRABAJO
+                FROM OFERTA_TRABAJO
+                ORDER BY FECHA_PUBLICACION DESC
+            """.trimIndent(), null)
+
+            while (cursor.moveToNext()) {
+                val nit = cursor.getString(0) ?: ""
+                val idOferta = cursor.getString(1) ?: ""
+                val idGrado = cursor.getString(2)?.toIntOrNull()
+                val titulo = cursor.getString(3) ?: ""
+                val fechaPub = cursor.getString(4) ?: ""
+                val fechaCad = cursor.getString(5) ?: ""
+                val expAnios = cursor.getString(6)?.toIntOrNull()
+                val edadMin = cursor.getString(7)?.toIntOrNull()
+                val edadMax = cursor.getString(8)?.toIntOrNull()
+                val descripcion = cursor.getString(9) ?: ""
+
+                val reqCursor = getDb().rawQuery("""
+                    SELECT ID_DETALLE, DESCRIPCION_REQUISITO
+                    FROM DETALLE_REQUISITO
+                    WHERE NIT = ? AND ID_OFERTA = ?
+                    ORDER BY ID_DETALLE
+                """.trimIndent(), arrayOf(nit, idOferta))
+
+                val requisitos = JSONArray()
+                while (reqCursor.moveToNext()) {
+                    requisitos.put(JSONObject().apply {
+                        put("id_detalle", reqCursor.getString(0) ?: "")
+                        put("descripcion", reqCursor.getString(1) ?: "")
+                    })
+                }
+                reqCursor.close()
+
+                val oferta = JSONObject().apply {
+                    put("nit", nit)
+                    put("id_oferta", idOferta)
+                    put("titulo", titulo)
+                    if (idGrado != null) put("id_grado", idGrado)
+                    if (fechaPub.isNotBlank()) put("fecha_publicacion", fechaPub)
+                    if (fechaCad.isNotBlank()) put("fecha_caducidad", fechaCad)
+                    if (expAnios != null) put("experiencia_anios", expAnios)
+                    if (edadMin != null) put("edad_minima", edadMin)
+                    if (edadMax != null) put("edad_maxima", edadMax)
+                    if (descripcion.isNotBlank()) put("descripcion", descripcion)
+                    put("requisitos", requisitos)
+                }
+                ofertas.add(oferta)
+            }
+            cursor.close()
+        } catch (e: Exception) {
+            Log.e("MainRepository", "Error al leer ofertas locales", e)
+        }
+        return ofertas
     }
 
     private fun getFormacionesForPostulant(idPostulante: String): List<List<String>> {

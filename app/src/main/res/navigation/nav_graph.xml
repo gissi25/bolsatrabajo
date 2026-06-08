@@ -65,6 +65,12 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left" />
         <action
+            android:id="@+id/action_dashboard_to_servicio2"
+            app:destination="@id/servicio2Fragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left" />
+        <action
             android:id="@+id/action_dashboard_to_servicio3"
             app:destination="@id/servicio3Fragment"
             app:enterAnim="@anim/slide_in_right"
@@ -126,6 +132,12 @@
         android:name="sv.ues.fia.eisi.bt.ui.servicios.Servicio1Fragment"
         android:label="@string/oferta_titulo_seccion"
         tools:layout="@layout/fragment_servicio1" />
+
+    <fragment
+        android:id="@+id/servicio2Fragment"
+        android:name="sv.ues.fia.eisi.bt.ui.servicios.Servicio2Fragment"
+        android:label="Recomendador de Formacion"
+        tools:layout="@layout/fragment_servicio2" />
 
     <fragment
         android:id="@+id/servicio3Fragment"

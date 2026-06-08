@@ -1,0 +1,454 @@
+# Triggers de la Base de Datos — Bolsa de Trabajo
+
+Total: **27 triggers** implementados en SQLite.
+
+---
+
+## Clasificación
+
+| Tipo | Cantidad |
+|------|----------|
+| Restricción CHECK (17) — 8 pares INSERT/UPDATE + 1 solo INSERT | 17 |
+| Integridad Referencial (10) — 5 pares INSERT/UPDATE | 10 |
+| **Total** | **27** |
+
+---
+
+## 1. Restricciones CHECK (Semánticos)
+
+### 1.1 TR_POSTULANTE_EDAD / TR_POSTULANTE_EDAD_UPD
+
+**Tabla:** POSTULANTE — **Evento:** BEFORE INSERT / BEFORE UPDATE
+
+**Validación:**
+- FECHA_NACIMIENTO no puede ser futura.
+- El postulante debe ser mayor de 18 años.
+
+```sql
+CREATE TRIGGER TR_POSTULANTE_EDAD BEFORE INSERT ON POSTULANTE
+FOR EACH ROW BEGIN
+    SELECT CASE
+        WHEN NEW.FECHA_NACIMIENTO > date('now')
+            THEN RAISE(ABORT, 'La fecha de nacimiento no puede ser futura')
+        WHEN (strftime('%Y', 'now') - strftime('%Y', NEW.FECHA_NACIMIENTO)) < 18
+            THEN RAISE(ABORT, 'El postulante debe ser mayor de edad')
+    END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS TR_POSTULANTE_EDAD_UPD BEFORE UPDATE ON POSTULANTE
+FOR EACH ROW BEGIN
+    SELECT CASE
+        WHEN NEW.FECHA_NACIMIENTO > date('now')
+            THEN RAISE(ABORT, 'La fecha de nacimiento no puede ser futura')
+        WHEN (strftime('%Y', 'now') - strftime('%Y', NEW.FECHA_NACIMIENTO)) < 18
+            THEN RAISE(ABORT, 'El postulante debe ser mayor de edad')
+    END;
+END;
+```
+
+---
+
+### 1.2 TR_POSTULANTE_GRADO / TR_POSTULANTE_GRADO_UPD
+
+**Tabla:** POSTULANTE — **Evento:** BEFORE INSERT / BEFORE UPDATE
+
+**Validación:** El grado académico del postulante no puede ser "Bachiller".
+
+```sql
+CREATE TRIGGER TR_POSTULANTE_GRADO BEFORE INSERT ON POSTULANTE
+FOR EACH ROW BEGIN
+    SELECT CASE WHEN (
+        SELECT LOWER(NOMBRE_GRADO) FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO
+    ) IN ('bachiller')
+    THEN RAISE(ABORT, 'El postulante debe tener un grado academico superior a Bachiller') END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS TR_POSTULANTE_GRADO_UPD BEFORE UPDATE ON POSTULANTE
+FOR EACH ROW BEGIN
+    SELECT CASE WHEN (
+        SELECT LOWER(NOMBRE_GRADO) FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO
+    ) IN ('bachiller')
+    THEN RAISE(ABORT, 'El postulante debe tener un grado academico superior a Bachiller') END;
+END;
+```
+
+---
+
+### 1.3 TR_OFERTA_RANGO_EDAD / TR_OFERTA_RANGO_EDAD_UPD
+
+**Tabla:** OFERTA_TRABAJO — **Evento:** BEFORE INSERT / BEFORE UPDATE
+
+**Validación:**
+- EDAD_MINIMA debe ser >= 18.
+- EDAD_MINIMA no puede ser mayor que EDAD_MAXIMA.
+
+```sql
+CREATE TRIGGER TR_OFERTA_RANGO_EDAD BEFORE INSERT ON OFERTA_TRABAJO
+FOR EACH ROW BEGIN
+    SELECT CASE
+        WHEN NEW.EDAD_MINIMA < 18
+            THEN RAISE(ABORT, 'Edad minima debe ser mayor o igual a 18')
+        WHEN NEW.EDAD_MINIMA > NEW.EDAD_MAXIMA
+            THEN RAISE(ABORT, 'Edad minima no puede ser mayor a la maxima')
+    END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS TR_OFERTA_RANGO_EDAD_UPD BEFORE UPDATE ON OFERTA_TRABAJO
+FOR EACH ROW BEGIN
+    SELECT CASE
+        WHEN NEW.EDAD_MINIMA < 18
+            THEN RAISE(ABORT, 'Edad minima debe ser mayor o igual a 18')
+        WHEN NEW.EDAD_MINIMA > NEW.EDAD_MAXIMA
+            THEN RAISE(ABORT, 'Edad minima no puede ser mayor a la maxima')
+    END;
+END;
+```
+
+---
+
+### 1.4 TR_OFERTA_VIGENCIA / TR_OFERTA_VIGENCIA_UPD
+
+**Tabla:** OFERTA_TRABAJO — **Evento:** BEFORE INSERT / BEFORE UPDATE
+
+**Validación:** FECHA_CADUCIDAD debe ser posterior a FECHA_PUBLICACION.
+
+```sql
+CREATE TRIGGER TR_OFERTA_VIGENCIA BEFORE INSERT ON OFERTA_TRABAJO
+FOR EACH ROW BEGIN
+    SELECT CASE WHEN NEW.FECHA_CADUCIDAD <= NEW.FECHA_PUBLICACION
+    THEN RAISE(ABORT, 'La oferta ya caduco o fecha invalida') END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS TR_OFERTA_VIGENCIA_UPD BEFORE UPDATE ON OFERTA_TRABAJO
+FOR EACH ROW BEGIN
+    SELECT CASE WHEN NEW.FECHA_CADUCIDAD <= NEW.FECHA_PUBLICACION
+    THEN RAISE(ABORT, 'La oferta ya caduco o fecha invalida') END;
+END;
+```
+
+---
+
+### 1.5 TR_POSTULACION_VIGENCIA
+
+**Tabla:** POSTULACION — **Evento:** BEFORE INSERT (solo INSERT, no UPDATE)
+
+**Validación:** No permitir postularse a una oferta cuya FECHA_CADUCIDAD ya haya vencido.
+
+```sql
+CREATE TRIGGER TR_POSTULACION_VIGENCIA BEFORE INSERT ON POSTULACION
+FOR EACH ROW BEGIN
+    SELECT CASE WHEN (
+        SELECT FECHA_CADUCIDAD FROM OFERTA_TRABAJO
+        WHERE NIT = NEW.NIT AND ID_OFERTA = NEW.ID_OFERTA
+    ) < date('now')
+    THEN RAISE(ABORT, 'La oferta de trabajo ha vencido') END;
+END;
+```
+
+---
+
+### 1.6 TR_EXP_LABORAL_FECHAS / TR_EXP_LABORAL_FECHAS_UPD
+
+**Tabla:** EXPERIENCIA_LABORAL — **Evento:** BEFORE INSERT / BEFORE UPDATE
+
+**Validación:** FECHA_INICIO debe ser menor que FECHA_FIN.
+
+```sql
+CREATE TRIGGER TR_EXP_LABORAL_FECHAS BEFORE INSERT ON EXPERIENCIA_LABORAL
+FOR EACH ROW BEGIN
+    SELECT CASE WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
+    THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin') END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS TR_EXP_LABORAL_FECHAS_UPD BEFORE UPDATE ON EXPERIENCIA_LABORAL
+FOR EACH ROW BEGIN
+    SELECT CASE WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
+    THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin') END;
+END;
+```
+
+---
+
+### 1.7 TR_CERTIFICACION_FECHAS / TR_CERTIFICACION_FECHAS_UPD
+
+**Tabla:** CERTIFICACION — **Evento:** BEFORE INSERT / BEFORE UPDATE
+
+**Validaciones (6 reglas):**
+1. FECHA_INICIO < FECHA_FIN
+2. FECHA_INICIO no puede ser futura
+3. FECHA_FIN no puede ser futura
+4. FECHA_CERTIFICACION >= FECHA_FIN
+5. FECHA_CERTIFICACION <= FECHA_FIN + 1 año
+6. FECHA_CERTIFICACION no puede ser futura
+
+```sql
+CREATE TRIGGER TR_CERTIFICACION_FECHAS BEFORE INSERT ON CERTIFICACION
+FOR EACH ROW BEGIN
+    SELECT CASE
+        WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
+            THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin')
+        WHEN NEW.FECHA_INICIO > date('now')
+            THEN RAISE(ABORT, 'Fecha inicio no puede ser una fecha futura')
+        WHEN NEW.FECHA_FIN > date('now')
+            THEN RAISE(ABORT, 'Fecha fin no puede ser una fecha futura')
+        WHEN NEW.FECHA_CERTIFICACION < NEW.FECHA_FIN
+            THEN RAISE(ABORT, 'Fecha de certificacion no puede ser menor a la fecha fin del periodo')
+        WHEN NEW.FECHA_CERTIFICACION > date(NEW.FECHA_FIN, '+1 years')
+            THEN RAISE(ABORT, 'Fecha de certificacion no puede exceder un año despues de la fecha fin del periodo')
+        WHEN NEW.FECHA_CERTIFICACION > date('now')
+            THEN RAISE(ABORT, 'Fecha de certificacion no puede ser una fecha futura')
+    END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS TR_CERTIFICACION_FECHAS_UPD BEFORE UPDATE ON CERTIFICACION
+FOR EACH ROW BEGIN
+    SELECT CASE
+        WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
+            THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin')
+        WHEN NEW.FECHA_INICIO > date('now')
+            THEN RAISE(ABORT, 'Fecha inicio no puede ser una fecha futura')
+        WHEN NEW.FECHA_FIN > date('now')
+            THEN RAISE(ABORT, 'Fecha fin no puede ser una fecha futura')
+        WHEN NEW.FECHA_CERTIFICACION < NEW.FECHA_FIN
+            THEN RAISE(ABORT, 'Fecha de certificacion no puede ser menor a la fecha fin del periodo')
+        WHEN NEW.FECHA_CERTIFICACION > date(NEW.FECHA_FIN, '+1 years')
+            THEN RAISE(ABORT, 'Fecha de certificacion no puede exceder un año despues de la fecha fin del periodo')
+        WHEN NEW.FECHA_CERTIFICACION > date('now')
+            THEN RAISE(ABORT, 'Fecha de certificacion no puede ser una fecha futura')
+    END;
+END;
+```
+
+---
+
+### 1.8 TR_FORMACION_FECHAS / TR_FORMACION_FECHAS_UPD
+
+**Tabla:** FORMACION_ACADEMICA — **Evento:** BEFORE INSERT / BEFORE UPDATE
+
+**Validaciones (6 reglas):**
+1. FECHA_INICIO < FECHA_FIN
+2. FECHA_INICIO no puede ser futura
+3. FECHA_FIN no puede ser futura
+4. FECHA_OBTENCION >= FECHA_FIN
+5. FECHA_OBTENCION <= FECHA_FIN + 1 año
+6. FECHA_OBTENCION no puede ser futura
+
+```sql
+CREATE TRIGGER TR_FORMACION_FECHAS BEFORE INSERT ON FORMACION_ACADEMICA
+FOR EACH ROW BEGIN
+    SELECT CASE
+        WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
+            THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin')
+        WHEN NEW.FECHA_INICIO > date('now')
+            THEN RAISE(ABORT, 'Fecha inicio no puede ser una fecha futura')
+        WHEN NEW.FECHA_FIN > date('now')
+            THEN RAISE(ABORT, 'Fecha fin no puede ser una fecha futura')
+        WHEN NEW.FECHA_OBTENCION < NEW.FECHA_FIN
+            THEN RAISE(ABORT, 'Fecha de obtencion no puede ser menor a la fecha fin del periodo')
+        WHEN NEW.FECHA_OBTENCION > date(NEW.FECHA_FIN, '+1 years')
+            THEN RAISE(ABORT, 'Fecha de obtencion no puede exceder un año despues de la fecha fin del periodo')
+        WHEN NEW.FECHA_OBTENCION > date('now')
+            THEN RAISE(ABORT, 'Fecha de obtencion no puede ser una fecha futura')
+    END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS TR_FORMACION_FECHAS_UPD BEFORE UPDATE ON FORMACION_ACADEMICA
+FOR EACH ROW BEGIN
+    SELECT CASE
+        WHEN NEW.FECHA_INICIO >= NEW.FECHA_FIN
+            THEN RAISE(ABORT, 'Fecha inicio debe ser menor a fecha fin')
+        WHEN NEW.FECHA_INICIO > date('now')
+            THEN RAISE(ABORT, 'Fecha inicio no puede ser una fecha futura')
+        WHEN NEW.FECHA_FIN > date('now')
+            THEN RAISE(ABORT, 'Fecha fin no puede ser una fecha futura')
+        WHEN NEW.FECHA_OBTENCION < NEW.FECHA_FIN
+            THEN RAISE(ABORT, 'Fecha de obtencion no puede ser menor a la fecha fin del periodo')
+        WHEN NEW.FECHA_OBTENCION > date(NEW.FECHA_FIN, '+1 years')
+            THEN RAISE(ABORT, 'Fecha de obtencion no puede exceder un año despues de la fecha fin del periodo')
+        WHEN NEW.FECHA_OBTENCION > date('now')
+            THEN RAISE(ABORT, 'Fecha de obtencion no puede ser una fecha futura')
+    END;
+END;
+```
+
+---
+
+### 1.9 TR_HABILIDAD_NIVEL / TR_HABILIDAD_NIVEL_UPD
+
+**Tabla:** HABILIDAD_POSTULANTE — **Evento:** BEFORE INSERT / BEFORE UPDATE
+
+**Validación:** NIVEL_DESTREZA debe ser uno de: 'Básico', 'Intermedio', 'Avanzado'.
+
+```sql
+CREATE TRIGGER TR_HABILIDAD_NIVEL BEFORE INSERT ON HABILIDAD_POSTULANTE
+FOR EACH ROW BEGIN
+    SELECT CASE WHEN NEW.NIVEL_DESTREZA NOT IN ('Básico', 'Intermedio', 'Avanzado')
+    THEN RAISE(ABORT, 'Nivel de destreza debe ser Basico, Intermedio o Avanzado') END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS TR_HABILIDAD_NIVEL_UPD BEFORE UPDATE ON HABILIDAD_POSTULANTE
+FOR EACH ROW BEGIN
+    SELECT CASE WHEN NEW.NIVEL_DESTREZA NOT IN ('Básico', 'Intermedio', 'Avanzado')
+    THEN RAISE(ABORT, 'Nivel de destreza debe ser Basico, Intermedio o Avanzado') END;
+END;
+```
+
+---
+
+## 2. Integridad Referencial (FK)
+
+### 2.1 TR_MUNICIPIO_DEPTO / TR_MUNICIPIO_DEPTO_UPD
+
+**Tabla:** MUNICIPIO — **Evento:** BEFORE INSERT / BEFORE UPDATE
+**Validación:** ID_DEPARTAMENTO debe existir en DEPARTAMENTO.
+
+```sql
+CREATE TRIGGER TR_MUNICIPIO_DEPTO BEFORE INSERT ON MUNICIPIO
+FOR EACH ROW BEGIN
+    SELECT CASE WHEN (SELECT 1 FROM DEPARTAMENTO WHERE ID_DEPARTAMENTO = NEW.ID_DEPARTAMENTO) IS NULL
+    THEN RAISE(ABORT, 'El departamento asociado no existe') END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS TR_MUNICIPIO_DEPTO_UPD BEFORE UPDATE ON MUNICIPIO
+FOR EACH ROW BEGIN
+    SELECT CASE WHEN (SELECT 1 FROM DEPARTAMENTO WHERE ID_DEPARTAMENTO = NEW.ID_DEPARTAMENTO) IS NULL
+    THEN RAISE(ABORT, 'El departamento asociado no existe') END;
+END;
+```
+
+---
+
+### 2.2 TR_DISTRITO_MUNICIPIO / TR_DISTRITO_MUNICIPIO_UPD
+
+**Tabla:** DISTRITO — **Evento:** BEFORE INSERT / BEFORE UPDATE
+**Validación:** El par (ID_DEPARTAMENTO, ID_MUNICIPIO) debe existir en MUNICIPIO.
+
+```sql
+CREATE TRIGGER TR_DISTRITO_MUNICIPIO BEFORE INSERT ON DISTRITO
+FOR EACH ROW BEGIN
+    SELECT CASE WHEN (SELECT 1 FROM MUNICIPIO WHERE ID_DEPARTAMENTO = NEW.ID_DEPARTAMENTO AND ID_MUNICIPIO = NEW.ID_MUNICIPIO) IS NULL
+    THEN RAISE(ABORT, 'El municipio asociado no existe') END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS TR_DISTRITO_MUNICIPIO_UPD BEFORE UPDATE ON DISTRITO
+FOR EACH ROW BEGIN
+    SELECT CASE WHEN (SELECT 1 FROM MUNICIPIO WHERE ID_DEPARTAMENTO = NEW.ID_DEPARTAMENTO AND ID_MUNICIPIO = NEW.ID_MUNICIPIO) IS NULL
+    THEN RAISE(ABORT, 'El municipio asociado no existe') END;
+END;
+```
+
+---
+
+### 2.3 TR_HABILIDAD_CATEGORIA / TR_HABILIDAD_CATEGORIA_UPD
+
+**Tabla:** HABILIDAD — **Evento:** BEFORE INSERT / BEFORE UPDATE
+**Validación:** ID_CATEGORIA_HABILIDAD debe existir en CATEGORIA_HABILIDAD.
+
+```sql
+CREATE TRIGGER TR_HABILIDAD_CATEGORIA BEFORE INSERT ON HABILIDAD
+FOR EACH ROW BEGIN
+    SELECT CASE WHEN (SELECT 1 FROM CATEGORIA_HABILIDAD WHERE ID_CATEGORIA_HABILIDAD = NEW.ID_CATEGORIA_HABILIDAD) IS NULL
+    THEN RAISE(ABORT, 'La categoria asociada no existe') END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS TR_HABILIDAD_CATEGORIA_UPD BEFORE UPDATE ON HABILIDAD
+FOR EACH ROW BEGIN
+    SELECT CASE WHEN (SELECT 1 FROM CATEGORIA_HABILIDAD WHERE ID_CATEGORIA_HABILIDAD = NEW.ID_CATEGORIA_HABILIDAD) IS NULL
+    THEN RAISE(ABORT, 'La categoria asociada no existe') END;
+END;
+```
+
+---
+
+### 2.4 TR_EMPRESA_DISTRITO / TR_EMPRESA_DISTRITO_UPD
+
+**Tabla:** EMPRESA — **Evento:** BEFORE INSERT / BEFORE UPDATE
+**Validación:** El trio (ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID) debe existir en DISTRITO.
+
+```sql
+CREATE TRIGGER TR_EMPRESA_DISTRITO BEFORE INSERT ON EMPRESA
+FOR EACH ROW BEGIN
+    SELECT CASE WHEN (SELECT 1 FROM DISTRITO WHERE ID_DEPARTAMENTO = NEW.ID_DISTRITO_DEPTO AND ID_MUNICIPIO = NEW.ID_DISTRITO_MUNICIPIO AND ID_DISTRITO = NEW.ID_DISTRITO_ID) IS NULL
+    THEN RAISE(ABORT, 'El distrito asociado no existe') END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS TR_EMPRESA_DISTRITO_UPD BEFORE UPDATE ON EMPRESA
+FOR EACH ROW BEGIN
+    SELECT CASE WHEN (SELECT 1 FROM DISTRITO WHERE ID_DEPARTAMENTO = NEW.ID_DISTRITO_DEPTO AND ID_MUNICIPIO = NEW.ID_DISTRITO_MUNICIPIO AND ID_DISTRITO = NEW.ID_DISTRITO_ID) IS NULL
+    THEN RAISE(ABORT, 'El distrito asociado no existe') END;
+END;
+```
+
+---
+
+### 2.5 TR_POSTULANTE_FK / TR_POSTULANTE_FK_UPD
+
+**Tabla:** POSTULANTE — **Evento:** BEFORE INSERT / BEFORE UPDATE
+**Validaciones (3 FK en un solo trigger):**
+- ID_GENERO debe existir en GENERO.
+- ID_TIPO_DOCUMENTO debe existir en TIPO_DOCUMENTO.
+- ID_GRADO_ACADEMICO (si no es NULL) debe existir en GRADO_ACADEMICO.
+
+```sql
+CREATE TRIGGER TR_POSTULANTE_FK BEFORE INSERT ON POSTULANTE
+FOR EACH ROW BEGIN
+    SELECT CASE
+        WHEN (SELECT 1 FROM GENERO WHERE ID_GENERO = NEW.ID_GENERO) IS NULL
+            THEN RAISE(ABORT, 'El genero asociado no existe')
+        WHEN (SELECT 1 FROM TIPO_DOCUMENTO WHERE ID_TIPO_DOCUMENTO = NEW.ID_TIPO_DOCUMENTO) IS NULL
+            THEN RAISE(ABORT, 'El tipo de documento asociado no existe')
+        WHEN NEW.ID_GRADO_ACADEMICO IS NOT NULL AND (SELECT 1 FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO) IS NULL
+            THEN RAISE(ABORT, 'El grado academico asociado no existe')
+    END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS TR_POSTULANTE_FK_UPD BEFORE UPDATE ON POSTULANTE
+FOR EACH ROW BEGIN
+    SELECT CASE
+        WHEN (SELECT 1 FROM GENERO WHERE ID_GENERO = NEW.ID_GENERO) IS NULL
+            THEN RAISE(ABORT, 'El genero asociado no existe')
+        WHEN (SELECT 1 FROM TIPO_DOCUMENTO WHERE ID_TIPO_DOCUMENTO = NEW.ID_TIPO_DOCUMENTO) IS NULL
+            THEN RAISE(ABORT, 'El tipo de documento asociado no existe')
+        WHEN NEW.ID_GRADO_ACADEMICO IS NOT NULL AND (SELECT 1 FROM GRADO_ACADEMICO WHERE ID_GRADO_ACADEMICO = NEW.ID_GRADO_ACADEMICO) IS NULL
+            THEN RAISE(ABORT, 'El grado academico asociado no existe')
+    END;
+END;
+```
+
+---
+
+## Resumen
+
+| # | Trigger | Tabla | Evento | Validación |
+|---|---------|-------|--------|------------|
+| 1 | TR_POSTULANTE_EDAD | POSTULANTE | BEFORE INSERT | Edad >= 18, fecha no futura |
+| 2 | TR_POSTULANTE_EDAD_UPD | POSTULANTE | BEFORE UPDATE | Edad >= 18, fecha no futura |
+| 3 | TR_POSTULANTE_GRADO | POSTULANTE | BEFORE INSERT | Grado no puede ser Bachiller |
+| 4 | TR_POSTULANTE_GRADO_UPD | POSTULANTE | BEFORE UPDATE | Grado no puede ser Bachiller |
+| 5 | TR_OFERTA_RANGO_EDAD | OFERTA_TRABAJO | BEFORE INSERT | Edad min >= 18, min <= max |
+| 6 | TR_OFERTA_RANGO_EDAD_UPD | OFERTA_TRABAJO | BEFORE UPDATE | Edad min >= 18, min <= max |
+| 7 | TR_OFERTA_VIGENCIA | OFERTA_TRABAJO | BEFORE INSERT | Caducidad > Publicación |
+| 8 | TR_OFERTA_VIGENCIA_UPD | OFERTA_TRABAJO | BEFORE UPDATE | Caducidad > Publicación |
+| 9 | TR_POSTULACION_VIGENCIA | POSTULACION | BEFORE INSERT | Oferta no vencida |
+| 10 | TR_EXP_LABORAL_FECHAS | EXPERIENCIA_LABORAL | BEFORE INSERT | Inicio < Fin |
+| 11 | TR_EXP_LABORAL_FECHAS_UPD | EXPERIENCIA_LABORAL | BEFORE UPDATE | Inicio < Fin |
+| 12 | TR_CERTIFICACION_FECHAS | CERTIFICACION | BEFORE INSERT | 6 reglas de fechas |
+| 13 | TR_CERTIFICACION_FECHAS_UPD | CERTIFICACION | BEFORE UPDATE | 6 reglas de fechas |
+| 14 | TR_FORMACION_FECHAS | FORMACION_ACADEMICA | BEFORE INSERT | 6 reglas de fechas |
+| 15 | TR_FORMACION_FECHAS_UPD | FORMACION_ACADEMICA | BEFORE UPDATE | 6 reglas de fechas |
+| 16 | TR_HABILIDAD_NIVEL | HABILIDAD_POSTULANTE | BEFORE INSERT | Nivel: Básico/Intermedio/Avanzado |
+| 17 | TR_HABILIDAD_NIVEL_UPD | HABILIDAD_POSTULANTE | BEFORE UPDATE | Nivel: Básico/Intermedio/Avanzado |
+| 18 | TR_MUNICIPIO_DEPTO | MUNICIPIO | BEFORE INSERT | FK -> DEPARTAMENTO |
+| 19 | TR_MUNICIPIO_DEPTO_UPD | MUNICIPIO | BEFORE UPDATE | FK -> DEPARTAMENTO |
+| 20 | TR_DISTRITO_MUNICIPIO | DISTRITO | BEFORE INSERT | FK compuesta -> MUNICIPIO |
+| 21 | TR_DISTRITO_MUNICIPIO_UPD | DISTRITO | BEFORE UPDATE | FK compuesta -> MUNICIPIO |
+| 22 | TR_HABILIDAD_CATEGORIA | HABILIDAD | BEFORE INSERT | FK -> CATEGORIA_HABILIDAD |
+| 23 | TR_HABILIDAD_CATEGORIA_UPD | HABILIDAD | BEFORE UPDATE | FK -> CATEGORIA_HABILIDAD |
+| 24 | TR_EMPRESA_DISTRITO | EMPRESA | BEFORE INSERT | FK 3-col -> DISTRITO |
+| 25 | TR_EMPRESA_DISTRITO_UPD | EMPRESA | BEFORE UPDATE | FK 3-col -> DISTRITO |
+| 26 | TR_POSTULANTE_FK | POSTULANTE | BEFORE INSERT | 3 FK (GENERO, TIPO_DOC, GRADO) |
+| 27 | TR_POSTULANTE_FK_UPD | POSTULANTE | BEFORE UPDATE | 3 FK (GENERO, TIPO_DOC, GRADO) |
+
+---
+
+*Fuente: `ConnectionHelper.kt` (líneas 329–632)*

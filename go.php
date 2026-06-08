@@ -16,7 +16,9 @@ $action = $_GET['action'] ?? '';
 $route = [
     // Servicio 1: carga masiva de ofertas
     'empresas' => 1, 'grados' => 1, 'insertar_ofertas' => 1,
-    // Servicio 2: (disponible)
+    // Servicio 2: recomendador de formación y panorama de mercado
+    'recomendar_formacion' => 2,
+    'panorama_mercado' => 2,
     // Servicio 3: sincronizar postulantes
     'sincronizar_postulantes' => 3,
     // Servicio 4: buscar certificaciones
