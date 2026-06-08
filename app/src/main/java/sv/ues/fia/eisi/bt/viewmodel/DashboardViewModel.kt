@@ -134,6 +134,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         val result = mutableListOf<DashboardItem>()
         val filtered = webServices.filter { service ->
             when (service.id) {
+                9 -> currentRole == Constants.ROLE_EMPRESA || currentRole == Constants.ROLE_ADMIN
                 10 -> currentRole == Constants.ROLE_POSTULANTE || currentRole == Constants.ROLE_ADMIN
                 else -> true
             }
