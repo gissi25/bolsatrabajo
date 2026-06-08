@@ -556,6 +556,23 @@
     <string name="s9_error_seleccionar">You must select an item</string>
     <string name="s9_resultados">%d result(s) found</string>
     <string name="s9_desglose" formatted="false">Degree: %d | Skills: %d | Exp: %d | Age: %d</string>
+    <string name="s9_detalle_grado">Academic Degree</string>
+    <string name="s9_detalle_experiencia">Work Experience</string>
+    <string name="s9_detalle_habilidades">Skills</string>
+    <string name="s9_detalle_edad">Age</string>
+    <string name="s9_detalle_oferta">Offer Description</string>
+    <string name="s9_detalle_puntaje">Score Breakdown</string>
+    <string name="s9_detalle_postulante_grado" formatted="false">Applicant: %s</string>
+    <string name="s9_detalle_oferta_grado" formatted="false">Offer requires: %s</string>
+    <string name="s9_detalle_postulante_exp" formatted="false">Applicant has: %s years</string>
+    <string name="s9_detalle_oferta_exp" formatted="false">Offer requires: %d years</string>
+    <string name="s9_detalle_postulante_edad" formatted="false">Applicant: %d years</string>
+    <string name="s9_detalle_oferta_edad" formatted="false">Offer requires: %d - %d years</string>
+    <string name="s9_detalle_habilidades_match" formatted="false">%d of %d skills match</string>
+    <string name="s9_detalle_sin_requisitos">No specific requirements</string>
+    <string name="s9_detalle_puntaje_linea" formatted="false">Degree: %d/30 | Skills: %d/30 | Experience: %d/25 | Age: %d/15</string>
+    <string name="s9_detalle_total" formatted="false">Total: %d/100 — %s</string>
+    <string name="s9_detalle_tap_para_detalle">Tap for details</string>
 
     <!-- Servicio 10: My Applications -->
     <string name="s10_titulo">My Applications</string>

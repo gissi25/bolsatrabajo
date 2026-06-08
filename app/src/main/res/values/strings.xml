@@ -581,6 +581,23 @@
     <string name="s9_error_seleccionar">Debe seleccionar un elemento</string>
     <string name="s9_resultados">%d resultado(s) encontrado(s)</string>
     <string name="s9_desglose" formatted="false">Grado: %d | Habilidades: %d | Exp: %d | Edad: %d</string>
+    <string name="s9_detalle_grado">Grado Académico</string>
+    <string name="s9_detalle_experiencia">Experiencia Laboral</string>
+    <string name="s9_detalle_habilidades">Habilidades</string>
+    <string name="s9_detalle_edad">Edad</string>
+    <string name="s9_detalle_oferta">Descripción de la Oferta</string>
+    <string name="s9_detalle_puntaje">Desglose de Puntaje</string>
+    <string name="s9_detalle_postulante_grado" formatted="false">Postulante: %s</string>
+    <string name="s9_detalle_oferta_grado" formatted="false">Oferta requiere: %s</string>
+    <string name="s9_detalle_postulante_exp" formatted="false">Postulante tiene: %s años</string>
+    <string name="s9_detalle_oferta_exp" formatted="false">Oferta requiere: %d años</string>
+    <string name="s9_detalle_postulante_edad" formatted="false">Postulante: %d años</string>
+    <string name="s9_detalle_oferta_edad" formatted="false">Oferta requiere: %d - %d años</string>
+    <string name="s9_detalle_habilidades_match" formatted="false">%d de %d habilidades coinciden</string>
+    <string name="s9_detalle_sin_requisitos">Sin requisitos específicos</string>
+    <string name="s9_detalle_puntaje_linea" formatted="false">Grado: %d/30 | Habilidades: %d/30 | Experiencia: %d/25 | Edad: %d/15</string>
+    <string name="s9_detalle_total" formatted="false">Total: %d/100 — %s</string>
+    <string name="s9_detalle_tap_para_detalle">Toca para ver detalle</string>
 
     <!-- Servicio 10: Mis Postulaciones -->
     <string name="s10_titulo">Mis Postulaciones</string>

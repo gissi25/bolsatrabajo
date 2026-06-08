@@ -71,6 +71,13 @@ switch ($action) {
         $idGradoPost = isset($postulante['ID_GRADO_ACADEMICO']) ? (int)$postulante['ID_GRADO_ACADEMICO'] : 0;
         $edad = isset($postulante['edad']) ? (int)$postulante['edad'] : 0;
 
+        $gradoMap = [];
+        $gradoRes = $conn->query("SELECT ID_GRADO_ACADEMICO, NOMBRE_GRADO FROM GRADO_ACADEMICO");
+        while ($g = $gradoRes->fetch_assoc()) {
+            $gradoMap[$g['ID_GRADO_ACADEMICO']] = $g['NOMBRE_GRADO'];
+        }
+        $gradoRes->free();
+
         $stmt = $conn->prepare("SELECT hp.NIVEL_DESTREZA, h.NOMBRE_HABILIDAD
             FROM HABILIDAD_POSTULANTE hp
             JOIN HABILIDAD h ON hp.ID_CATEGORIA_HABILIDAD = h.ID_CATEGORIA_HABILIDAD AND hp.ID_HABILIDAD = h.ID_HABILIDAD
@@ -198,7 +205,21 @@ switch ($action) {
                 'puntaje_habilidades' => $puntajeHabilidades,
                 'puntaje_experiencia' => $puntajeExperiencia,
                 'puntaje_edad' => $puntajeEdad,
-                'clasificacion' => $clasificacion
+                'clasificacion' => $clasificacion,
+                'postulante_grado_nombre' => $gradoMap[$idGradoPost] ?? 'N/A',
+                'postulante_edad' => $edad,
+                'postulante_experiencia_total' => round($totalExp, 1),
+                'postulante_habilidades' => $postSkills,
+                'postulante_nup' => $postulante['NUP'] ?? '',
+                'postulante_email' => $postulante['EMAIL'] ?? '',
+                'oferta_grado_nombre' => $gradoMap[$idGradoOferta] ?? 'N/A',
+                'oferta_experiencia_anios' => $expRequerida,
+                'oferta_edad_min' => $edadMin,
+                'oferta_edad_max' => $edadMax,
+                'oferta_descripcion' => $oferta['DESCRIPCION_OFERTA_TRABAJO'] ?? '',
+                'oferta_requisitos' => $reqDescriptions,
+                'habilidades_coincidentes' => $coincidencias,
+                'requisitos_totales' => $totalRequeridas
             ];
         }
 
@@ -233,6 +254,13 @@ switch ($action) {
         $edadMin = (int)$oferta['EDAD_MINIMA'];
         $edadMax = (int)$oferta['EDAD_MAXIMA'];
         $expRequerida = (int)$oferta['EXPERIENCIA_ANIOS'];
+
+        $gradoMap = [];
+        $gradoRes = $conn->query("SELECT ID_GRADO_ACADEMICO, NOMBRE_GRADO FROM GRADO_ACADEMICO");
+        while ($g = $gradoRes->fetch_assoc()) {
+            $gradoMap[$g['ID_GRADO_ACADEMICO']] = $g['NOMBRE_GRADO'];
+        }
+        $gradoRes->free();
 
         $reqStmt = $conn->prepare("SELECT DESCRIPCION_REQUISITO FROM DETALLE_REQUISITO WHERE NIT = ? AND ID_OFERTA = ?");
         $reqStmt->bind_param("ss", $nit, $idOferta);
@@ -340,7 +368,21 @@ switch ($action) {
                 'puntaje_habilidades' => $puntajeHabilidades,
                 'puntaje_experiencia' => $puntajeExperiencia,
                 'puntaje_edad' => $puntajeEdad,
-                'clasificacion' => $clasificacion
+                'clasificacion' => $clasificacion,
+                'postulante_grado_nombre' => $gradoMap[$idGradoPost] ?? 'N/A',
+                'postulante_edad' => $edad,
+                'postulante_experiencia_total' => round($totalExp, 1),
+                'postulante_habilidades' => $postSkills,
+                'postulante_nup' => $postulante['NUP'] ?? '',
+                'postulante_email' => $postulante['EMAIL'] ?? '',
+                'oferta_grado_nombre' => $gradoMap[$idGradoOferta] ?? 'N/A',
+                'oferta_experiencia_anios' => $expRequerida,
+                'oferta_edad_min' => $edadMin,
+                'oferta_edad_max' => $edadMax,
+                'oferta_descripcion' => $oferta['DESCRIPCION_OFERTA_TRABAJO'] ?? '',
+                'oferta_requisitos' => $reqDescriptions,
+                'habilidades_coincidentes' => $coincidencias,
+                'requisitos_totales' => $totalRequeridas
             ];
         }
 
