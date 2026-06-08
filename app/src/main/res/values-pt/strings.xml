@@ -544,4 +544,37 @@
     <string name="req_hint_id">Código (D1)</string>
     <string name="req_hint_desc">Descrição</string>
     <string name="req_btn_agregar">+ Adicionar requisito</string>
+
+    <!-- Servicio 9: Matching -->
+    <string name="s9_titulo">Matching de Vagas</string>
+    <string name="s9_modo_postulante">Candidato → Vagas</string>
+    <string name="s9_modo_oferta">Vaga → Candidatos</string>
+    <string name="s9_btn_buscar">Buscar</string>
+    <string name="s9_seleccionar_postulante">Selecionar candidato</string>
+    <string name="s9_seleccionar_empresa">Selecionar empresa</string>
+    <string name="s9_seleccionar_oferta">Selecionar vaga</string>
+    <string name="s9_error_seleccionar">Você deve selecionar um item</string>
+    <string name="s9_resultados">%d resultado(s) encontrado(s)</string>
+    <string name="s9_desglose" formatted="false">Grau: %d | Habilidades: %d | Exp: %d | Idade: %d</string>
+
+    <!-- Servicio 10: Minhas Candidaturas -->
+    <string name="s10_titulo">Minhas Candidaturas</string>
+    <string name="s10_filtro_todos">Todos</string>
+    <string name="s10_filtro_activo">Ativo</string>
+    <string name="s10_filtro_en_proceso">Em Processo</string>
+    <string name="s10_filtro_contratado">Contratado</string>
+    <string name="s10_filtro_rechazado">Rejeitado</string>
+    <string name="s10_btn_sincronizar">Sincronizar</string>
+    <string name="s10_btn_ver_detalle">Ver detalhes</string>
+    <string name="s10_vencida">Vencida</string>
+    <string name="s10_aplicado">Aplicado em</string>
+    <string name="s10_vencimiento">Vence em</string>
+    <string name="s10_estado">Estado</string>
+    <string name="s10_sin_postulaciones">Nenhuma candidatura encontrada</string>
+    <string name="s10_sincronizado_ok" formatted="false">%d inseridas, %d atualizadas</string>
+    <string name="s10_sincronizar_vacio">Não há dados remotos para sincronizar</string>
+    <string name="s10_estado_activo">Ativo</string>
+    <string name="s10_estado_en_proceso">Em Processo</string>
+    <string name="s10_estado_contratado">Contratado</string>
+    <string name="s10_estado_rechazado">Rejeitado</string>
 </resources>

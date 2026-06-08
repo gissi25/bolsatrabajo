@@ -21,7 +21,12 @@ $route = [
     'panorama_mercado' => 2,
     // Servicio 3: sincronizar postulantes
     'sincronizar_postulantes' => 3,
-    // Servicios 4-10: (disponibles)
+    // Servicio 4: buscar certificaciones
+    'tipos_certificacion' => 4, 'buscar_certificaciones' => 4, 'sincronizar_certificaciones' => 4,
+    // Servicio 9: matching postulante ↔ oferta
+    'matching_postulante' => 9, 'matching_oferta' => 9, 'ofertas_vigentes' => 9,
+    // Servicio 10: mis postulaciones
+    'mis_postulaciones' => 10,
 ];
 
 if (!array_key_exists($action, $route)) {

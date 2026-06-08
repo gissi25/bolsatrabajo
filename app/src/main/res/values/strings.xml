@@ -554,4 +554,52 @@
     <string name="s3_habilidades">Habilidades</string>
     <string name="s3_redes">Redes Sociales</string>
     <string name="s3_sin_datos">Sin datos</string>
+
+    <!-- Servicio 4 - Buscar por Certificaciones -->
+    <string name="s4_titulo">Buscar por Certificaciones</string>
+    <string name="s4_hint_tipo">Tipo de certificación</string>
+    <string name="s4_hint_nombre">Nombre (opcional)</string>
+    <string name="s4_hint_anio">Año (opcional)</string>
+    <string name="s4_btn_buscar">Buscar</string>
+    <string name="s4_resultados">%d postulante(s) encontrado(s)</string>
+    <string name="s4_sin_resultados">No se encontraron resultados</string>
+    <string name="s4_total_cert">%d certificación(es)</string>
+    <string name="s4_error_tipo">Debe seleccionar un tipo de certificación</string>
+    <string name="s4_cargando">Buscando…</string>
+    <string name="s4_sincronizar">Sincronizar con servidor</string>
+    <string name="s4_sincronizando">Sincronizando…</string>
+    <string name="s4_sincronizado_ok">Sincronizado correctamente</string>
+
+    <!-- Servicio 9: Matching -->
+    <string name="s9_titulo">Matching de Ofertas</string>
+    <string name="s9_modo_postulante">Postulante → Ofertas</string>
+    <string name="s9_modo_oferta">Oferta → Postulantes</string>
+    <string name="s9_btn_buscar">Buscar</string>
+    <string name="s9_seleccionar_postulante">Seleccionar postulante</string>
+    <string name="s9_seleccionar_empresa">Seleccionar empresa</string>
+    <string name="s9_seleccionar_oferta">Seleccionar oferta</string>
+    <string name="s9_error_seleccionar">Debe seleccionar un elemento</string>
+    <string name="s9_resultados">%d resultado(s) encontrado(s)</string>
+    <string name="s9_desglose" formatted="false">Grado: %d | Habilidades: %d | Exp: %d | Edad: %d</string>
+
+    <!-- Servicio 10: Mis Postulaciones -->
+    <string name="s10_titulo">Mis Postulaciones</string>
+    <string name="s10_filtro_todos">Todos</string>
+    <string name="s10_filtro_activo">Activo</string>
+    <string name="s10_filtro_en_proceso">En Proceso</string>
+    <string name="s10_filtro_contratado">Contratado</string>
+    <string name="s10_filtro_rechazado">Rechazado</string>
+    <string name="s10_btn_sincronizar">Sincronizar</string>
+    <string name="s10_btn_ver_detalle">Ver detalle</string>
+    <string name="s10_vencida">Vencida</string>
+    <string name="s10_aplicado">Aplicado el</string>
+    <string name="s10_vencimiento">Vence el</string>
+    <string name="s10_estado">Estado</string>
+    <string name="s10_sin_postulaciones">No tienes postulaciones</string>
+    <string name="s10_sincronizado_ok" formatted="false">%d insertadas, %d actualizadas</string>
+    <string name="s10_sincronizar_vacio">No hay datos remotos para sincronizar</string>
+    <string name="s10_estado_activo">Activo</string>
+    <string name="s10_estado_en_proceso">En Proceso</string>
+    <string name="s10_estado_contratado">Contratado</string>
+    <string name="s10_estado_rechazado">Rechazado</string>
 </resources>

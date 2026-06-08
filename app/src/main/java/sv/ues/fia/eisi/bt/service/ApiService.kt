@@ -166,4 +166,49 @@ object ApiService {
         val body = JSONObject().apply { put("id_postulante", idPostulante) }
         fetch("recomendar_formacion", "POST", body.toString())
     }
+
+    suspend fun sincronizarCertificaciones(body: JSONObject): JSONObject = withContext(Dispatchers.Main) {
+        fetch("sincronizar_certificaciones", "POST", body.toString())
+    }
+
+    suspend fun getTiposCertificacion(): List<JSONObject> = withContext(Dispatchers.Main) {
+        val json = fetch("tipos_certificacion")
+        val arr = json.getJSONArray("data")
+        (0 until arr.length()).map { arr.getJSONObject(it) }
+    }
+
+    suspend fun buscarCertificaciones(tipo: Int, nombre: String?, anio: Int?): JSONObject = withContext(Dispatchers.Main) {
+        val params = mutableListOf<String>()
+        params.add("tipo=$tipo")
+        if (!nombre.isNullOrBlank()) params.add("nombre=${java.net.URLEncoder.encode(nombre, "UTF-8")}")
+        if (anio != null && anio > 0) params.add("anio=$anio")
+        fetch("buscar_certificaciones&${params.joinToString("&")}")
+    }
+
+    suspend fun getPostulantes(): List<JSONObject> = withContext(Dispatchers.Main) {
+        val json = fetch("postulantes")
+        val arr = json.getJSONArray("data")
+        (0 until arr.length()).map { arr.getJSONObject(it) }
+    }
+
+    suspend fun getOfertasVigentes(nit: String): List<JSONObject> = withContext(Dispatchers.Main) {
+        val json = fetch("ofertas_vigentes&nit=${java.net.URLEncoder.encode(nit, "UTF-8")}")
+        val arr = json.getJSONArray("data")
+        (0 until arr.length()).map { arr.getJSONObject(it) }
+    }
+
+    suspend fun matchingPostulante(idPostulante: String): JSONObject = withContext(Dispatchers.Main) {
+        val body = JSONObject().apply { put("id_postulante", idPostulante) }
+        fetch("matching_postulante", "POST", body.toString())
+    }
+
+    suspend fun matchingOferta(nit: String, idOferta: String): JSONObject = withContext(Dispatchers.Main) {
+        val body = JSONObject().apply { put("nit", nit); put("id_oferta", idOferta) }
+        fetch("matching_oferta", "POST", body.toString())
+    }
+
+    suspend fun getMisPostulaciones(idPostulante: String): JSONObject = withContext(Dispatchers.Main) {
+        val body = JSONObject().apply { put("id_postulante", idPostulante) }
+        fetch("mis_postulaciones", "POST", body.toString())
+    }
 }

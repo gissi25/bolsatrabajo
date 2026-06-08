@@ -209,6 +209,9 @@ class DashboardFragment : Fragment() {
                     1 -> findNavController().navigate(R.id.action_dashboard_to_bulkOferta)
                     2 -> findNavController().navigate(R.id.action_dashboard_to_servicio2)
                     3 -> findNavController().navigate(R.id.action_dashboard_to_servicio3)
+                    4 -> findNavController().navigate(R.id.action_dashboard_to_servicio4)
+                    9 -> findNavController().navigate(R.id.action_dashboard_to_servicio9)
+                    10 -> findNavController().navigate(R.id.action_dashboard_to_servicio10)
                 }
             }
         )
