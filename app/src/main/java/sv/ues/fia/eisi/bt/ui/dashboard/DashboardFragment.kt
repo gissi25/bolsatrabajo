@@ -207,6 +207,7 @@ class DashboardFragment : Fragment() {
             onServiceClick = { service ->
                 when (service.id) {
                     1 -> findNavController().navigate(R.id.action_dashboard_to_bulkOferta)
+                    2 -> findNavController().navigate(R.id.action_dashboard_to_servicio2)
                     3 -> findNavController().navigate(R.id.action_dashboard_to_servicio3)
                 }
             }

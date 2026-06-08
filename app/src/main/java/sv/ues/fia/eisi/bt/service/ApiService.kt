@@ -161,4 +161,9 @@ object ApiService {
     suspend fun sincronizarUnPostulante(postulante: JSONObject): JSONObject = withContext(Dispatchers.Main) {
         fetch("sincronizar_postulantes", "POST", postulante.toString())
     }
+
+    suspend fun recomendarFormacion(idPostulante: String): JSONObject = withContext(Dispatchers.Main) {
+        val body = JSONObject().apply { put("id_postulante", idPostulante) }
+        fetch("recomendar_formacion", "POST", body.toString())
+    }
 }

@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 import sv.ues.fia.eisi.bt.R
+import sv.ues.fia.eisi.bt.data.repository.MainRepository
 import sv.ues.fia.eisi.bt.service.ApiService
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -53,8 +54,10 @@ class Servicio1Fragment : Fragment() {
     private lateinit var btnAgregarOtra: MaterialButton
     private lateinit var btnCargarCSV: MaterialButton
     private lateinit var btnInsertarTodas: MaterialButton
+    private lateinit var btnSubirLocales: MaterialButton
     private lateinit var rvPendientes: RecyclerView
     private lateinit var progressBar: ProgressBar
+    private lateinit var repository: MainRepository
 
     private val pendingOffers = mutableListOf<JSONObject>()
     private lateinit var pendingAdapter: PendingAdapter
@@ -91,8 +94,10 @@ class Servicio1Fragment : Fragment() {
         btnAgregarOtra = view.findViewById(R.id.btnAgregarOtra)
         btnCargarCSV = view.findViewById(R.id.btnCargarCSV)
         btnInsertarTodas = view.findViewById(R.id.btnInsertarTodas)
+        btnSubirLocales = view.findViewById(R.id.btnSubirLocales)
         rvPendientes = view.findViewById(R.id.rvPendientes)
         progressBar = view.findViewById(R.id.progressBar)
+        repository = MainRepository(requireContext())
 
         pendingAdapter = PendingAdapter(pendingOffers) { pos ->
             pendingOffers.removeAt(pos); pendingAdapter.notifyDataSetChanged(); updateInsertButton()
@@ -113,6 +118,7 @@ class Servicio1Fragment : Fragment() {
         btnAgregarOtra.setOnClickListener { agregarOferta() }
         btnCargarCSV.setOnClickListener { filePicker.launch("*/*") }
         btnInsertarTodas.setOnClickListener { mostrarPreview() }
+        btnSubirLocales.setOnClickListener { subirDatosLocales() }
 
         lifecycleScope.launch {
             for (attempt in 1..3) {
@@ -254,6 +260,54 @@ class Servicio1Fragment : Fragment() {
                 btnInsertarTodas.isEnabled = true; updateInsertButton()
                 Snackbar.make(requireView(), e.message ?: "Error", Snackbar.LENGTH_LONG).show()
             }
+        }
+    }
+
+    private fun subirDatosLocales() {
+        btnSubirLocales.isEnabled = false
+        progressBar.visibility = View.VISIBLE
+        lifecycleScope.launch {
+            try {
+                val ofertas = repository.getOfertasLocales()
+                if (ofertas.isEmpty()) {
+                    Snackbar.make(requireView(), "No hay ofertas locales para subir", Snackbar.LENGTH_LONG).show()
+                    btnSubirLocales.isEnabled = true; progressBar.visibility = View.GONE; return@launch
+                }
+
+                val result = ApiService.insertarOfertas(ofertas)
+                if (result.optBoolean("exito", false)) {
+                    val msg = result.optString("mensaje", "Subidas correctamente")
+                    val insertadas = result.optInt("insertadas", 0)
+                    val fallidas = result.optInt("fallidas", 0)
+
+                    val detalle = result.optJSONArray("detalle")
+                    val sb = StringBuilder(msg)
+                    if (detalle != null) {
+                        for (i in 0 until detalle.length()) {
+                            val d = detalle.getJSONObject(i)
+                            if (d.optString("estado") == "fallida") {
+                                val errArr = d.optJSONArray("errores")
+                                val errStr = if (errArr != null) {
+                                    (0 until errArr.length()).joinToString(", ") { errArr.optString(it) }
+                                } else "error"
+                                sb.append("\n• ${d.optString("oferta_id")}: $errStr")
+                            }
+                        }
+                    }
+
+                    androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                        .setTitle("Subidas: $insertadas ok, $fallidas fallos")
+                        .setMessage(sb.toString())
+                        .setPositiveButton("OK", null)
+                        .show()
+                } else {
+                    throw Exception(result.optString("error", "Error del servidor"))
+                }
+            } catch (e: Exception) {
+                Snackbar.make(requireView(), e.message?.take(300) ?: "Error de conexión", Snackbar.LENGTH_LONG).show()
+            }
+            btnSubirLocales.isEnabled = true
+            progressBar.visibility = View.GONE
         }
     }
 
