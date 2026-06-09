@@ -204,11 +204,13 @@ class DashboardFragment : Fragment() {
             onSectionClick = { title ->
                 viewModel.toggleSection(title)
             },
-            onServiceClick = { service ->
+                    onServiceClick = { service ->
                 when (service.id) {
                     1 -> findNavController().navigate(R.id.action_dashboard_to_bulkOferta)
                     3 -> findNavController().navigate(R.id.action_dashboard_to_servicio3)
                     4 -> findNavController().navigate(R.id.action_dashboard_to_servicio4)
+                    5 -> findNavController().navigate(R.id.action_dashboard_to_servicio5)
+                    6 -> findNavController().navigate(R.id.action_dashboard_to_servicio6)
                 }
             }
         )

@@ -61,6 +61,8 @@ class EditorDialogFragment : DialogFragment() {
     private var numDocColumnIndex: Int = -1
     private var savedUsername: String = ""
     private var savedNewRole: String = ""
+    private var savedIdPostulante: String? = null
+    private var savedNitEmpresa: String? = null
 
     private var distritoDepartamentoAutoComplete: MaterialAutoCompleteTextView? = null
     private var distritoMunicipioAutoComplete: MaterialAutoCompleteTextView? = null
@@ -144,6 +146,16 @@ class EditorDialogFragment : DialogFragment() {
                                 putString(Constants.KEY_USER_ROLE, savedNewRole)
                             }
                         }
+                    }
+                    if (savedIdPostulante != null) {
+                        requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+                            .edit { putString(Constants.KEY_ID_POSTULANTE, savedIdPostulante!!) }
+                        savedIdPostulante = null
+                    }
+                    if (savedNitEmpresa != null) {
+                        requireContext().getSharedPreferences(Constants.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+                            .edit { putString(Constants.KEY_NIT_EMPRESA, savedNitEmpresa!!) }
+                        savedNitEmpresa = null
                     }
                     StyledToast.show(requireContext(), result.message)
                     viewModel.clearResult()
@@ -1812,6 +1824,25 @@ class EditorDialogFragment : DialogFragment() {
             val roleIndex = editableColumns.indexOf("ROL")
             if (roleIndex >= 0 && roleIndex < values.size) {
                 savedNewRole = values[roleIndex]
+            }
+        }
+
+        if (tableName == "POSTULANTE") {
+            savedIdPostulante = if (isEditMode) {
+                val idCol = columns.indexOf("ID_POSTULANTE")
+                if (idCol >= 0 && idCol < itemData.size) itemData[idCol].trim() else null
+            } else {
+                val idx = editableColumns.indexOf("ID_POSTULANTE")
+                if (idx >= 0 && idx < values.size) values[idx].trim().takeIf { it.isNotEmpty() } else null
+            }
+        }
+        if (tableName == "EMPRESA") {
+            savedNitEmpresa = if (isEditMode) {
+                val nitCol = columns.indexOf("NIT")
+                if (nitCol >= 0 && nitCol < itemData.size) itemData[nitCol].trim() else null
+            } else {
+                val idx = editableColumns.indexOf("NIT")
+                if (idx >= 0 && idx < values.size) values[idx].trim().takeIf { it.isNotEmpty() } else null
             }
         }
 
