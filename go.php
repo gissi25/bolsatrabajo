@@ -37,7 +37,7 @@ $route = [
     'ranking_ofertas' => 8,
     'postulantes_por_estado' => 8,
     // Servicio 9: matching postulante ↔ oferta
-    'matching_postulante' => 9, 'matching_oferta' => 9, 'ofertas_vigentes' => 9,
+    'postulantes' => 9, 'matching_postulante' => 9, 'matching_oferta' => 9, 'ofertas_vigentes' => 9,
     // Servicio 10: mis postulaciones
     'mis_postulaciones' => 10
 ];
