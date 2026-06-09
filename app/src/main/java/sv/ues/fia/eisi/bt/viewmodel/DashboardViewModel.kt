@@ -143,6 +143,8 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 1 -> currentRole == Constants.ROLE_ADMIN || currentRole == Constants.ROLE_EMPRESA
                 7 -> currentRole == Constants.ROLE_ADMIN || currentRole == Constants.ROLE_POSTULANTE
                 8 -> currentRole == Constants.ROLE_ADMIN || currentRole == Constants.ROLE_EMPRESA
+                9 -> currentRole == Constants.ROLE_EMPRESA || currentRole == Constants.ROLE_ADMIN
+                10 -> currentRole == Constants.ROLE_POSTULANTE || currentRole == Constants.ROLE_ADMIN
                 else -> currentRole == Constants.ROLE_ADMIN
             }
         }

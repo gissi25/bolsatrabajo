@@ -3,6 +3,9 @@ package sv.ues.fia.eisi.bt.data.repository
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
+import android.util.Log
+import org.json.JSONArray
+import org.json.JSONObject
 import sv.ues.fia.eisi.bt.data.local.ConnectionHelper
 import sv.ues.fia.eisi.bt.utils.Constants
 import sv.ues.fia.eisi.bt.utils.PasswordHasher
@@ -1177,6 +1180,67 @@ class MainRepository(private val context: Context) {
         } catch (_: Exception) { null }
     }
 
+    fun getOfertasLocales(): List<JSONObject> {
+        val ofertas = mutableListOf<JSONObject>()
+        try {
+            val cursor = getDb().rawQuery("""
+                SELECT NIT, ID_OFERTA, ID_GRADO_ACADEMICO, TITULO_PUESTO,
+                       FECHA_PUBLICACION, FECHA_CADUCIDAD, EXPERIENCIA_ANIOS,
+                       EDAD_MINIMA, EDAD_MAXIMA, DESCRIPCION_OFERTA_TRABAJO
+                FROM OFERTA_TRABAJO
+                ORDER BY FECHA_PUBLICACION DESC
+            """.trimIndent(), null)
+
+            while (cursor.moveToNext()) {
+                val nit = cursor.getString(0) ?: ""
+                val idOferta = cursor.getString(1) ?: ""
+                val idGrado = cursor.getString(2)?.toIntOrNull()
+                val titulo = cursor.getString(3) ?: ""
+                val fechaPub = cursor.getString(4) ?: ""
+                val fechaCad = cursor.getString(5) ?: ""
+                val expAnios = cursor.getString(6)?.toIntOrNull()
+                val edadMin = cursor.getString(7)?.toIntOrNull()
+                val edadMax = cursor.getString(8)?.toIntOrNull()
+                val descripcion = cursor.getString(9) ?: ""
+
+                val reqCursor = getDb().rawQuery("""
+                    SELECT ID_DETALLE, DESCRIPCION_REQUISITO
+                    FROM DETALLE_REQUISITO
+                    WHERE NIT = ? AND ID_OFERTA = ?
+                    ORDER BY ID_DETALLE
+                """.trimIndent(), arrayOf(nit, idOferta))
+
+                val requisitos = JSONArray()
+                while (reqCursor.moveToNext()) {
+                    requisitos.put(JSONObject().apply {
+                        put("id_detalle", reqCursor.getString(0) ?: "")
+                        put("descripcion", reqCursor.getString(1) ?: "")
+                    })
+                }
+                reqCursor.close()
+
+                val oferta = JSONObject().apply {
+                    put("nit", nit)
+                    put("id_oferta", idOferta)
+                    put("titulo", titulo)
+                    if (idGrado != null) put("id_grado", idGrado)
+                    if (fechaPub.isNotBlank()) put("fecha_publicacion", fechaPub)
+                    if (fechaCad.isNotBlank()) put("fecha_caducidad", fechaCad)
+                    if (expAnios != null) put("experiencia_anios", expAnios)
+                    if (edadMin != null) put("edad_minima", edadMin)
+                    if (edadMax != null) put("edad_maxima", edadMax)
+                    if (descripcion.isNotBlank()) put("descripcion", descripcion)
+                    put("requisitos", requisitos)
+                }
+                ofertas.add(oferta)
+            }
+            cursor.close()
+        } catch (e: Exception) {
+            Log.e("MainRepository", "Error al leer ofertas locales", e)
+        }
+        return ofertas
+    }
+
     private fun getFormacionesForPostulant(idPostulante: String): List<List<String>> {
         val results = mutableListOf<List<String>>()
         try {
@@ -1290,6 +1354,49 @@ class MainRepository(private val context: Context) {
                 results.add(listOf(
                     cursor.getString(0) ?: "",
                     cursor.getString(1) ?: ""
+                ))
+            }
+            cursor.close()
+        } catch (_: Exception) {}
+        return results
+    }
+
+    data class PostulacionCompleta(
+        val idPostulacion: String,
+        val fechaAplicacion: String,
+        val estadoProceso: String,
+        val tituloPuesto: String,
+        val fechaPublicacion: String,
+        val fechaCaducidad: String,
+        val nombreEmpresa: String,
+        val nit: String,
+        val idOferta: String
+    )
+
+    fun getPostulacionesPorPostulante(idPostulante: String): List<PostulacionCompleta> {
+        val results = mutableListOf<PostulacionCompleta>()
+        try {
+            val cursor = getDb().rawQuery("""
+                SELECT po.ID_POSTULACION, po.FECHA_APLICACION, po.ESTADO_PROCESO,
+                       of.TITULO_PUESTO, of.FECHA_PUBLICACION, of.FECHA_CADUCIDAD,
+                       em.NOMBRE_EMPRESA, em.NIT, of.ID_OFERTA
+                FROM POSTULACION po
+                INNER JOIN OFERTA_TRABAJO of ON po.NIT = of.NIT AND po.ID_OFERTA = of.ID_OFERTA
+                INNER JOIN EMPRESA em ON of.NIT = em.NIT
+                WHERE po.ID_POSTULANTE = ?
+                ORDER BY po.FECHA_APLICACION DESC
+            """.trimIndent(), arrayOf(idPostulante))
+            while (cursor.moveToNext()) {
+                results.add(PostulacionCompleta(
+                    idPostulacion = cursor.getString(0) ?: "",
+                    fechaAplicacion = cursor.getString(1) ?: "",
+                    estadoProceso = cursor.getString(2) ?: "",
+                    tituloPuesto = cursor.getString(3) ?: "",
+                    fechaPublicacion = cursor.getString(4) ?: "",
+                    fechaCaducidad = cursor.getString(5) ?: "",
+                    nombreEmpresa = cursor.getString(6) ?: "",
+                    nit = cursor.getString(7) ?: "",
+                    idOferta = cursor.getString(8) ?: ""
                 ))
             }
             cursor.close()

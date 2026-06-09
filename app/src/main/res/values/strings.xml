@@ -594,4 +594,71 @@
     <string name="s8_estado_rechazado">Rechazado</string>
     <string name="s8_estado_activo">Activo</string>
     <string name="s8_estado_en_proceso">En Proceso</string>
+
+    <!-- Servicio 4 - Buscar por Certificaciones -->
+    <string name="s4_titulo">Buscar por Certificaciones</string>
+    <string name="s4_hint_tipo">Tipo de certificacion</string>
+    <string name="s4_hint_nombre">Nombre (opcional)</string>
+    <string name="s4_hint_anio">Anio (opcional)</string>
+    <string name="s4_btn_buscar">Buscar</string>
+    <string name="s4_resultados">%d postulante(s) encontrado(s)</string>
+    <string name="s4_sin_resultados">No se encontraron resultados</string>
+    <string name="s4_total_cert">%d certificacion(es)</string>
+    <string name="s4_error_tipo">Debe seleccionar un tipo de certificacion</string>
+    <string name="s4_cargando">Buscando...</string>
+    <string name="s4_sincronizar">Sincronizar con servidor</string>
+    <string name="s4_sincronizando">Sincronizando...</string>
+    <string name="s4_sincronizado_ok">Sincronizado correctamente</string>
+
+    <!-- Servicio 9: Matching -->
+    <string name="s9_titulo">Matching de Ofertas</string>
+    <string name="s9_modo_postulante">Postulante -> Ofertas</string>
+    <string name="s9_modo_oferta">Oferta -> Postulantes</string>
+    <string name="s9_btn_buscar">Buscar</string>
+    <string name="s9_seleccionar_postulante">Seleccionar postulante</string>
+    <string name="s9_seleccionar_empresa">Seleccionar empresa</string>
+    <string name="s9_seleccionar_oferta">Seleccionar oferta</string>
+    <string name="s9_error_seleccionar">Debe seleccionar un elemento</string>
+    <string name="s9_resultados">%d resultado(s) encontrado(s)</string>
+    <string name="s9_desglose" formatted="false">Grado: %d | Habilidades: %d | Exp: %d | Edad: %d</string>
+    <string name="s9_detalle_grado">Grado Academico</string>
+    <string name="s9_detalle_experiencia">Experiencia Laboral</string>
+    <string name="s9_detalle_habilidades">Habilidades</string>
+    <string name="s9_detalle_edad">Edad</string>
+    <string name="s9_detalle_oferta">Descripcion de la Oferta</string>
+    <string name="s9_detalle_puntaje">Desglose de Puntaje</string>
+    <string name="s9_detalle_postulante_grado" formatted="false">Postulante: %s</string>
+    <string name="s9_detalle_oferta_grado" formatted="false">Oferta requiere: %s</string>
+    <string name="s9_detalle_postulante_exp" formatted="false">Postulante tiene: %s anios</string>
+    <string name="s9_detalle_oferta_exp" formatted="false">Oferta requiere: %d anios</string>
+    <string name="s9_detalle_postulante_edad" formatted="false">Postulante: %d anios</string>
+    <string name="s9_detalle_oferta_edad" formatted="false">Oferta requiere: %d - %d anios</string>
+    <string name="s9_detalle_habilidades_match" formatted="false">%d de %d habilidades coinciden</string>
+    <string name="s9_detalle_sin_requisitos">Sin requisitos especificos</string>
+    <string name="s9_detalle_puntaje_linea" formatted="false">Grado: %d/30 | Habilidades: %d/30 | Experiencia: %d/25 | Edad: %d/15</string>
+    <string name="s9_detalle_total" formatted="false">Total: %d/100 - %s</string>
+    <string name="s9_detalle_tap_para_detalle">Toca para ver detalle</string>
+
+    <!-- Servicio 10: Mis Postulaciones -->
+    <string name="s10_titulo">Mis Postulaciones</string>
+    <string name="s10_filtro_todos">Todos</string>
+    <string name="s10_filtro_activo">Activo</string>
+    <string name="s10_filtro_en_proceso">En Proceso</string>
+    <string name="s10_filtro_contratado">Contratado</string>
+    <string name="s10_filtro_rechazado">Rechazado</string>
+    <string name="s10_btn_sincronizar">Sincronizar</string>
+    <string name="s10_btn_ver_detalle">Ver detalle</string>
+    <string name="s10_vencida">Vencida</string>
+    <string name="s10_aplicado">Aplicado el</string>
+    <string name="s10_vencimiento">Vence el</string>
+    <string name="s10_estado">Estado</string>
+    <string name="s10_sin_postulaciones">No tienes postulaciones</string>
+    <string name="s10_sincronizado_ok" formatted="false">%d insertadas, %d actualizadas</string>
+    <string name="s10_sincronizar_vacio">No hay datos remotos para sincronizar</string>
+    <string name="s10_estado_activo">Activo</string>
+    <string name="s10_estado_en_proceso">En Proceso</string>
+    <string name="s10_estado_contratado">Contratado</string>
+    <string name="s10_estado_rechazado">Rechazado</string>
+    <string name="s10_publicacion">Fecha de publicacion</string>
+    <string name="s10_id_postulacion">ID de Postulacion</string>
 </resources>

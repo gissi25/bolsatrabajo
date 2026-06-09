@@ -16,17 +16,24 @@ $action = $_GET['action'] ?? '';
 $route = [
     // Servicio 1: carga masiva de ofertas
     'empresas' => 1, 'grados' => 1, 'insertar_ofertas' => 1,
-    // Servicio 2: (disponible)
+    // Servicio 2: recomendador de formación y panorama de mercado
+    'recomendar_formacion' => 2,
+    'panorama_mercado' => 2,
     // Servicio 3: sincronizar postulantes
     'sincronizar_postulantes' => 3,
+    // Servicio 4: buscar certificaciones
+    'tipos_certificacion' => 4, 'buscar_certificaciones' => 4, 'sincronizar_certificaciones' => 4,
     // Servicio 7: busqueda de ofertas y postulacion
-        'ofertas_por_edad' => 7, 'postular' => 7,
+    'ofertas_por_edad' => 7, 'postular' => 7,
     // Servicio 8: inteligencia empresarial
     'subir_postulaciones' => 8,
     'resumen_reclutamiento' => 8,
     'ranking_ofertas' => 8,
     'postulantes_por_estado' => 8,
-    // Servicios 4-6, 9-10: (disponibles)
+    // Servicio 9: matching postulante ↔ oferta
+    'matching_postulante' => 9, 'matching_oferta' => 9, 'ofertas_vigentes' => 9,
+    // Servicio 10: mis postulaciones
+    'mis_postulaciones' => 10,
 ];
 
 if (!array_key_exists($action, $route)) {

@@ -43,22 +43,6 @@ switch ($action) {
         $distMuni = !empty($p['id_distrito_municipio']) ? intval($p['id_distrito_municipio']) : 'NULL';
         $distId = !empty($p['id_distrito_id']) ? intval($p['id_distrito_id']) : 'NULL';
 
-        // Si hay distrito, asegurarse de que existe en MySQL, si no, crearlo
-        if ($distDepto !== 'NULL' && $distMuni !== 'NULL' && $distId !== 'NULL') {
-            $rsD = $conn->query("SELECT 1 FROM DISTRITO WHERE ID_DEPARTAMENTO=$distDepto AND ID_MUNICIPIO=$distMuni AND ID_DISTRITO=$distId");
-            if (!$rsD || !$rsD->fetch_row()) {
-                $deptoNombre = $conn->real_escape_string($p['depto_nombre'] ?? 'Distrito '.$distDepto);
-                $muniNombre = $conn->real_escape_string($p['municipio_nombre'] ?? 'Municipio '.$distMuni);
-                $distNombre = $conn->real_escape_string($p['distrito_nombre'] ?? 'Distrito '.$distId);
-                // Crear departamento si no existe
-                $conn->query("INSERT IGNORE INTO DEPARTAMENTO (ID_DEPARTAMENTO, NOMBRE_DEPARTAMENTO) VALUES ($distDepto, '$deptoNombre')");
-                // Crear municipio si no existe
-                $conn->query("INSERT IGNORE INTO MUNICIPIO (ID_DEPARTAMENTO, ID_MUNICIPIO, NOMBRE_MUNICIPIO) VALUES ($distDepto, $distMuni, '$muniNombre')");
-                // Crear distrito
-                $conn->query("INSERT IGNORE INTO DISTRITO (ID_DEPARTAMENTO, ID_MUNICIPIO, ID_DISTRITO, NOMBRE_DISTRITO) VALUES ($distDepto, $distMuni, $distId, '$distNombre')");
-            }
-        }
-
         $errores = [];
 
         // Validaciones

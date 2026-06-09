@@ -1,5 +1,6 @@
 package sv.ues.fia.eisi.bt.ui.auth
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -118,6 +119,7 @@ class LoginFragment : Fragment() {
         } else {
             tilUsername.error = null
         }
+
 
         if (password.isBlank()) {
             tilPassword.error = getString(R.string.field_required)
