@@ -95,6 +95,18 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left" />
         <action
+            android:id="@+id/action_dashboard_to_servicio7"
+            app:destination="@id/servicio7Fragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left" />
+        <action
+            android:id="@+id/action_dashboard_to_servicio8"
+            app:destination="@id/servicio8Fragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left" />
+        <action
             android:id="@+id/action_dashboard_to_servicio9"
             app:destination="@id/servicio9Fragment"
             app:enterAnim="@anim/slide_in_right"
@@ -174,6 +186,18 @@
         android:name="sv.ues.fia.eisi.bt.ui.servicios.Servicio6Fragment"
         android:label="@string/s6_titulo"
         tools:layout="@layout/fragment_servicio6" />
+
+    <fragment
+        android:id="@+id/servicio7Fragment"
+        android:name="sv.ues.fia.eisi.bt.ui.servicios.Servicio7Fragment"
+        android:label="@string/s7_titulo"
+        tools:layout="@layout/fragment_servicio7" />
+
+    <fragment
+        android:id="@+id/servicio8Fragment"
+        android:name="sv.ues.fia.eisi.bt.ui.servicios.Servicio8Fragment"
+        android:label="@string/s8_titulo"
+        tools:layout="@layout/fragment_servicio8" />
 
     <fragment
         android:id="@+id/servicio9Fragment"

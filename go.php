@@ -29,11 +29,17 @@ $route = [
     'departamentos' => 6, 'municipios_por_depto' => 6,
     'filtrar_ofertas_ubicacion' => 6, 'filtrar_postulantes_empresa' => 6,
     'filtrar_postulantes_empresa_estado' => 6,
+    // Servicio 7: busqueda de ofertas y postulacion
+    'ofertas_por_edad' => 7, 'postular' => 7,
+    // Servicio 8: inteligencia empresarial
+    'subir_postulaciones' => 8,
+    'resumen_reclutamiento' => 8,
+    'ranking_ofertas' => 8,
+    'postulantes_por_estado' => 8,
     // Servicio 9: matching postulante ↔ oferta
     'matching_postulante' => 9, 'matching_oferta' => 9, 'ofertas_vigentes' => 9,
     // Servicio 10: mis postulaciones
-    'mis_postulaciones' => 10,
-    // Servicios 7-8: (disponibles)
+    'mis_postulaciones' => 10
 ];
 
 if (!array_key_exists($action, $route)) {

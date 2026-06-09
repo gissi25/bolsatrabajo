@@ -26,12 +26,6 @@ object ApiService {
     private const val BASE_URL = "https://bolsadetrabajopdm.gt.tc/go.php?action="
     private const val TAG = "ApiService"
 
-    private class ChallengeHtmlException(val html: String) : Exception()
-    private fun isChallengeHtml(text: String): Boolean {
-        val lower = text.lowercase()
-        return lower.contains("<html") || lower.contains("<script") || lower.contains("aes.js")
-    }
-
     private var webView: WebView? = null
     private var challengeDone = false
     private var pendingCallback: ((JSONObject) -> Unit)? = null
@@ -75,38 +69,6 @@ object ApiService {
         Log.d(TAG, "Challenge iniciado...")
     }
 
-    private suspend fun refreshChallenge() {
-        val wv = webView ?: throw Exception("WebView no disponible")
-        challengeDone = false
-
-        suspendCancellableCoroutine<Unit> { cont ->
-            var loads = 0
-            wv.webViewClient = object : WebViewClient() {
-                override fun onPageFinished(view: WebView, url: String) {
-                    loads++
-                    Log.d(TAG, "Challenge refresh load #$loads: $url")
-                    if (loads >= 2) {
-                        challengeDone = true
-                        cont.resume(Unit)
-                    }
-                }
-            }
-            Handler(Looper.getMainLooper()).post {
-                wv.loadUrl("${BASE_URL}empresas")
-                Log.d(TAG, "Challenge refresh iniciado...")
-            }
-
-            cont.invokeOnCancellation { challengeDone = true }
-
-            Handler(Looper.getMainLooper()).postDelayed({
-                if (!challengeDone) {
-                    challengeDone = true
-                    cont.resumeWithException(Exception("Challenge refresh timeout"))
-                }
-            }, 30000)
-        }
-    }
-
     private suspend fun fetch(action: String, method: String = "GET", body: String? = null): JSONObject {
         val wv = webView ?: throw Exception("initChallenge() no llamado aún")
 
@@ -143,53 +105,38 @@ object ApiService {
             """
         }
 
-        for (attempt in 1..2) {
-            try {
-                return suspendCancellableCoroutine { cont ->
-                    var done = false
-                    pendingCallback = { json ->
-                        if (!done) {
-                            done = true
-                            try {
-                                if (json.has("_error")) {
-                                    val errorText = json.optString("_error", "")
-                                    if (isChallengeHtml(errorText)) {
-                                        cont.resumeWithException(ChallengeHtmlException(errorText))
-                                    } else {
-                                        cont.resumeWithException(Exception("Respuesta inválida: $errorText"))
-                                    }
-                                } else if (json.has("error")) {
-                                    cont.resumeWithException(Exception(json.getString("error")))
-                                } else {
-                                    cont.resume(json)
-                                }
-                            } catch (_: Exception) {}
+        return suspendCancellableCoroutine { cont ->
+            var done = false
+            pendingCallback = { json ->
+                if (!done) {
+                    done = true
+                    try {
+                        if (json.has("_error")) {
+                            cont.resumeWithException(Exception("Respuesta inválida: ${json.optString("_error")}"))
+                        } else if (json.has("error")) {
+                            cont.resumeWithException(Exception(json.getString("error")))
+                        } else {
+                            cont.resume(json)
                         }
-                    }
-
-                    Handler(Looper.getMainLooper()).post {
-                        wv.evaluateJavascript(jsCode, null)
-                        Log.d(TAG, "JS injected: $action")
-                    }
-
-                    cont.invokeOnCancellation { done = true }
-
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        if (!done) {
-                            done = true
-                            pendingCallback = null
-                            cont.resumeWithException(Exception("Timeout - JS no respondió"))
-                        }
-                    }, 60000)
+                    } catch (_: Exception) {}
                 }
-            } catch (e: ChallengeHtmlException) {
-                if (attempt == 2) throw Exception("Respuesta inválida: ${e.html}")
-                Log.d(TAG, "Challenge HTML detectado (intento $attempt), refrescando...")
-                refreshChallenge()
             }
-        }
 
-        throw Exception("No se pudo completar la petición")
+            Handler(Looper.getMainLooper()).post {
+                wv.evaluateJavascript(jsCode, null)
+                Log.d(TAG, "JS injected: $action")
+            }
+
+            cont.invokeOnCancellation { done = true }
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                if (!done) {
+                    done = true
+                    pendingCallback = null
+                    cont.resumeWithException(Exception("Timeout - JS no respondió"))
+                }
+            }, 60000)
+        }
     }
 
     suspend fun getEmpresas(): List<JSONObject> = withContext(Dispatchers.Main) {
@@ -213,6 +160,46 @@ object ApiService {
 
     suspend fun sincronizarUnPostulante(postulante: JSONObject): JSONObject = withContext(Dispatchers.Main) {
         fetch("sincronizar_postulantes", "POST", postulante.toString())
+    }
+
+    suspend fun buscarOfertasPorEdad(edad: Int, idPostulante: String = ""): List<JSONObject> = withContext(Dispatchers.Main) {
+        val action = if (idPostulante.isNotBlank()) "ofertas_por_edad&edad=$edad&id_postulante=$idPostulante"
+                     else "ofertas_por_edad&edad=$edad"
+        val json = fetch(action)
+        val arr = json.getJSONArray("data")
+        (0 until arr.length()).map { arr.getJSONObject(it) }
+    }
+
+    suspend fun postularOferta(idPostulante: String, nit: String, idOferta: String): JSONObject = withContext(Dispatchers.Main) {
+        val body = JSONObject().apply {
+            put("id_postulante", idPostulante)
+            put("nit", nit)
+            put("id_oferta", idOferta)
+        }
+        fetch("postular", "POST", body.toString())
+    }
+
+    suspend fun subirPostulaciones(postulaciones: List<JSONObject>): JSONObject = withContext(Dispatchers.Main) {
+        val arr = JSONArray()
+        for (p in postulaciones) arr.put(p)
+        val body = JSONObject().apply { put("postulaciones", arr) }
+        fetch("subir_postulaciones", "POST", body.toString())
+    }
+
+    suspend fun getResumenReclutamiento(nit: String): JSONObject = withContext(Dispatchers.Main) {
+        fetch("resumen_reclutamiento&nit=$nit")
+    }
+
+    suspend fun getRankingOfertas(nit: String): List<JSONObject> = withContext(Dispatchers.Main) {
+        val json = fetch("ranking_ofertas&nit=$nit")
+        val arr = json.getJSONArray("data")
+        (0 until arr.length()).map { arr.getJSONObject(it) }
+    }
+
+    suspend fun getPostulantesPorEstado(nit: String): List<JSONObject> = withContext(Dispatchers.Main) {
+        val json = fetch("postulantes_por_estado&nit=$nit")
+        val arr = json.getJSONArray("data")
+        (0 until arr.length()).map { arr.getJSONObject(it) }
     }
 
     suspend fun recomendarFormacion(idPostulante: String): JSONObject = withContext(Dispatchers.Main) {
