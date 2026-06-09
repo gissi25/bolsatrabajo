@@ -594,4 +594,6 @@
     <string name="s10_estado_en_proceso">Em Processo</string>
     <string name="s10_estado_contratado">Contratado</string>
     <string name="s10_estado_rechazado">Rejeitado</string>
+    <string name="s10_publicacion">Data de publicação</string>
+    <string name="s10_id_postulacion">ID da Candidatura</string>
 </resources>

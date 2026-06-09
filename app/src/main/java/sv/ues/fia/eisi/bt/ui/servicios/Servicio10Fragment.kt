@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -169,15 +169,29 @@ class Servicio10Fragment : Fragment() {
 
     private fun mostrarDetalle(post: MainRepository.PostulacionCompleta) {
         val contexto = requireContext()
-        AlertDialog.Builder(contexto)
-            .setTitle(post.tituloPuesto)
-            .setMessage(buildString {
-                appendLine("${contexto.getString(R.string.s10_estado)}: ${post.estadoProceso}")
-                appendLine("${contexto.getString(R.string.s10_aplicado)}: ${post.fechaAplicacion}")
-                appendLine("${contexto.getString(R.string.s10_vencimiento)}: ${post.fechaCaducidad}")
-                appendLine("Empresa: ${post.nombreEmpresa}")
-                appendLine("ID: ${post.idPostulacion}")
-            })
+        val view = LayoutInflater.from(contexto).inflate(R.layout.dialog_postulacion_detalle, null)
+
+        view.findViewById<TextView>(R.id.tvDialogTituloPuesto).text = post.tituloPuesto
+        view.findViewById<TextView>(R.id.tvDialogNombreEmpresa).text = post.nombreEmpresa
+
+        val color = ContextCompat.getColor(contexto, getEstadoColor(post.estadoProceso))
+        val badge = view.findViewById<TextView>(R.id.tvDialogEstadoBadge)
+        badge.text = getEstadoLabel(post.estadoProceso)
+        badge.setBackgroundColor(color)
+
+        view.findViewById<TextView>(R.id.tvDialogEstado).text = getEstadoLabel(post.estadoProceso)
+        view.findViewById<TextView>(R.id.tvDialogFechaAplicacion).text = post.fechaAplicacion
+        view.findViewById<TextView>(R.id.tvDialogFechaPublicacion).text = post.fechaPublicacion
+
+        val vencida = estaVencida(post.fechaCaducidad)
+        view.findViewById<TextView>(R.id.tvDialogFechaVencimiento).text = post.fechaCaducidad
+        val tvVencida = view.findViewById<TextView>(R.id.tvDialogVencidaWarning)
+        tvVencida.visibility = if (vencida) View.VISIBLE else View.GONE
+
+        view.findViewById<TextView>(R.id.tvDialogIdPostulacion).text = post.idPostulacion
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setView(view)
             .setPositiveButton("Cerrar", null)
             .show()
     }
