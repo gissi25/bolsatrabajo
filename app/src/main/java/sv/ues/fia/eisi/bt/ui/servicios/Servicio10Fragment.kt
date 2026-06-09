@@ -154,12 +154,12 @@ class Servicio10Fragment : Fragment() {
                 cursor.moveToFirst()
                 val exists = cursor.getInt(0) > 0
                 cursor.close()
+                val fecha = item.optString("FECHA_APLICACION", "").trim()
                 if (exists) {
-                    db.execSQL("UPDATE POSTULACION SET ESTADO_PROCESO = ? WHERE ID_POSTULACION = ?",
-                        arrayOf(estado, idPostulacion))
+                    db.execSQL("UPDATE POSTULACION SET ESTADO_PROCESO = ?, FECHA_APLICACION = ? WHERE ID_POSTULACION = ?",
+                        arrayOf(estado, fecha, idPostulacion))
                 } else {
                     val idPost = item.optString("ID_POSTULANTE", idPostulante).trim()
-                    val fecha = item.optString("FECHA_APLICACION", "").trim()
                     db.execSQL("INSERT INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO) VALUES (?, ?, ?, ?, ?, ?)",
                         arrayOf(idPostulacion, nit, idOferta, idPost, fecha, estado))
                 }
