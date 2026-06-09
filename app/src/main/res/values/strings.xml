@@ -538,6 +538,7 @@
     <string name="req_hint_id">Código (D1)</string>
     <string name="req_hint_desc">Descripción del requisito</string>
     <string name="req_btn_agregar">+ Agregar requisito</string>
+    <string name="req_titulo">Requisitos para esta oferta</string>
     <string name="oferta_btn_agregar">+ Agregar otra oferta</string>
     <string name="oferta_lista_pendientes">Ofertas pendientes de insertar</string>
     <string name="oferta_btn_insertar">Insertar todas</string>
@@ -609,6 +610,79 @@
     <string name="s4_sincronizar">Sincronizar con servidor</string>
     <string name="s4_sincronizando">Sincronizando...</string>
     <string name="s4_sincronizado_ok">Sincronizado correctamente</string>
+
+    <!-- Servicio 5 -->
+    <string name="s5_titulo">Descargar del Servidor</string>
+    <string name="s5_btn_descargar">Descargar</string>
+    <string name="s5_btn_descargar_todo">Descargar Todo</string>
+    <string name="s5_descargado">Descargado</string>
+    <string name="s5_descarga_completa">Descarga completa</string>
+    <string name="s5_titulo_catalogos">Catálogos</string>
+    <string name="s5_desc_catalogos">Categorías, géneros, departamentos, municipios, distritos, instituciones, grados, redes sociales, tipos de certificación, habilidades y ofertas académicas</string>
+    <string name="s5_titulo_empresas">Empresas</string>
+    <string name="s5_desc_empresas">Todas las empresas registradas con su información de contacto</string>
+    <string name="s5_titulo_ofertas">Ofertas de Trabajo</string>
+    <string name="s5_desc_ofertas">Ofertas laborales publicadas con sus requisitos</string>
+    <string name="s5_titulo_postulantes">Perfiles de Postulantes</string>
+    <string name="s5_desc_postulantes">CVs completos con formación, experiencia, certificaciones, habilidades y redes sociales</string>
+    <string name="s5_titulo_postulaciones">Postulaciones</string>
+    <string name="s5_desc_postulaciones">Aplicaciones a ofertas con su estado actual</string>
+    <string name="s5_hint_id_postulante">Tu ID de Postulante</string>
+    <string name="s5_status_ok">Descargado: %s</string>
+    <string name="s5_status_empresas">%d empresas descargadas</string>
+    <string name="s5_status_ofertas">%d ofertas descargadas</string>
+    <string name="s5_status_postulantes">%d postulantes descargados</string>
+    <string name="s5_status_postulaciones">%d postulaciones descargadas</string>
+    <string name="s5_status_postulaciones_propias">%d postulaciones propias descargadas</string>
+    <string name="s5_error">Error: %s</string>
+    <string name="s5_dialogo_titulo">Descarga completada</string>
+    <string name="s5_dialogo_total" formatted="false">Total: %d registros en %d tablas</string>
+    <string name="s5_reintentar">Reintentar</string>
+    <string name="s5_ver_mas">Ver todos los %d registros</string>
+    <string name="s5_ver_catalogos">Ver tablas</string>
+    <string name="s5_n_tablas">%d tablas</string>
+    <string name="s5_descargando">Descargando datos del servidor…</string>
+    <string name="s5_postularse">Postularme a esta oferta</string>
+    <string name="s5_postulacion_exitosa">Postulación creada correctamente</string>
+    <string name="s5_requisitos">Requisitos</string>
+    <string name="s5_datos_oferta">Datos de la oferta</string>
+    <string name="s5_error_ya_postulado">Ya te postulaste a esta oferta</string>
+    <string name="s5_sin_id_postulante">No se encontró tu ID de postulante en el dispositivo</string>
+    <string name="s5_empresa">Empresa</string>
+    <string name="s5_grado">Grado</string>
+    <string name="s5_publicacion">Publicación</string>
+    <string name="s5_caducidad">Caducidad</string>
+    <string name="s5_experiencia">Experiencia</string>
+    <string name="s5_edad">Edad</string>
+    <string name="s5_descripcion">Descripción</string>
+    <string name="s5_oferta">Oferta</string>
+    <string name="s5_estado">Estado</string>
+    <string name="s5_fecha">Fecha</string>
+    <string name="s5_seleccionar_postulante">Selecciona tu perfil de postulante</string>
+    <string name="s5_seleccionar_empresa">Selecciona tu empresa</string>
+    <string name="s5_sin_perfil">No tienes un perfil. Créalo primero desde el dashboard.</string>
+    <string name="s5_confirmar">Confirmar</string>
+
+    <!-- Servicio 6 - Filtro de ofertas por ubicacion y postulantes por empresa -->
+    <string name="s6_titulo">Filtro de ofertas</string>
+    <string name="s6_titulo_postulante">Buscar ofertas por ubicación</string>
+    <string name="s6_titulo_empresa">Postulantes de mis ofertas</string>
+    <string name="s6_filtro_titulo">Filtrar por ubicación</string>
+    <string name="s6_departamento">Departamento</string>
+    <string name="s6_municipio">Municipio (opcional)</string>
+    <string name="s6_buscar">Buscar ofertas</string>
+    <string name="s6_sin_resultados">No se encontraron resultados</string>
+    <string name="s6_error_depto">Debe seleccionar un departamento</string>
+    <string name="s6_n_ofertas">%d oferta(s) encontrada(s)</string>
+    <string name="s6_n_postulantes">%d postulante(s) encontrado(s)</string>
+    <string name="s6_ubicacion">Ubicación</string>
+    <string name="s6_datos_postulante">Datos del postulante</string>
+    <string name="s6_datos_postulacion">Datos de la postulación</string>
+    <string name="s6_oferta_aplicada">Oferta aplicada</string>
+    <string name="s6_cambiar_estado">Cambiar estado</string>
+    <string name="s6_cambiar_estado_para">Cambiar estado de %s</string>
+    <string name="s6_estado_actualizado">Estado actualizado correctamente</string>
+    <string name="s6_estado_filtro">Filtrar por estado</string>
 
     <!-- Servicio 9: Matching -->
     <string name="s9_titulo">Matching de Ofertas</string>

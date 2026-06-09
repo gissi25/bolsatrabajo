@@ -7,14 +7,17 @@
     <application
         android:name=".BTApplication"
         android:allowBackup="true"
-        android:usesCleartextTraffic="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.BT">
+        android:theme="@style/Theme.BT"
+        android:usesCleartextTraffic="true">
+        <activity
+            android:name=".ui.servicios.Servicio5Fragment"
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

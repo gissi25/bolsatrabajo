@@ -225,6 +225,61 @@ object ApiService {
         fetch("buscar_certificaciones&${params.joinToString("&")}")
     }
 
+    // Servicio 5: descargar datos del servidor
+    suspend fun getCatalogos(): JSONObject = withContext(Dispatchers.Main) {
+        fetch("catalogos")
+    }
+
+    suspend fun getEmpresasFull(): JSONObject = withContext(Dispatchers.Main) {
+        fetch("empresas_full")
+    }
+
+    suspend fun getOfertasFull(): JSONObject = withContext(Dispatchers.Main) {
+        fetch("ofertas_full")
+    }
+
+    suspend fun getPostulantesFull(): JSONObject = withContext(Dispatchers.Main) {
+        fetch("postulantes_full")
+    }
+
+    suspend fun getPostulacionesFull(idPostulante: String? = null): JSONObject = withContext(Dispatchers.Main) {
+        val action = if (!idPostulante.isNullOrBlank()) {
+            "postulaciones_full&id_postulante=${java.net.URLEncoder.encode(idPostulante, "UTF-8")}"
+        } else {
+            "postulaciones_full"
+        }
+        fetch(action)
+    }
+
+    suspend fun insertarPostulacion(postulacion: JSONObject): JSONObject = withContext(Dispatchers.Main) {
+        fetch("insertar_postulacion", "POST", postulacion.toString())
+    }
+
+    // Servicio 6: filtros geográficos y de postulantes
+    suspend fun getDepartamentos(): JSONObject = withContext(Dispatchers.Main) {
+        fetch("departamentos")
+    }
+
+    suspend fun getMunicipiosPorDepto(idDepartamento: String): JSONObject = withContext(Dispatchers.Main) {
+        fetch("municipios_por_depto&id_departamento=${java.net.URLEncoder.encode(idDepartamento, "UTF-8")}")
+    }
+
+    suspend fun filtrarOfertasPorUbicacion(idDepartamento: String, idMunicipio: String? = null): JSONObject = withContext(Dispatchers.Main) {
+        var action = "filtrar_ofertas_ubicacion&id_departamento=${java.net.URLEncoder.encode(idDepartamento, "UTF-8")}"
+        if (!idMunicipio.isNullOrBlank()) {
+            action += "&id_municipio=${java.net.URLEncoder.encode(idMunicipio, "UTF-8")}"
+        }
+        fetch(action)
+    }
+
+    suspend fun filtrarPostulantesPorEmpresa(nit: String, estado: String? = null): JSONObject = withContext(Dispatchers.Main) {
+        if (!estado.isNullOrBlank()) {
+            fetch("filtrar_postulantes_empresa_estado&nit=${java.net.URLEncoder.encode(nit, "UTF-8")}&estado=${java.net.URLEncoder.encode(estado, "UTF-8")}")
+        } else {
+            fetch("filtrar_postulantes_empresa&nit=${java.net.URLEncoder.encode(nit, "UTF-8")}")
+        }
+    }
+
     suspend fun getPostulantes(): List<JSONObject> = withContext(Dispatchers.Main) {
         val json = fetch("postulantes")
         val arr = json.getJSONArray("data")
