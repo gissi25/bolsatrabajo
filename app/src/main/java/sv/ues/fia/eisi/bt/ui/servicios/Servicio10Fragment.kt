@@ -133,6 +133,7 @@ class Servicio10Fragment : Fragment() {
     private fun sincronizarPostulaciones(idPostulante: String, data: JSONArray) {
         val dbHelper = ConnectionHelper(requireContext())
         val db = dbHelper.writableDb
+        db.execSQL("PRAGMA foreign_keys=OFF")
         val estadosValidos = setOf("activo", "en proceso", "contratado", "rechazado")
         for (i in 0 until data.length()) {
             val item = data.getJSONObject(i)
@@ -164,6 +165,7 @@ class Servicio10Fragment : Fragment() {
                 }
             } catch (_: Exception) {}
         }
+        db.execSQL("PRAGMA foreign_keys=ON")
         db.close()
     }
 
