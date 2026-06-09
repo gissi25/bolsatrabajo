@@ -210,6 +210,8 @@ class DashboardFragment : Fragment() {
                     2 -> findNavController().navigate(R.id.action_dashboard_to_servicio2)
                     3 -> findNavController().navigate(R.id.action_dashboard_to_servicio3)
                     4 -> findNavController().navigate(R.id.action_dashboard_to_servicio4)
+                    7 -> findNavController().navigate(R.id.action_dashboard_to_servicio7)
+                    8 -> findNavController().navigate(R.id.action_dashboard_to_servicio8)
                     9 -> findNavController().navigate(R.id.action_dashboard_to_servicio9)
                     10 -> findNavController().navigate(R.id.action_dashboard_to_servicio10)
                 }

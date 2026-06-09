@@ -554,26 +554,66 @@
     <string name="s3_habilidades">Habilidades</string>
     <string name="s3_redes">Redes Sociales</string>
     <string name="s3_sin_datos">Sin datos</string>
+    <string name="s7_titulo">Buscar ofertas por edad</string>
+    <string name="s7_hint_edad">Tu edad</string>
+    <string name="s7_btn_buscar">Buscar ofertas</string>
+    <string name="s7_buscando">Buscando ofertas…</string>
+    <string name="s7_sin_resultados">No se encontraron ofertas para tu edad</string>
+    <string name="s7_hint_postulante">ID del postulante</string>
+    <string name="s7_error_edad">Ingresa una edad válida</string>
+    <string name="s7_error_postulante">Ingresa un ID de postulante válido</string>
+    <string name="s7_edad_minima">Edad min</string>
+    <string name="s7_edad_maxima">Edad max</string>
+    <string name="s7_experiencia">Experiencia</string>
+    <string name="s7_publicacion">Publicación</string>
+    <string name="s7_caducidad">Caducidad</string>
+    <string name="s7_grado">Grado requerido</string>
+    <string name="s7_btn_postularme">Postularme</string>
+    <string name="s7_chip_no_postulado">Aún no postulado</string>
+    <string name="s7_chip_pendiente">Activo</string>
+    <string name="s7_chip_entrevista">En proceso</string>
+    <string name="s7_chip_activo">Activo</string>
+    <string name="s7_chip_en_proceso">En proceso</string>
+    <string name="s7_chip_contratado">Contratado</string>
+    <string name="s7_chip_rechazado">Rechazado</string>
+    <string name="s7_postulando">Postulando…</string>
+    <string name="s7_postulacion_exitosa">Postulación exitosa</string>
+    <string name="s7_ya_postulado">Ya has postulado a esta oferta</string>
+    <string name="s8_titulo">Inteligencia Empresarial</string>
+    <string name="s8_hint_nit">NIT de la empresa</string>
+    <string name="s8_btn_resumen">Resumen</string>
+    <string name="s8_btn_ranking">Ranking ofertas</string>
+    <string name="s8_btn_estados">Postulantes por estado</string>
+    <string name="s8_error_nit">Ingresa un NIT válido</string>
+    <string name="s8_ofertas_activas">Ofertas activas</string>
+    <string name="s8_ofertas_vencidas">Ofertas vencidas</string>
+    <string name="s8_total_postulaciones">Total postulaciones</string>
+    <string name="s8_estado_pendiente">Activo</string>
+    <string name="s8_estado_entrevista">En Proceso</string>
+    <string name="s8_estado_contratado">Contratado</string>
+    <string name="s8_estado_rechazado">Rechazado</string>
+    <string name="s8_estado_activo">Activo</string>
+    <string name="s8_estado_en_proceso">En Proceso</string>
 
     <!-- Servicio 4 - Buscar por Certificaciones -->
     <string name="s4_titulo">Buscar por Certificaciones</string>
-    <string name="s4_hint_tipo">Tipo de certificación</string>
+    <string name="s4_hint_tipo">Tipo de certificacion</string>
     <string name="s4_hint_nombre">Nombre (opcional)</string>
-    <string name="s4_hint_anio">Año (opcional)</string>
+    <string name="s4_hint_anio">Anio (opcional)</string>
     <string name="s4_btn_buscar">Buscar</string>
     <string name="s4_resultados">%d postulante(s) encontrado(s)</string>
     <string name="s4_sin_resultados">No se encontraron resultados</string>
-    <string name="s4_total_cert">%d certificación(es)</string>
-    <string name="s4_error_tipo">Debe seleccionar un tipo de certificación</string>
-    <string name="s4_cargando">Buscando…</string>
+    <string name="s4_total_cert">%d certificacion(es)</string>
+    <string name="s4_error_tipo">Debe seleccionar un tipo de certificacion</string>
+    <string name="s4_cargando">Buscando...</string>
     <string name="s4_sincronizar">Sincronizar con servidor</string>
-    <string name="s4_sincronizando">Sincronizando…</string>
+    <string name="s4_sincronizando">Sincronizando...</string>
     <string name="s4_sincronizado_ok">Sincronizado correctamente</string>
 
     <!-- Servicio 9: Matching -->
     <string name="s9_titulo">Matching de Ofertas</string>
-    <string name="s9_modo_postulante">Postulante → Ofertas</string>
-    <string name="s9_modo_oferta">Oferta → Postulantes</string>
+    <string name="s9_modo_postulante">Postulante -> Ofertas</string>
+    <string name="s9_modo_oferta">Oferta -> Postulantes</string>
     <string name="s9_btn_buscar">Buscar</string>
     <string name="s9_seleccionar_postulante">Seleccionar postulante</string>
     <string name="s9_seleccionar_empresa">Seleccionar empresa</string>
@@ -581,22 +621,22 @@
     <string name="s9_error_seleccionar">Debe seleccionar un elemento</string>
     <string name="s9_resultados">%d resultado(s) encontrado(s)</string>
     <string name="s9_desglose" formatted="false">Grado: %d | Habilidades: %d | Exp: %d | Edad: %d</string>
-    <string name="s9_detalle_grado">Grado Académico</string>
+    <string name="s9_detalle_grado">Grado Academico</string>
     <string name="s9_detalle_experiencia">Experiencia Laboral</string>
     <string name="s9_detalle_habilidades">Habilidades</string>
     <string name="s9_detalle_edad">Edad</string>
-    <string name="s9_detalle_oferta">Descripción de la Oferta</string>
+    <string name="s9_detalle_oferta">Descripcion de la Oferta</string>
     <string name="s9_detalle_puntaje">Desglose de Puntaje</string>
     <string name="s9_detalle_postulante_grado" formatted="false">Postulante: %s</string>
     <string name="s9_detalle_oferta_grado" formatted="false">Oferta requiere: %s</string>
-    <string name="s9_detalle_postulante_exp" formatted="false">Postulante tiene: %s años</string>
-    <string name="s9_detalle_oferta_exp" formatted="false">Oferta requiere: %d años</string>
-    <string name="s9_detalle_postulante_edad" formatted="false">Postulante: %d años</string>
-    <string name="s9_detalle_oferta_edad" formatted="false">Oferta requiere: %d - %d años</string>
+    <string name="s9_detalle_postulante_exp" formatted="false">Postulante tiene: %s anios</string>
+    <string name="s9_detalle_oferta_exp" formatted="false">Oferta requiere: %d anios</string>
+    <string name="s9_detalle_postulante_edad" formatted="false">Postulante: %d anios</string>
+    <string name="s9_detalle_oferta_edad" formatted="false">Oferta requiere: %d - %d anios</string>
     <string name="s9_detalle_habilidades_match" formatted="false">%d de %d habilidades coinciden</string>
-    <string name="s9_detalle_sin_requisitos">Sin requisitos específicos</string>
+    <string name="s9_detalle_sin_requisitos">Sin requisitos especificos</string>
     <string name="s9_detalle_puntaje_linea" formatted="false">Grado: %d/30 | Habilidades: %d/30 | Experiencia: %d/25 | Edad: %d/15</string>
-    <string name="s9_detalle_total" formatted="false">Total: %d/100 — %s</string>
+    <string name="s9_detalle_total" formatted="false">Total: %d/100 - %s</string>
     <string name="s9_detalle_tap_para_detalle">Toca para ver detalle</string>
 
     <!-- Servicio 10: Mis Postulaciones -->
@@ -619,6 +659,6 @@
     <string name="s10_estado_en_proceso">En Proceso</string>
     <string name="s10_estado_contratado">Contratado</string>
     <string name="s10_estado_rechazado">Rechazado</string>
-    <string name="s10_publicacion">Fecha de publicación</string>
-    <string name="s10_id_postulacion">ID de Postulación</string>
+    <string name="s10_publicacion">Fecha de publicacion</string>
+    <string name="s10_id_postulacion">ID de Postulacion</string>
 </resources>
