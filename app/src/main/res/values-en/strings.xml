@@ -594,4 +594,6 @@
     <string name="s10_estado_en_proceso">In Process</string>
     <string name="s10_estado_contratado">Hired</string>
     <string name="s10_estado_rechazado">Rejected</string>
+    <string name="s10_publicacion">Publication date</string>
+    <string name="s10_id_postulacion">Postulation ID</string>
 </resources>
