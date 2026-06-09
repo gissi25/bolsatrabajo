@@ -618,4 +618,55 @@
     <string name="s6_estado_actualizado">Status updated successfully</string>
     <string name="s6_estado_filtro">Filter by status</string>
 
+    <!-- Servicio 9: Matching -->
+    <string name="s9_titulo">Offer Matching</string>
+    <string name="s9_modo_postulante">Applicant → Offers</string>
+    <string name="s9_modo_oferta">Offer → Applicants</string>
+    <string name="s9_btn_buscar">Search</string>
+    <string name="s9_seleccionar_postulante">Select applicant</string>
+    <string name="s9_seleccionar_empresa">Select company</string>
+    <string name="s9_seleccionar_oferta">Select offer</string>
+    <string name="s9_error_seleccionar">You must select an item</string>
+    <string name="s9_resultados">%d result(s) found</string>
+    <string name="s9_desglose" formatted="false">Degree: %d | Skills: %d | Exp: %d | Age: %d</string>
+    <string name="s9_detalle_grado">Academic Degree</string>
+    <string name="s9_detalle_experiencia">Work Experience</string>
+    <string name="s9_detalle_habilidades">Skills</string>
+    <string name="s9_detalle_edad">Age</string>
+    <string name="s9_detalle_oferta">Offer Description</string>
+    <string name="s9_detalle_puntaje">Score Breakdown</string>
+    <string name="s9_detalle_postulante_grado" formatted="false">Applicant: %s</string>
+    <string name="s9_detalle_oferta_grado" formatted="false">Offer requires: %s</string>
+    <string name="s9_detalle_postulante_exp" formatted="false">Applicant has: %s years</string>
+    <string name="s9_detalle_oferta_exp" formatted="false">Offer requires: %d years</string>
+    <string name="s9_detalle_postulante_edad" formatted="false">Applicant: %d years</string>
+    <string name="s9_detalle_oferta_edad" formatted="false">Offer requires: %d - %d years</string>
+    <string name="s9_detalle_habilidades_match" formatted="false">%d of %d skills match</string>
+    <string name="s9_detalle_sin_requisitos">No specific requirements</string>
+    <string name="s9_detalle_puntaje_linea" formatted="false">Degree: %d/30 | Skills: %d/30 | Experience: %d/25 | Age: %d/15</string>
+    <string name="s9_detalle_total" formatted="false">Total: %d/100 — %s</string>
+    <string name="s9_detalle_tap_para_detalle">Tap for details</string>
+
+    <!-- Servicio 10: My Applications -->
+    <string name="s10_titulo">My Applications</string>
+    <string name="s10_filtro_todos">All</string>
+    <string name="s10_filtro_activo">Active</string>
+    <string name="s10_filtro_en_proceso">In Process</string>
+    <string name="s10_filtro_contratado">Hired</string>
+    <string name="s10_filtro_rechazado">Rejected</string>
+    <string name="s10_btn_sincronizar">Sync</string>
+    <string name="s10_btn_ver_detalle">View details</string>
+    <string name="s10_vencida">Expired</string>
+    <string name="s10_aplicado">Applied on</string>
+    <string name="s10_vencimiento">Expires on</string>
+    <string name="s10_estado">Status</string>
+    <string name="s10_sin_postulaciones">No applications found</string>
+    <string name="s10_sincronizado_ok" formatted="false">%d inserted, %d updated</string>
+    <string name="s10_sincronizar_vacio">No remote data to sync</string>
+    <string name="s10_estado_activo">Active</string>
+    <string name="s10_estado_en_proceso">In Process</string>
+    <string name="s10_estado_contratado">Hired</string>
+    <string name="s10_estado_rechazado">Rejected</string>
+    <string name="s10_publicacion">Publication date</string>
+    <string name="s10_id_postulacion">Postulation ID</string>
 </resources>

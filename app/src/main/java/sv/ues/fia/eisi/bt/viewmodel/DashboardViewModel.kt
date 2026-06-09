@@ -132,8 +132,15 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     private fun buildWebServiceSection(): List<DashboardItem> {
         val result = mutableListOf<DashboardItem>()
+        val filtered = webServices.filter { service ->
+            when (service.id) {
+                9 -> currentRole == Constants.ROLE_EMPRESA || currentRole == Constants.ROLE_ADMIN
+                10 -> currentRole == Constants.ROLE_POSTULANTE || currentRole == Constants.ROLE_ADMIN
+                else -> true
+            }
+        }
         result.add(DashboardItem.Section(DashboardItem.SECTION_SERVICIOS_WEB, DashboardItem.SECTION_SERVICIOS_WEB in expandedSections))
-        result.addAll(webServices)
+        result.addAll(filtered)
         return result
     }
 

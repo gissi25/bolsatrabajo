@@ -618,4 +618,55 @@
     <string name="s6_estado_actualizado">Status atualizado com sucesso</string>
     <string name="s6_estado_filtro">Filtrar por status</string>
 
+    <!-- Servicio 9: Matching -->
+    <string name="s9_titulo">Matching de Vagas</string>
+    <string name="s9_modo_postulante">Candidato → Vagas</string>
+    <string name="s9_modo_oferta">Vaga → Candidatos</string>
+    <string name="s9_btn_buscar">Buscar</string>
+    <string name="s9_seleccionar_postulante">Selecionar candidato</string>
+    <string name="s9_seleccionar_empresa">Selecionar empresa</string>
+    <string name="s9_seleccionar_oferta">Selecionar vaga</string>
+    <string name="s9_error_seleccionar">Você deve selecionar um item</string>
+    <string name="s9_resultados">%d resultado(s) encontrado(s)</string>
+    <string name="s9_desglose" formatted="false">Grau: %d | Habilidades: %d | Exp: %d | Idade: %d</string>
+    <string name="s9_detalle_grado">Grau Acadêmico</string>
+    <string name="s9_detalle_experiencia">Experiência Profissional</string>
+    <string name="s9_detalle_habilidades">Habilidades</string>
+    <string name="s9_detalle_edad">Idade</string>
+    <string name="s9_detalle_oferta">Descrição da Vaga</string>
+    <string name="s9_detalle_puntaje">Detalhamento da Pontuação</string>
+    <string name="s9_detalle_postulante_grado" formatted="false">Candidato: %s</string>
+    <string name="s9_detalle_oferta_grado" formatted="false">Vaga requer: %s</string>
+    <string name="s9_detalle_postulante_exp" formatted="false">Candidato tem: %s anos</string>
+    <string name="s9_detalle_oferta_exp" formatted="false">Vaga requer: %d anos</string>
+    <string name="s9_detalle_postulante_edad" formatted="false">Candidato: %d anos</string>
+    <string name="s9_detalle_oferta_edad" formatted="false">Vaga requer: %d - %d anos</string>
+    <string name="s9_detalle_habilidades_match" formatted="false">%d de %d habilidades coincidem</string>
+    <string name="s9_detalle_sin_requisitos">Sem requisitos específicos</string>
+    <string name="s9_detalle_puntaje_linea" formatted="false">Grau: %d/30 | Habilidades: %d/30 | Experiência: %d/25 | Idade: %d/15</string>
+    <string name="s9_detalle_total" formatted="false">Total: %d/100 — %s</string>
+    <string name="s9_detalle_tap_para_detalle">Toque para detalhes</string>
+
+    <!-- Servicio 10: Minhas Candidaturas -->
+    <string name="s10_titulo">Minhas Candidaturas</string>
+    <string name="s10_filtro_todos">Todos</string>
+    <string name="s10_filtro_activo">Ativo</string>
+    <string name="s10_filtro_en_proceso">Em Processo</string>
+    <string name="s10_filtro_contratado">Contratado</string>
+    <string name="s10_filtro_rechazado">Rejeitado</string>
+    <string name="s10_btn_sincronizar">Sincronizar</string>
+    <string name="s10_btn_ver_detalle">Ver detalhes</string>
+    <string name="s10_vencida">Vencida</string>
+    <string name="s10_aplicado">Aplicado em</string>
+    <string name="s10_vencimiento">Vence em</string>
+    <string name="s10_estado">Estado</string>
+    <string name="s10_sin_postulaciones">Nenhuma candidatura encontrada</string>
+    <string name="s10_sincronizado_ok" formatted="false">%d inseridas, %d atualizadas</string>
+    <string name="s10_sincronizar_vacio">Não há dados remotos para sincronizar</string>
+    <string name="s10_estado_activo">Ativo</string>
+    <string name="s10_estado_en_proceso">Em Processo</string>
+    <string name="s10_estado_contratado">Contratado</string>
+    <string name="s10_estado_rechazado">Rejeitado</string>
+    <string name="s10_publicacion">Data de publicação</string>
+    <string name="s10_id_postulacion">ID da Candidatura</string>
 </resources>
