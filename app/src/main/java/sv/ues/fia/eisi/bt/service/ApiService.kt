@@ -30,6 +30,11 @@ object ApiService {
     private var challengeDone = false
     private var pendingCallback: ((JSONObject) -> Unit)? = null
 
+    private val okHttpClient = OkHttpClient.Builder()
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .build()
+
     private val jsInterface = object {
         @JavascriptInterface
         fun onResult(json: String) {
@@ -137,6 +142,22 @@ object ApiService {
                 }
             }, 60000)
         }
+    }
+
+    private suspend fun fetchDirect(action: String, body: String? = null): JSONObject = withContext(Dispatchers.IO) {
+        val url = "${BASE_URL}${action}"
+        Log.d(TAG, "OkHttp $url")
+        val request = if (body != null) {
+            Request.Builder().url(url)
+                .post(body.toRequestBody("application/json".toMediaType()))
+                .build()
+        } else {
+            Request.Builder().url(url).build()
+        }
+        val response = okHttpClient.newCall(request).execute()
+        val jsonStr = response.body?.string() ?: throw Exception("Respuesta vacía")
+        Log.d(TAG, "OkHttp response: ${jsonStr.take(300)}")
+        JSONObject(jsonStr)
     }
 
     suspend fun getEmpresas(): List<JSONObject> = withContext(Dispatchers.Main) {
@@ -302,8 +323,15 @@ object ApiService {
         fetch("matching_oferta", "POST", body.toString())
     }
 
-    suspend fun getMisPostulaciones(idPostulante: String): JSONObject = withContext(Dispatchers.Main) {
+    suspend fun getMisPostulaciones(idPostulante: String): JSONObject {
         val body = JSONObject().apply { put("id_postulante", idPostulante) }
-        fetch("mis_postulaciones", "POST", body.toString())
+        return try {
+            fetchDirect("mis_postulaciones", body.toString())
+        } catch (e: Exception) {
+            Log.w(TAG, "OkHttp falló, usando WebView: ${e.message}")
+            withContext(Dispatchers.Main) {
+                fetch("mis_postulaciones", "POST", body.toString())
+            }
+        }
     }
 }

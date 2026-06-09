@@ -5,15 +5,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
-import android.widget.ProgressBar
 import android.widget.TextView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.ChipGroup
@@ -24,7 +25,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import sv.ues.fia.eisi.bt.R
-import sv.ues.fia.eisi.bt.data.local.ConnectionHelper
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
 import sv.ues.fia.eisi.bt.service.ApiService
 import java.text.SimpleDateFormat
@@ -35,11 +35,11 @@ class Servicio10Fragment : Fragment() {
 
     private lateinit var chipGroup: ChipGroup
     private lateinit var tvVacio: TextView
-    private lateinit var progressBar: ProgressBar
     private lateinit var rvPostulaciones: RecyclerView
     private lateinit var tilPostulante: TextInputLayout
     private lateinit var spPostulante: MaterialAutoCompleteTextView
     private lateinit var tvSelectorLabel: TextView
+    private lateinit var swipeRefresh: SwipeRefreshLayout
 
     private var idPostulante: String? = null
     private var todasPostulaciones = listOf<MainRepository.PostulacionCompleta>()
@@ -60,13 +60,15 @@ class Servicio10Fragment : Fragment() {
 
         chipGroup = view.findViewById(R.id.chipGroup)
         tvVacio = view.findViewById(R.id.tvVacio)
-        progressBar = view.findViewById(R.id.progressBar)
         rvPostulaciones = view.findViewById(R.id.rvPostulaciones)
         tilPostulante = view.findViewById(R.id.tilPostulante)
         spPostulante = view.findViewById(R.id.spPostulante)
         tvSelectorLabel = view.findViewById(R.id.tvSelectorLabel)
+        swipeRefresh = view.findViewById(R.id.swipeRefresh)
 
         view.findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener { findNavController().navigateUp() }
+
+        swipeRefresh.setOnRefreshListener { cargarPostulaciones() }
 
         adapter = PostulacionAdapter(todasPostulaciones) { post ->
             mostrarDetalle(post)
@@ -108,65 +110,43 @@ class Servicio10Fragment : Fragment() {
 
     private fun cargarPostulaciones() {
         val id = idPostulante ?: return
-        progressBar.visibility = View.VISIBLE
+        swipeRefresh.isRefreshing = true
         tvVacio.visibility = View.GONE
         lifecycleScope.launch {
             try {
-                val json = ApiService.getMisPostulaciones(id)
+                val json = withContext(Dispatchers.IO) {
+                    ApiService.getMisPostulaciones(id)
+                }
+                val postulanteExiste = json.optBoolean("postulante_existe", true)
+                if (!postulanteExiste) {
+                    Snackbar.make(requireView(), "El postulante no existe en el servidor remoto", Snackbar.LENGTH_LONG).show()
+                }
                 val data = json.optJSONArray("data")
-                if (data != null && data.length() > 0) {
-                    withContext(Dispatchers.IO) { sincronizarPostulaciones(id, data) }
+                val lista = mutableListOf<MainRepository.PostulacionCompleta>()
+                if (data != null) {
+                    for (i in 0 until data.length()) {
+                        val item = data.getJSONObject(i)
+                        lista.add(MainRepository.PostulacionCompleta(
+                            idPostulacion = item.optString("ID_POSTULACION", ""),
+                            fechaAplicacion = item.optString("FECHA_APLICACION", ""),
+                            estadoProceso = item.optString("ESTADO_PROCESO", "activo").lowercase(),
+                            tituloPuesto = item.optString("TITULO_PUESTO", ""),
+                            fechaPublicacion = item.optString("FECHA_PUBLICACION", ""),
+                            fechaCaducidad = item.optString("FECHA_CADUCIDAD", ""),
+                            nombreEmpresa = item.optString("NOMBRE_EMPRESA", ""),
+                            nit = item.optString("NIT", ""),
+                            idOferta = item.optString("ID_OFERTA", "")
+                        ))
+                    }
                 }
-            } catch (_: Exception) {
-                // Si falla la API, usa los datos locales que ya existen
+                todasPostulaciones = lista
+            } catch (e: Exception) {
+                Snackbar.make(requireView(), "Error al obtener datos: ${e.message}", Snackbar.LENGTH_LONG).show()
+                todasPostulaciones = emptyList()
             }
-            val lista = withContext(Dispatchers.IO) {
-                val repo = MainRepository(requireContext())
-                repo.getPostulacionesPorPostulante(id)
-            }
-            todasPostulaciones = lista
             aplicarFiltro()
-            progressBar.visibility = View.GONE
+            swipeRefresh.isRefreshing = false
         }
-    }
-
-    private fun sincronizarPostulaciones(idPostulante: String, data: JSONArray) {
-        val dbHelper = ConnectionHelper(requireContext())
-        val db = dbHelper.writableDb
-        db.execSQL("PRAGMA foreign_keys=OFF")
-        val estadosValidos = setOf("activo", "en proceso", "contratado", "rechazado")
-        for (i in 0 until data.length()) {
-            val item = data.getJSONObject(i)
-            val idPostulacion = item.optString("ID_POSTULACION", "").trim()
-            val nit = item.optString("NIT", "").trim()
-            val idOferta = item.optString("ID_OFERTA", "").trim()
-            val estado = item.optString("ESTADO_PROCESO", "activo").trim().lowercase()
-            if (idPostulacion.isEmpty() || nit.isEmpty() || idOferta.isEmpty()) continue
-            if (estado !in estadosValidos) continue
-            try {
-                db.execSQL("INSERT OR REPLACE INTO EMPRESA (NIT, NOMBRE_EMPRESA) VALUES (?, ?)",
-                    arrayOf(nit, item.optString("NOMBRE_EMPRESA", "")))
-                db.execSQL("INSERT OR REPLACE INTO OFERTA_TRABAJO (NIT, ID_OFERTA, TITULO_PUESTO, FECHA_PUBLICACION, FECHA_CADUCIDAD) VALUES (?, ?, ?, ?, ?)",
-                    arrayOf(nit, idOferta, item.optString("TITULO_PUESTO", ""),
-                        item.optString("FECHA_PUBLICACION", ""), item.optString("FECHA_CADUCIDAD", "")))
-                val cursor = db.rawQuery("SELECT COUNT(*) FROM POSTULACION WHERE ID_POSTULACION = ?",
-                    arrayOf(idPostulacion))
-                cursor.moveToFirst()
-                val exists = cursor.getInt(0) > 0
-                cursor.close()
-                val fecha = item.optString("FECHA_APLICACION", "").trim()
-                if (exists) {
-                    db.execSQL("UPDATE POSTULACION SET ESTADO_PROCESO = ?, FECHA_APLICACION = ? WHERE ID_POSTULACION = ?",
-                        arrayOf(estado, fecha, idPostulacion))
-                } else {
-                    val idPost = item.optString("ID_POSTULANTE", idPostulante).trim()
-                    db.execSQL("INSERT INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO) VALUES (?, ?, ?, ?, ?, ?)",
-                        arrayOf(idPostulacion, nit, idOferta, idPost, fecha, estado))
-                }
-            } catch (_: Exception) {}
-        }
-        db.execSQL("PRAGMA foreign_keys=ON")
-        db.close()
     }
 
     private fun aplicarFiltro() {
