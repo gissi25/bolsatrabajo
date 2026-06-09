@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:minHeight="?attr/actionBarSize"
-        app:title="@string/s7_titulo"
+        app:title="@string/s8_titulo"
         app:titleTextColor="?attr/colorOnSurface"
         app:navigationIcon="?attr/homeAsUpIndicator"
         style="@style/Widget.Material3.Toolbar" />
@@ -33,15 +33,15 @@
             android:padding="16dp">
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilPostulante"
+                android:id="@+id/tilNit"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:hint="@string/s7_hint_postulante"
+                android:hint="@string/s8_hint_nit"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etPostulante"
+                    android:id="@+id/etNit"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="text"
@@ -53,35 +53,40 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:weightSum="3">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilEdad"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnResumen"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginEnd="12dp"
-                    android:hint="@string/s7_hint_edad"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etEdad"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="number"
-                        android:imeOptions="actionSearch"
-                        android:maxLength="3"
-                        android:paddingTop="16dp"
-                        android:paddingBottom="16dp" />
-
-                </com.google.android.material.textfield.TextInputLayout>
+                    android:layout_marginEnd="4dp"
+                    android:text="@string/s8_btn_resumen"
+                    android:textSize="11sp"
+                    style="@style/AestheticButton" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnBuscar"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/btnRanking"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="@string/s7_btn_buscar"
-                    style="@style/AestheticButton" />
+                    android:layout_weight="1"
+                    android:layout_marginHorizontal="4dp"
+                    android:text="@string/s8_btn_ranking"
+                    android:textSize="11sp"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:textColor="?attr/colorPrimary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEstados"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:text="@string/s8_btn_estados"
+                    android:textSize="11sp"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:textColor="?attr/colorPrimary" />
 
             </LinearLayout>
 
@@ -94,31 +99,37 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_gravity="center"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="24dp"
         android:indeterminateTint="?attr/colorPrimary"
         android:visibility="gone" />
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:layout_marginTop="8dp">
+
+        <ScrollView
+            android:id="@+id/scrollResultados"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="12dp"
+            android:paddingBottom="16dp">
+
+            <LinearLayout
+                android:id="@+id/containerResultados"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+        </ScrollView>
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvOfertas"
+            android:id="@+id/rvRanking"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="16dp" />
-
-        <TextView
-            android:id="@+id/tvSinResultados"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="@string/s7_sin_resultados"
-            android:textSize="15sp"
-            android:textColor="?android:attr/textColorSecondary"
+            android:paddingHorizontal="12dp"
+            android:paddingBottom="16dp"
             android:visibility="gone" />
 
     </FrameLayout>

@@ -162,8 +162,42 @@ object ApiService {
         fetch("sincronizar_postulantes", "POST", postulante.toString())
     }
 
-    suspend fun buscarOfertasPorEdad(edad: Int): List<JSONObject> = withContext(Dispatchers.Main) {
-        val json = fetch("ofertas_por_edad&edad=$edad")
+    suspend fun buscarOfertasPorEdad(edad: Int, idPostulante: String = ""): List<JSONObject> = withContext(Dispatchers.Main) {
+        val action = if (idPostulante.isNotBlank()) "ofertas_por_edad&edad=$edad&id_postulante=$idPostulante"
+                     else "ofertas_por_edad&edad=$edad"
+        val json = fetch(action)
+        val arr = json.getJSONArray("data")
+        (0 until arr.length()).map { arr.getJSONObject(it) }
+    }
+
+    suspend fun postularOferta(idPostulante: String, nit: String, idOferta: String): JSONObject = withContext(Dispatchers.Main) {
+        val body = JSONObject().apply {
+            put("id_postulante", idPostulante)
+            put("nit", nit)
+            put("id_oferta", idOferta)
+        }
+        fetch("postular", "POST", body.toString())
+    }
+
+    suspend fun subirPostulaciones(postulaciones: List<JSONObject>): JSONObject = withContext(Dispatchers.Main) {
+        val arr = JSONArray()
+        for (p in postulaciones) arr.put(p)
+        val body = JSONObject().apply { put("postulaciones", arr) }
+        fetch("subir_postulaciones", "POST", body.toString())
+    }
+
+    suspend fun getResumenReclutamiento(nit: String): JSONObject = withContext(Dispatchers.Main) {
+        fetch("resumen_reclutamiento&nit=$nit")
+    }
+
+    suspend fun getRankingOfertas(nit: String): List<JSONObject> = withContext(Dispatchers.Main) {
+        val json = fetch("ranking_ofertas&nit=$nit")
+        val arr = json.getJSONArray("data")
+        (0 until arr.length()).map { arr.getJSONObject(it) }
+    }
+
+    suspend fun getPostulantesPorEstado(nit: String): List<JSONObject> = withContext(Dispatchers.Main) {
+        val json = fetch("postulantes_por_estado&nit=$nit")
         val arr = json.getJSONArray("data")
         (0 until arr.length()).map { arr.getJSONObject(it) }
     }
