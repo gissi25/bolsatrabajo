@@ -143,12 +143,19 @@ class Servicio10Fragment : Fragment() {
             if (idPostulacion.isEmpty() || nit.isEmpty() || idOferta.isEmpty()) continue
             if (estado !in estadosValidos) continue
             try {
-                val cursor = db.rawQuery("SELECT COUNT(*) FROM POSTULACION WHERE ID_POSTULACION = ?", arrayOf(idPostulacion))
+                db.execSQL("INSERT OR REPLACE INTO EMPRESA (NIT, NOMBRE_EMPRESA) VALUES (?, ?)",
+                    arrayOf(nit, item.optString("NOMBRE_EMPRESA", "")))
+                db.execSQL("INSERT OR REPLACE INTO OFERTA_TRABAJO (NIT, ID_OFERTA, TITULO_PUESTO, FECHA_PUBLICACION, FECHA_CADUCIDAD) VALUES (?, ?, ?, ?, ?)",
+                    arrayOf(nit, idOferta, item.optString("TITULO_PUESTO", ""),
+                        item.optString("FECHA_PUBLICACION", ""), item.optString("FECHA_CADUCIDAD", "")))
+                val cursor = db.rawQuery("SELECT COUNT(*) FROM POSTULACION WHERE ID_POSTULACION = ?",
+                    arrayOf(idPostulacion))
                 cursor.moveToFirst()
                 val exists = cursor.getInt(0) > 0
                 cursor.close()
                 if (exists) {
-                    db.execSQL("UPDATE POSTULACION SET ESTADO_PROCESO = ? WHERE ID_POSTULACION = ?", arrayOf(estado, idPostulacion))
+                    db.execSQL("UPDATE POSTULACION SET ESTADO_PROCESO = ? WHERE ID_POSTULACION = ?",
+                        arrayOf(estado, idPostulacion))
                 } else {
                     val idPost = item.optString("ID_POSTULANTE", idPostulante).trim()
                     val fecha = item.optString("FECHA_APLICACION", "").trim()
