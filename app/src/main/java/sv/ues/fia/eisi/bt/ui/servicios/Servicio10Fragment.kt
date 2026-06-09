@@ -102,10 +102,23 @@ class Servicio10Fragment : Fragment() {
     }
 
     private fun cargarPostulantesLocal() {
-        val repo = MainRepository(requireContext())
-        val raw = repo.getDropdownOptions("POSTULANTE", "NOMBRE")
-        postulantes = raw.map { PostulanteItem(it.first, it.second) }
-        spPostulante.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, postulantes))
+        swipeRefresh.isRefreshing = true
+        lifecycleScope.launch {
+            try {
+                val raw = ApiService.getPostulantes()
+                postulantes = raw.map {
+                    PostulanteItem(
+                        it.getString("ID_POSTULANTE"),
+                        "${it.optString("NOMBRE", "")} ${it.optString("APELLIDO", "")}".trim()
+                    )
+                }
+                spPostulante.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, postulantes))
+            } catch (e: Exception) {
+                Snackbar.make(requireView(), "Error al cargar postulantes: ${e.message}", Snackbar.LENGTH_LONG).show()
+            } finally {
+                swipeRefresh.isRefreshing = false
+            }
+        }
     }
 
     private fun cargarPostulaciones() {
