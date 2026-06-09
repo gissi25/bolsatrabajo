@@ -41,7 +41,12 @@ switch ($action) {
         }
         $stmt->close();
 
-        echo json_encode(["exito" => true, "data" => $data]);
+        $postulanteExiste = false;
+        $rs = $conn->query("SELECT 1 FROM POSTULANTE WHERE ID_POSTULANTE = '" . $conn->real_escape_string($idPostulante) . "'");
+        if ($rs && $rs->fetch_row()) $postulanteExiste = true;
+        if ($rs) $rs->free();
+
+        echo json_encode(["exito" => true, "postulante_existe" => $postulanteExiste, "data" => $data]);
         break;
 
     default:

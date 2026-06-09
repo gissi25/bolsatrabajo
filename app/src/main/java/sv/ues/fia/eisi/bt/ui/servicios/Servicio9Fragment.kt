@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -32,9 +33,9 @@ class Servicio9Fragment : Fragment() {
     private lateinit var spOferta: MaterialAutoCompleteTextView
     private lateinit var tilOferta: TextInputLayout
     private lateinit var btnBuscar: MaterialButton
-    private lateinit var progressBar: ProgressBar
     private lateinit var tvResultado: TextView
     private lateinit var rvResultados: RecyclerView
+    private lateinit var swipeRefresh: SwipeRefreshLayout
 
     private data class EmpresaItem(val nit: String, val nombre: String) {
         override fun toString() = nombre
@@ -59,11 +60,21 @@ class Servicio9Fragment : Fragment() {
         spEmpresa = view.findViewById(R.id.spEmpresa); tilEmpresa = view.findViewById(R.id.tilEmpresa)
         spOferta = view.findViewById(R.id.spOferta); tilOferta = view.findViewById(R.id.tilOferta)
         btnBuscar = view.findViewById(R.id.btnBuscar)
-        progressBar = view.findViewById(R.id.progressBar)
         tvResultado = view.findViewById(R.id.tvResultado)
         rvResultados = view.findViewById(R.id.rvResultados)
+        swipeRefresh = view.findViewById(R.id.swipeRefresh)
 
         view.findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener { findNavController().navigateUp() }
+
+        swipeRefresh.setOnRefreshListener {
+            val nit = spEmpresa.tag?.toString()
+            val idOferta = spOferta.tag?.toString()
+            if (!nit.isNullOrEmpty() && !idOferta.isNullOrEmpty()) {
+                buscar()
+            } else {
+                loadDropdownData()
+            }
+        }
 
         adapter = MatchAdapter(resultados) { mostrarDetalleMatching(it) }
         rvResultados.layoutManager = LinearLayoutManager(requireContext())
@@ -73,7 +84,7 @@ class Servicio9Fragment : Fragment() {
     }
 
     private fun loadDropdownData() {
-        progressBar.visibility = View.VISIBLE
+        swipeRefresh.isRefreshing = true
         lifecycleScope.launch {
             try {
                 val empresasRaw = ApiService.getEmpresas()
@@ -86,7 +97,7 @@ class Servicio9Fragment : Fragment() {
             } catch (e: Exception) {
                 Snackbar.make(requireView(), "Error al cargar datos: ${e.message}", Snackbar.LENGTH_LONG).show()
             } finally {
-                progressBar.visibility = View.GONE
+                swipeRefresh.isRefreshing = false
             }
         }
     }
@@ -120,14 +131,14 @@ class Servicio9Fragment : Fragment() {
     }
 
     private fun buscar() {
-        btnBuscar.isEnabled = false; progressBar.visibility = View.VISIBLE; tvResultado.visibility = View.GONE
+        btnBuscar.isEnabled = false; swipeRefresh.isRefreshing = true; tvResultado.visibility = View.GONE
         resultados.clear(); adapter.notifyDataSetChanged()
 
         val nit = spEmpresa.tag?.toString()
         val idOferta = spOferta.tag?.toString()
         if (nit.isNullOrEmpty() || idOferta.isNullOrEmpty()) {
             Snackbar.make(requireView(), R.string.s9_error_seleccionar, Snackbar.LENGTH_LONG).show()
-            btnBuscar.isEnabled = true; progressBar.visibility = View.GONE; return
+            btnBuscar.isEnabled = true; swipeRefresh.isRefreshing = false; return
         }
 
         lifecycleScope.launch {
@@ -141,7 +152,7 @@ class Servicio9Fragment : Fragment() {
             } catch (e: Exception) {
                 Snackbar.make(requireView(), "Error: ${e.message}", Snackbar.LENGTH_LONG).show()
             }
-            progressBar.visibility = View.GONE; btnBuscar.isEnabled = true
+            btnBuscar.isEnabled = true; swipeRefresh.isRefreshing = false
         }
     }
 
