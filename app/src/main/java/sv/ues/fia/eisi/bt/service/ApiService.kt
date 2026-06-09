@@ -264,4 +264,5 @@ object ApiService {
         val body = JSONObject().apply { put("id_postulante", idPostulante) }
         fetch("mis_postulaciones", "POST", body.toString())
     }
+
 }
