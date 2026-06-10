@@ -178,7 +178,7 @@ class Servicio8Fragment : Fragment() {
         val inflater = LayoutInflater.from(requireContext())
 
         estados.forEach { e ->
-            val estado = e.optString("ESTADO_PROCESO", "—")
+            val estado = e.optString("ESTADO_PROCESO", "—").lowercase()
             val total = e.optInt("total", 0)
             val label = mapaEstados[estado] ?: estado
             val color = mapaColores[estado] ?: Color.parseColor("#9E9E9E")
@@ -196,7 +196,7 @@ class Servicio8Fragment : Fragment() {
         estados.forEach { e ->
             val count = e.optInt("total", 0)
             val pct = if (total > 0) (count * 100 / total) else 0
-            val label = mapaEstados[e.optString("ESTADO_PROCESO", "—")] ?: e.optString("ESTADO_PROCESO", "—")
+            val label = mapaEstados[e.optString("ESTADO_PROCESO", "—").lowercase()] ?: e.optString("ESTADO_PROCESO", "—")
             agregarBarraProgreso(label, count, pct)
         }
     }
