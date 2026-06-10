@@ -344,7 +344,7 @@
     <string name="error_insertar_datos">Error al insertar datos</string>
     <string name="error_registro">Error en el registro. Intenta de nuevo.</string>
     <string name="error_inicio_sesion">Error en el inicio de sesión</string>
-    <string name="generando_pdfs">Generando archivos PDF…</string>
+    <string name="generando_pdfs">Generando archivos PDF...</string>
     <string name="fecha_inicio_menor_fin">Fecha inicio debe ser menor a fecha fin</string>
     <string name="fecha_ref_menor_periodo">%1$s no puede ser menor a la fecha fin del periodo</string>
     <string name="fecha_ref_excede_anio">%1$s no puede exceder un año después de la fecha fin del periodo</string>
@@ -543,7 +543,7 @@
     <string name="oferta_lista_pendientes">Ofertas pendientes de insertar</string>
     <string name="oferta_btn_insertar">Insertar todas</string>
     <string name="oferta_btn_insertar_n">Insertar todas (%d)</string>
-    <string name="oferta_insertando">Insertando…</string>
+    <string name="oferta_insertando">Insertando...</string>
     <string name="s3_titulo">Sincronizar Postulantes</string>
     <string name="s3_btn_recuperar">Recuperar de BD local</string>
     <string name="s3_btn_sincronizar">Subir al servidor</string>
@@ -558,7 +558,7 @@
     <string name="s7_titulo">Buscar ofertas por edad</string>
     <string name="s7_hint_edad">Tu edad</string>
     <string name="s7_btn_buscar">Buscar ofertas</string>
-    <string name="s7_buscando">Buscando ofertas…</string>
+    <string name="s7_buscando">Buscando ofertas...</string>
     <string name="s7_sin_resultados">No se encontraron ofertas para tu edad</string>
     <string name="s7_hint_postulante">ID del postulante</string>
     <string name="s7_error_edad">Ingresa una edad válida</string>
@@ -577,7 +577,7 @@
     <string name="s7_chip_en_proceso">En proceso</string>
     <string name="s7_chip_contratado">Contratado</string>
     <string name="s7_chip_rechazado">Rechazado</string>
-    <string name="s7_postulando">Postulando…</string>
+    <string name="s7_postulando">Postulando...</string>
     <string name="s7_postulacion_exitosa">Postulación exitosa</string>
     <string name="s7_ya_postulado">Ya has postulado a esta oferta</string>
     <string name="s8_titulo">Inteligencia Empresarial</string>
@@ -641,7 +641,7 @@
     <string name="s5_ver_mas">Ver todos los %d registros</string>
     <string name="s5_ver_catalogos">Ver tablas</string>
     <string name="s5_n_tablas">%d tablas</string>
-    <string name="s5_descargando">Descargando datos del servidor…</string>
+    <string name="s5_descargando">Descargando datos del servidor...</string>
     <string name="s5_postularse">Postularme a esta oferta</string>
     <string name="s5_postulacion_exitosa">Postulación creada correctamente</string>
     <string name="s5_requisitos">Requisitos</string>

@@ -53,7 +53,9 @@ class Servicio6Fragment : Fragment() {
         val empresa: String, val departamento: String, val municipio: String,
         val grado: String, val fechaPub: String, val fechaCad: String,
         val expAnios: String, val edadMin: String, val edadMax: String,
-        val descripcion: String, val contacto: String
+        val descripcion: String, val contacto: String,
+        val yaPostulado: Boolean = true,
+        val estadoPostulacion: String? = null
     )
     data class ResultadoPostulante(
         val idPostulante: String, val nombre: String, val apellido: String,
@@ -300,6 +302,16 @@ class Servicio6Fragment : Fragment() {
 
         lifecycleScope.launch {
             try {
+                val muniId = spMunicipio.tag?.toString()
+                try {
+                    val remoteData = ApiService.filtrarOfertasPorUbicacion(deptoId, muniId)
+                    withContext(Dispatchers.IO) {
+                        syncOfertas(remoteData)
+                    }
+                } catch (e: Exception) {
+                    Log.e("Servicio6", "Error al sincronizar ofertas", e)
+                }
+
                 val resultados = withContext(Dispatchers.IO) {
                     val lista = mutableListOf<ResultadoOferta>()
                     val db = ConnectionHelper(requireContext()).writableDb
@@ -309,20 +321,27 @@ class Servicio6Fragment : Fragment() {
                         append("o.EXPERIENCIA_ANIOS, o.EDAD_MINIMA, o.EDAD_MAXIMA, o.DESCRIPCION_OFERTA_TRABAJO, o.ID_GRADO_ACADEMICO, ")
                         append("e.NOMBRE_EMPRESA, e.CONTACTO_DIRECTO, ")
                         append("IFNULL(d.NOMBRE_DISTRITO,''), IFNULL(m.NOMBRE_MUNICIPIO,''), IFNULL(dep.NOMBRE_DEPARTAMENTO,''), ")
-                        append("IFNULL(g.NOMBRE_GRADO,'') ")
+                        append("IFNULL(g.NOMBRE_GRADO,''), ")
+                        append("p.ID_POSTULACION, p.ESTADO_PROCESO ")
                         append("FROM OFERTA_TRABAJO o ")
                         append("INNER JOIN EMPRESA e ON o.NIT = e.NIT ")
                         append("LEFT JOIN DISTRITO d ON e.ID_DISTRITO_DEPTO = d.ID_DEPARTAMENTO AND e.ID_DISTRITO_MUNICIPIO = d.ID_MUNICIPIO AND e.ID_DISTRITO_ID = d.ID_DISTRITO ")
                         append("LEFT JOIN MUNICIPIO m ON e.ID_DISTRITO_DEPTO = m.ID_DEPARTAMENTO AND e.ID_DISTRITO_MUNICIPIO = m.ID_MUNICIPIO ")
                         append("LEFT JOIN DEPARTAMENTO dep ON e.ID_DISTRITO_DEPTO = dep.ID_DEPARTAMENTO ")
                         append("LEFT JOIN GRADO_ACADEMICO g ON o.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO ")
+                        append("LEFT JOIN POSTULACION p ON o.NIT = p.NIT AND o.ID_OFERTA = p.ID_OFERTA AND p.ID_POSTULANTE = ? ")
                         append("WHERE e.ID_DISTRITO_DEPTO = ? ")
                         if (!muniId.isNullOrBlank()) append("AND e.ID_DISTRITO_MUNICIPIO = ? ")
                         append("ORDER BY o.FECHA_PUBLICACION DESC")
                     }
-                    val args = if (!muniId.isNullOrBlank()) arrayOf(deptoId, muniId) else arrayOf(deptoId)
-                    val c = db.rawQuery(sql, args)
+                    val argsList = mutableListOf<String>()
+                    argsList.add(idPostulanteSeleccionado ?: "")
+                    argsList.add(deptoId)
+                    if (!muniId.isNullOrBlank()) argsList.add(muniId)
+                    val c = db.rawQuery(sql, argsList.toTypedArray())
                     while (c.moveToNext()) {
+                        val idPostulacion = c.getString(16)
+                        val estadoProceso = c.getString(17)
                         lista.add(ResultadoOferta(
                             nit = c.getString(0), idOferta = c.getString(1), titulo = c.getString(2),
                             empresa = c.getString(10) ?: "", departamento = c.getString(14) ?: "",
@@ -331,7 +350,9 @@ class Servicio6Fragment : Fragment() {
                             expAnios = if (!c.isNull(5)) "${c.getInt(5)}" else "",
                             edadMin = if (!c.isNull(6)) "${c.getInt(6)}" else "",
                             edadMax = if (!c.isNull(7)) "${c.getInt(7)}" else "",
-                            descripcion = c.getString(8) ?: "", contacto = c.getString(11) ?: ""
+                            descripcion = c.getString(8) ?: "", contacto = c.getString(11) ?: "",
+                            yaPostulado = idPostulacion != null,
+                            estadoPostulacion = estadoProceso
                         ))
                     }
                     c.close()
@@ -381,6 +402,15 @@ class Servicio6Fragment : Fragment() {
         lifecycleScope.launch {
             try {
                 val estado = spEstado.tag?.toString()?.takeIf { it.isNotBlank() }
+                try {
+                    val remoteData = ApiService.filtrarPostulantesPorEmpresa(nit, estado)
+                    withContext(Dispatchers.IO) {
+                        syncPostulantesDeEmpresa(remoteData)
+                    }
+                } catch (e: Exception) {
+                    Log.e("Servicio6", "Error al sincronizar postulantes", e)
+                }
+
                 val resultados = withContext(Dispatchers.IO) {
                     val lista = mutableListOf<ResultadoPostulante>()
                     val db = ConnectionHelper(requireContext()).writableDb
@@ -533,9 +563,15 @@ class Servicio6Fragment : Fragment() {
             setBackgroundColor(0x22000000)
         })
         val btnPostular = MaterialButton(context).apply {
-            text = getString(R.string.s5_postularse)
+            if (item.yaPostulado) {
+                text = getString(R.string.s5_error_ya_postulado)
+                isEnabled = false
+                setBackgroundColor(0xFF2E7D32.toInt())
+            } else {
+                text = getString(R.string.s5_postularse)
+                setBackgroundColor(0xFF3366FF.toInt())
+            }
             setTextColor(0xFFFFFFFF.toInt())
-            setBackgroundColor(0xFF3366FF.toInt())
             cornerRadius = 24.toDp(context)
             isAllCaps = false
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 56.toDp(context))
@@ -543,9 +579,11 @@ class Servicio6Fragment : Fragment() {
 
         sv.addView(container)
         val dialog = AlertDialog.Builder(context).setView(sv).setPositiveButton(getString(R.string.cerrar), null).create()
-        btnPostular.setOnClickListener {
-            dialog.dismiss()
-            postularse(item.nit, item.idOferta)
+        if (!item.yaPostulado) {
+            btnPostular.setOnClickListener {
+                dialog.dismiss()
+                postularse(item.nit, item.idOferta)
+            }
         }
         dialog.show()
     }
@@ -695,11 +733,15 @@ class Servicio6Fragment : Fragment() {
         val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
         idPostulanteSeleccionado = prefs.getString(Constants.KEY_ID_POSTULANTE, null)
 
-        val lista = queryPostulantesParaSeleccion()
-        if (lista.isEmpty()) {
-            configurarVistaPostulante()
+        if (idPostulanteSeleccionado == null) {
+            val lista = queryPostulantesParaSeleccion()
+            if (lista.isEmpty()) {
+                configurarVistaPostulante()
+            } else {
+                mostrarDialogoSeleccionPostulanteAlInicio(lista)
+            }
         } else {
-            mostrarDialogoSeleccionPostulanteAlInicio(lista)
+            configurarVistaPostulante()
         }
     }
 
@@ -822,24 +864,29 @@ class Servicio6Fragment : Fragment() {
                         append("o.EXPERIENCIA_ANIOS, o.EDAD_MINIMA, o.EDAD_MAXIMA, o.DESCRIPCION_OFERTA_TRABAJO, o.ID_GRADO_ACADEMICO, ")
                         append("e.NOMBRE_EMPRESA, e.CONTACTO_DIRECTO, ")
                         append("IFNULL(d.NOMBRE_DISTRITO,''), IFNULL(m.NOMBRE_MUNICIPIO,''), IFNULL(dep.NOMBRE_DEPARTAMENTO,''), ")
-                        append("IFNULL(g.NOMBRE_GRADO,'') ")
+                        append("IFNULL(g.NOMBRE_GRADO,''), ")
+                        append("p.ID_POSTULACION, p.ESTADO_PROCESO ")
                         append("FROM OFERTA_TRABAJO o ")
                         append("INNER JOIN EMPRESA e ON o.NIT = e.NIT ")
                         append("LEFT JOIN DISTRITO d ON e.ID_DISTRITO_DEPTO = d.ID_DEPARTAMENTO AND e.ID_DISTRITO_MUNICIPIO = d.ID_MUNICIPIO AND e.ID_DISTRITO_ID = d.ID_DISTRITO ")
                         append("LEFT JOIN MUNICIPIO m ON e.ID_DISTRITO_DEPTO = m.ID_DEPARTAMENTO AND e.ID_DISTRITO_MUNICIPIO = m.ID_MUNICIPIO ")
                         append("LEFT JOIN DEPARTAMENTO dep ON e.ID_DISTRITO_DEPTO = dep.ID_DEPARTAMENTO ")
                         append("LEFT JOIN GRADO_ACADEMICO g ON o.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO ")
+                        append("LEFT JOIN POSTULACION p ON o.NIT = p.NIT AND o.ID_OFERTA = p.ID_OFERTA AND p.ID_POSTULANTE = ? ")
                         append("WHERE e.ID_DISTRITO_DEPTO = ? ")
                         if (!muniId.isNullOrBlank()) append("AND e.ID_DISTRITO_MUNICIPIO = ? ")
                         if (!distId.isNullOrBlank()) append("AND e.ID_DISTRITO_ID = ? ")
                         append("ORDER BY o.FECHA_PUBLICACION DESC")
                     }
                     val argsList = mutableListOf<String>()
+                    argsList.add(idPostulanteSeleccionado ?: "")
                     argsList.add(deptoId)
                     if (!muniId.isNullOrBlank()) argsList.add(muniId)
                     if (!distId.isNullOrBlank()) argsList.add(distId)
                     val c = db.rawQuery(sql, argsList.toTypedArray())
                     while (c.moveToNext()) {
+                        val idPostulacion = c.getString(16)
+                        val estadoProceso = c.getString(17)
                         lista.add(ResultadoOferta(
                             nit = c.getString(0), idOferta = c.getString(1), titulo = c.getString(2),
                             empresa = c.getString(10) ?: "", departamento = c.getString(14) ?: "",
@@ -848,7 +895,9 @@ class Servicio6Fragment : Fragment() {
                             expAnios = if (!c.isNull(5)) "${c.getInt(5)}" else "",
                             edadMin = if (!c.isNull(6)) "${c.getInt(6)}" else "",
                             edadMax = if (!c.isNull(7)) "${c.getInt(7)}" else "",
-                            descripcion = c.getString(8) ?: "", contacto = c.getString(11) ?: ""
+                            descripcion = c.getString(8) ?: "", contacto = c.getString(11) ?: "",
+                            yaPostulado = idPostulacion != null,
+                            estadoPostulacion = estadoProceso
                         ))
                     }
                     c.close()
@@ -894,8 +943,16 @@ class Servicio6Fragment : Fragment() {
         }
         override fun onBindViewHolder(h: VH, pos: Int) {
             val item = items[pos]
-            h.tv1.text = "${item.titulo} — ${item.empresa}"
-            h.tv2.text = "${item.municipio}, ${item.departamento} · ${item.fechaPub}"
+            if (item.yaPostulado) {
+                h.tv1.text = "${item.titulo} — ${item.empresa} (Postulado)"
+                val estado = item.estadoPostulacion ?: "Pendiente"
+                h.tv2.text = "[Mis Postulaciones] · Estado: $estado · ${item.municipio}, ${item.departamento}"
+                h.tv1.setTextColor(0xFF2E7D32.toInt())
+            } else {
+                h.tv1.text = "${item.titulo} — ${item.empresa}"
+                h.tv2.text = "${item.municipio}, ${item.departamento} · ${item.fechaPub}"
+                h.tv1.setTextColor(0xFF0D1A4A.toInt())
+            }
             h.itemView.setOnClickListener { onClick(item) }
         }
         override fun getItemCount() = items.size
@@ -945,4 +1002,89 @@ class Servicio6Fragment : Fragment() {
         row.addView(tvL); row.addView(tvV); container.addView(row)
     }
     private fun Int.toDp(context: Context) = (this * context.resources.displayMetrics.density).toInt()
+
+    private fun escapar(s: String) = s.replace("'", "''")
+    private fun escaparNullable(s: String) = if (s.isBlank()) "NULL" else "'${s.replace("'", "''")}'"
+
+    private fun syncOfertas(json: JSONObject) {
+        val db = ConnectionHelper(requireContext()).writableDb
+        try {
+            val arr = json.getJSONArray("data")
+            db.beginTransaction()
+            for (i in 0 until arr.length()) {
+                val o = arr.getJSONObject(i)
+                val nit = escapar(o.optString("NIT"))
+                val idOferta = escapar(o.optString("ID_OFERTA"))
+                val idGrado = o.optString("ID_GRADO_ACADEMICO", "").takeIf { it.isNotEmpty() } ?: "NULL"
+                val titulo = escapar(o.optString("TITULO_PUESTO"))
+                val fechaPub = escaparNullable(o.optString("FECHA_PUBLICACION"))
+                val fechaCad = escaparNullable(o.optString("FECHA_CADUCIDAD"))
+                val expAnios = o.optString("EXPERIENCIA_ANIOS", "").takeIf { it.isNotEmpty() } ?: "NULL"
+                val edadMin = o.optString("EDAD_MINIMA", "").takeIf { it.isNotEmpty() } ?: "NULL"
+                val edadMax = o.optString("EDAD_MAXIMA", "").takeIf { it.isNotEmpty() } ?: "NULL"
+                val descripcion = escapar(o.optString("DESCRIPCION_OFERTA_TRABAJO"))
+                
+                val nombreEmpresa = escapar(o.optString("NOMBRE_EMPRESA"))
+                db.execSQL("INSERT OR IGNORE INTO EMPRESA (NIT, ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID, NOMBRE_EMPRESA) VALUES ('$nit', 1, 1, 1, '$nombreEmpresa')")
+                db.execSQL("UPDATE EMPRESA SET NOMBRE_EMPRESA = '$nombreEmpresa' WHERE NIT = '$nit'")
+
+                if (idGrado != "NULL") {
+                    db.execSQL("INSERT OR IGNORE INTO GRADO_ACADEMICO (ID_GRADO_ACADEMICO, NOMBRE_GRADO) VALUES ($idGrado, 'Grado $idGrado')")
+                }
+
+                db.execSQL("INSERT OR REPLACE INTO OFERTA_TRABAJO (NIT, ID_OFERTA, ID_GRADO_ACADEMICO, TITULO_PUESTO, FECHA_PUBLICACION, FECHA_CADUCIDAD, EXPERIENCIA_ANIOS, EDAD_MINIMA, EDAD_MAXIMA, DESCRIPCION_OFERTA_TRABAJO) VALUES ('$nit', '$idOferta', $idGrado, '$titulo', $fechaPub, $fechaCad, $expAnios, $edadMin, $edadMax, '$descripcion')")
+                
+                db.execSQL("DELETE FROM DETALLE_REQUISITO WHERE NIT = '$nit' AND ID_OFERTA = '$idOferta'")
+                val requisitos = o.optJSONArray("requisitos")
+                if (requisitos != null) {
+                    for (j in 0 until requisitos.length()) {
+                        val r = requisitos.getJSONObject(j)
+                        db.execSQL("INSERT INTO DETALLE_REQUISITO (NIT, ID_OFERTA, ID_DETALLE, DESCRIPCION_REQUISITO) VALUES ('$nit', '$idOferta', '${escapar(r.optString("ID_DETALLE"))}', '${escapar(r.optString("DESCRIPCION_REQUISITO"))}')")
+                    }
+                }
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+            db.close()
+        }
+    }
+
+    private fun syncPostulantesDeEmpresa(json: JSONObject) {
+        val db = ConnectionHelper(requireContext()).writableDb
+        try {
+            val arr = json.getJSONArray("data")
+            db.beginTransaction()
+            for (i in 0 until arr.length()) {
+                val item = arr.getJSONObject(i)
+                val idPostulante = escapar(item.optString("ID_POSTULANTE"))
+                val nombre = escapar(item.optString("NOMBRE"))
+                val apellido = escapar(item.optString("APELLIDO"))
+                val email = escapar(item.optString("EMAIL"))
+                val telCel = escapar(item.optString("TELEFONO_CELULAR"))
+                val idGrado = item.optString("ID_GRADO_ACADEMICO", "").takeIf { it.isNotEmpty() } ?: "NULL"
+                val idPostulacion = escapar(item.optString("ID_POSTULACION"))
+                val idOferta = escapar(item.optString("ID_OFERTA"))
+                val fecha = escapar(item.optString("FECHA_APLICACION"))
+                val estado = escapar(item.optString("ESTADO_PROCESO"))
+                val nit = nitEmpresaSeleccionado ?: ""
+
+                if (idGrado != "NULL") {
+                    db.execSQL("INSERT OR IGNORE INTO GRADO_ACADEMICO (ID_GRADO_ACADEMICO, NOMBRE_GRADO) VALUES ($idGrado, 'Grado $idGrado')")
+                }
+
+                db.execSQL("INSERT OR IGNORE INTO POSTULANTE (ID_POSTULANTE, ID_GENERO, ID_TIPO_DOCUMENTO, ID_GRADO_ACADEMICO, NOMBRE, APELLIDO) VALUES ('$idPostulante', 1, 1, $idGrado, '$nombre', '$apellido')")
+                db.execSQL("UPDATE POSTULANTE SET NOMBRE = '$nombre', APELLIDO = '$apellido', EMAIL = '$email', TELEFONO_CELULAR = '$telCel', ID_GRADO_ACADEMICO = $idGrado WHERE ID_POSTULANTE = '$idPostulante'")
+
+                db.execSQL("INSERT OR IGNORE INTO OFERTA_TRABAJO (NIT, ID_OFERTA, TITULO_PUESTO) VALUES ('$nit', '$idOferta', '${escapar(item.optString("TITULO_PUESTO"))}')")
+                db.execSQL("UPDATE OFERTA_TRABAJO SET TITULO_PUESTO = '${escapar(item.optString("TITULO_PUESTO"))}' WHERE NIT = '$nit' AND ID_OFERTA = '$idOferta'")
+
+                db.execSQL("INSERT OR REPLACE INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO) VALUES ('$idPostulacion', '$nit', '$idOferta', '$idPostulante', '$fecha', '$estado')")
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+            db.close()
+        }
+    }
 }
