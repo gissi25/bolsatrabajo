@@ -51,6 +51,8 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         val title = when (id) {
             1 -> getApplication<Application>().getString(R.string.servicio_1_titulo)
             2 -> getApplication<Application>().getString(R.string.servicio_2_titulo)
+            7 -> "Filtrado de ofertas por edad"
+            8 -> "Inteligencia empresarial"
             else -> "Servicio $id"
         }
         DashboardItem.WebService(id, title)
@@ -138,16 +140,21 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private fun buildWebServiceSection(): List<DashboardItem> {
-        val result = mutableListOf<DashboardItem>()
-        val filtered = webServices.filter { service ->
-            when (service.id) {
+        val filtered = webServices.filter { sv ->
+            when (sv.id) {
+                1 -> currentRole == Constants.ROLE_ADMIN || currentRole == Constants.ROLE_EMPRESA
+                7 -> currentRole == Constants.ROLE_ADMIN || currentRole == Constants.ROLE_POSTULANTE
+                8 -> currentRole == Constants.ROLE_ADMIN || currentRole == Constants.ROLE_EMPRESA
                 9 -> currentRole == Constants.ROLE_EMPRESA || currentRole == Constants.ROLE_ADMIN
                 10 -> currentRole == Constants.ROLE_POSTULANTE || currentRole == Constants.ROLE_ADMIN
-                else -> true
+                else -> currentRole == Constants.ROLE_ADMIN
             }
         }
-        result.add(DashboardItem.Section(DashboardItem.SECTION_SERVICIOS_WEB, DashboardItem.SECTION_SERVICIOS_WEB in expandedSections))
-        result.addAll(filtered)
+        val result = mutableListOf<DashboardItem>()
+        if (filtered.isNotEmpty()) {
+            result.add(DashboardItem.Section(DashboardItem.SECTION_SERVICIOS_WEB, DashboardItem.SECTION_SERVICIOS_WEB in expandedSections))
+            result.addAll(filtered)
+        }
         return result
     }
 

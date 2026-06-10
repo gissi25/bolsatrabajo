@@ -58,6 +58,7 @@ dependencies {
 
     // Material Design 3
     implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.swiperefreshlayout)
 
     // HTTP client (OkHttp) for API calls
     implementation(libs.okhttp)
