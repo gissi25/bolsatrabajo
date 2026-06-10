@@ -1,87 +1,90 @@
-# Documentación de Servicios Web 7 y 8
+# Documentación de Servicios 7 y 8
 
 ---
 
-## Servicio 7: Filtrado de ofertas por edad
+## Servicio 7: Filtrado de ofertas por edad y postulación
 
 ### ¿Qué hace?
-Este servicio consulta las ofertas de trabajo que están guardadas en el servidor de InfinityFree (base de datos MySQL) y las filtra según la edad del postulante. Solo devuelve las ofertas activas donde la edad del usuario está dentro del rango permitido por la oferta. No modifica ningún dato, solo consulta.
 
-### ¿Cómo funciona paso a paso?
-1. El usuario abre la pantalla y ve un campo para escribir su edad, un botón "Buscar ofertas" y una lista vacía.
-2. Escribe su edad (por ejemplo, 25) y toca "Buscar ofertas":
-   - La app valida que la edad sea un número entre 1 y 120.
-   - La app hace una petición HTTP GET al servidor: `go.php?action=ofertas_por_edad&edad=25`.
-   - El servidor ejecuta una consulta SQL en MySQL que cruza las tablas `OFERTA_TRABAJO`, `EMPRESA` y `GRADO_ACADEMICO`.
-   - La consulta filtra las ofertas donde `EDAD_MINIMA <= 25 AND EDAD_MAXIMA >= 25`.
-   - También excluye ofertas vencidas: `FECHA_CADUCIDAD >= CURDATE()`.
-   - Ordena los resultados por fecha de publicación descendente.
-   - Devuelve un JSON con todas las ofertas encontradas.
-3. La app recibe el JSON y muestra cada oferta en una tarjeta con:
-   - Nombre de la empresa.
-   - Título del puesto.
-   - Grado académico requerido.
-   - Años de experiencia solicitados.
-   - Rango de edad que acepta la oferta.
-   - Fechas de publicación y caducidad.
-4. Si no encuentra ofertas, muestra el mensaje "No se encontraron ofertas para tu edad".
+Este servicio permite a los postulantes buscar ofertas de trabajo que coincidan con su edad y, si lo desean, postularse a ellas. El sistema filtra automáticamente las ofertas cuyo rango de edad (mínima y máxima) sea compatible con la edad ingresada, excluyendo aquellas que ya hayan vencido.
 
-### ¿Quién lo usa?
-- El postulante (para encontrar rápidamente ofertas compatibles con su edad).
-
----
-
-## Servicio 8: Inteligencia empresarial para reclutamiento
-
-### ¿Qué hace?
-Este servicio permite a una empresa sincronizar sus postulaciones locales con el servidor y luego consultar reportes inteligentes sobre sus procesos de reclutamiento. Responde preguntas como: ¿cuántas ofertas tengo publicadas?, ¿cuántas postulaciones he recibido?, ¿qué oferta es la más popular?, ¿cuántos candidatos están en entrevista, contratados o rechazados?. Todo es de solo lectura excepto la acción de sincronización que sube datos.
+Además, si el postulante está registrado en el sistema, puede ver si ya se ha postulado a alguna oferta y cuál es el estado de su postulación.
 
 ### ¿Cómo funciona paso a paso?
 
-**Paso 1: Subir postulaciones al servidor**
-1. La empresa ingresa su NIT y toca "Subir postulaciones".
-2. La app busca en la base de datos local todas las postulaciones asociadas a ese NIT.
-3. La app envía un POST al servidor: `go.php?action=subir_postulaciones` con los datos en JSON.
-4. El servidor guarda cada postulación en la tabla `POSTULACION` de MySQL.
-   - Si la postulación ya existe, la actualiza.
-   - Si es nueva, la inserta.
-5. Muestra un resumen de cuántas se insertaron y cuántas se actualizaron.
+#### Acción: Buscar ofertas por edad
 
-**Paso 2: Consultar resumen de reclutamiento**
-1. La empresa toca "Resumen".
-2. La app envía: `go.php?action=resumen_reclutamiento&nit=X`.
-3. El servidor devuelve:
-   - Total de ofertas activas (no han caducado).
-   - Total de ofertas vencidas.
-   - Total de postulaciones recibidas.
-   - Promedio de postulaciones por oferta.
-4. La app muestra los números en pantalla.
+1. El postulante abre la pantalla de búsqueda de ofertas.
+2. Ingresa su edad actual y, opcionalmente, su identificador de postulante.
+3. La aplicación envía una solicitud al servidor con la edad ingresada.
+4. El servidor consulta la tabla de ofertas de trabajo y filtra aquellas donde:
+   - La edad del postulante está entre la edad mínima y máxima requerida.
+   - La fecha de caducidad de la oferta no ha pasado (o no tiene fecha de vencimiento).
+5. Si se proporcionó el identificador del postulante, también consulta la tabla de postulaciones para saber si ya aplicó a cada oferta.
+6. Los resultados se ordenan desde la oferta más reciente a la más antigua.
+7. El servidor devuelve la lista de ofertas disponibles con todos sus detalles (empresa, título, grado requerido, experiencia, fechas, edades).
+8. La aplicación muestra las ofertas en una lista y el postulante puede ver los detalles de cada una.
 
-**Paso 3: Consultar ranking de ofertas**
-1. La empresa toca "Ranking ofertas".
-2. La app envía: `go.php?action=ranking_ofertas&nit=X`.
-3. El servidor cruza `OFERTA_TRABAJO` con `POSTULACION`, cuenta las postulaciones por oferta y las ordena de mayor a menor.
-4. La app muestra la lista ordenada con:
-   - Posición en el ranking.
-   - ID y título de la oferta.
-   - Cantidad de postulaciones recibidas.
-   - Fechas de publicación y caducidad.
+#### Acción: Postularse a una oferta
 
-**Paso 4: Consultar postulantes por estado**
-1. La empresa toca "Postulantes por estado".
-2. La app envía: `go.php?action=postulantes_por_estado&nit=X`.
-3. El servidor agrupa las postulaciones por `ESTADO_PROCESO` y cuenta cuántas hay en cada grupo.
-4. La app muestra:
-   - Pendiente: cantidad.
-   - Entrevista: cantidad.
-   - Contratado: cantidad.
-   - Rechazado: cantidad.
+1. El postulante selecciona una oferta de la lista y ve sus detalles.
+2. Presiona el botón "Postularme".
+3. La aplicación envía al servidor el identificador del postulante, el NIT de la empresa y el identificador de la oferta.
+4. El servidor realiza las siguientes validaciones:
+   - Verifica que la oferta exista en el sistema.
+   - Verifica que la oferta no haya caducado.
+   - Verifica que el postulante no se haya postulado anteriormente a la misma oferta.
+5. Si todo está correcto:
+   - Genera un nuevo identificador de postulación con formato POS### (ej. POS001, POS002).
+   - Registra la postulación en la tabla de postulaciones con estado "En Proceso".
+6. Si ocurre algún error:
+   - La postulación no se registra.
+   - El servidor devuelve un mensaje claro indicando el motivo (oferta no existe, ya caducó, ya postulado).
 
 ### ¿Quién lo usa?
-- El gerente de empresa (para tomar decisiones informadas sobre sus procesos de contratación).
+
+- Postulantes que buscan empleo según su edad.
+- Personas que desean postularse a ofertas de trabajo.
+- Administradores que consultan ofertas disponibles.
 
 ---
 
-## Nota técnica sobre la fuente de datos
 
-Ambos servicios consultan la base de datos **MySQL remota** alojada en InfinityFree a través del archivo `go.php` que actúa como enrutador. La app Android se conecta mediante la clase `ApiService`, que utiliza la interfaz `fetch()` para hacer las peticiones HTTP. Para que el Servicio 8 funcione correctamente, primero debe ejecutarse la acción "Subir postulaciones" para sincronizar los datos locales de la tabla `POSTULACION` con el servidor. Sin ese paso, los reportes devolverán resultados vacíos.
+
+## Servicio 8: Dashboard empresarial para reclutamiento
+
+### ¿Qué hace?
+
+Este servicio le da a la empresa un panel de control (dashboard) donde puede ver rápida y fácilmente cómo van sus procesos de reclutamiento. La empresa ingresa su NIT y obtiene de un solo golpe toda la información importante.
+
+### ¿Cómo funciona paso a paso?
+
+1. La empresa abre la pantalla del dashboard e ingresa su NIT.
+2. Presiona el botón "Cargar".
+3. El sistema busca toda la información relacionada con esa empresa y la muestra en pantalla.
+4. La empresa puede ver tres cosas principales:
+
+   **Resumen general:**
+   - Cuántas ofertas de trabajo tiene activas (las que siguen vigentes).
+   - Cuántas ofertas han vencido.
+   - Cuántas postulaciones ha recibido en total.
+   - En promedio, cuántas personas se postulan por cada oferta.
+
+   **Ranking de ofertas más populares:**
+   - Una lista de todas sus ofertas ordenadas desde la que tiene más postulaciones hasta la que tiene menos.
+   - Así la empresa sabe rápidamente qué vacantes están llamando más la atención.
+
+   **Postulaciones por estado:**
+   - Un desglose que muestra cuántos postulantes están en cada etapa del proceso (En Proceso, Activo, Contratado, Rechazado, etc.).
+   - Cada estado se muestra con su cantidad y su porcentaje.
+
+5. Toda esta información se actualiza cada vez que la empresa carga el dashboard.
+
+### ¿Quién lo usa?
+
+- Empresas que publican ofertas de trabajo.
+- Departamentos de recursos humanos.
+- Reclutadores que gestionan el proceso de selección.
+- Gerentes que toman decisiones basadas en datos de reclutamiento.
+
+

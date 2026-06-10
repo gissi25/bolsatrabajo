@@ -200,29 +200,6 @@ object ApiService {
         fetch("postular", "POST", body.toString())
     }
 
-    suspend fun subirPostulaciones(postulaciones: List<JSONObject>): JSONObject = withContext(Dispatchers.Main) {
-        val arr = JSONArray()
-        for (p in postulaciones) arr.put(p)
-        val body = JSONObject().apply { put("postulaciones", arr) }
-        fetch("subir_postulaciones", "POST", body.toString())
-    }
-
-    suspend fun getResumenReclutamiento(nit: String): JSONObject = withContext(Dispatchers.Main) {
-        fetch("resumen_reclutamiento&nit=$nit")
-    }
-
-    suspend fun getRankingOfertas(nit: String): List<JSONObject> = withContext(Dispatchers.Main) {
-        val json = fetch("ranking_ofertas&nit=$nit")
-        val arr = json.getJSONArray("data")
-        (0 until arr.length()).map { arr.getJSONObject(it) }
-    }
-
-    suspend fun getPostulantesPorEstado(nit: String): List<JSONObject> = withContext(Dispatchers.Main) {
-        val json = fetch("postulantes_por_estado&nit=$nit")
-        val arr = json.getJSONArray("data")
-        (0 until arr.length()).map { arr.getJSONObject(it) }
-    }
-
     suspend fun getDashboardEmpresa(nit: String): JSONObject = withContext(Dispatchers.Main) {
         fetch("dashboard_empresa&nit=$nit")
     }
