@@ -622,6 +622,27 @@
     <string name="s6_estado_actualizado">Status atualizado com sucesso</string>
     <string name="s6_estado_filtro">Filtrar por status</string>
 
+    <!-- Servicio 8: Dashboard da Empresa -->
+    <string name="s8_titulo">Dashboard da Empresa</string>
+    <string name="s8_hint_nit">NIT da empresa</string>
+    <string name="s8_btn_cargar">Carregar</string>
+    <string name="s8_error_nit">Insira um NIT válido</string>
+    <string name="s8_ofertas_activas">Ofertas ativas</string>
+    <string name="s8_ofertas_vencidas">Ofertas vencidas</string>
+    <string name="s8_total_postulaciones">Total candidaturas</string>
+    <string name="s8_postulaciones_count">%d candidaturas</string>
+    <string name="s8_publicacion">Publicação</string>
+    <string name="s8_caducidad">Validade</string>
+    <string name="s8_sin_ofertas">Nenhuma oferta registrada</string>
+    <string name="s8_sin_postulaciones">Nenhuma candidatura registrada</string>
+    <string name="s8_seccion_resumen">Resumo</string>
+    <string name="s8_seccion_ranking">Ranking de Vagas</string>
+    <string name="s8_seccion_estados">Candidatos por Estado</string>
+    <string name="s8_estado_activo">Ativo</string>
+    <string name="s8_estado_en_proceso">Em Processo</string>
+    <string name="s8_estado_contratado">Contratado</string>
+    <string name="s8_estado_rechazado">Rejeitado</string>
+
     <!-- Servicio 9: Matching -->
     <string name="s9_titulo">Matching de Vagas</string>
     <string name="s9_modo_postulante">Candidato → Vagas</string>

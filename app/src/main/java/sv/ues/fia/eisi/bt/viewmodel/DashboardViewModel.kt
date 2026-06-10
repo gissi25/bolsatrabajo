@@ -52,7 +52,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             1 -> getApplication<Application>().getString(R.string.servicio_1_titulo)
             2 -> getApplication<Application>().getString(R.string.servicio_2_titulo)
             7 -> "Filtrado de ofertas por edad"
-            8 -> "Inteligencia empresarial"
+            8 -> getApplication<Application>().getString(R.string.s8_titulo)
             else -> "Servicio $id"
         }
         DashboardItem.WebService(id, title)
