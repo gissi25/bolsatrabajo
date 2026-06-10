@@ -16,6 +16,7 @@ import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.service.ApiService
+import sv.ues.fia.eisi.bt.utils.setupMarqueeTitle
 
 class Servicio2Fragment : Fragment() {
 
@@ -50,7 +51,10 @@ class Servicio2Fragment : Fragment() {
         tvMercado = view.findViewById(R.id.tvMercado)
         containerResultado = view.findViewById(R.id.containerResultado)
 
-        view.findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener { findNavController().navigateUp() }
+        view.findViewById<MaterialToolbar>(R.id.toolbar).apply {
+            setNavigationOnClickListener { findNavController().navigateUp() }
+            setupMarqueeTitle()
+        }
 
         btnAnalizar.setOnClickListener { analizar() }
     }

@@ -25,6 +25,7 @@ import org.json.JSONObject
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.service.ApiService
 import sv.ues.fia.eisi.bt.utils.Constants
+import sv.ues.fia.eisi.bt.utils.setupMarqueeTitle
 
 class Servicio7Fragment : Fragment() {
 
@@ -63,8 +64,9 @@ class Servicio7Fragment : Fragment() {
             tilPostulante.visibility = View.GONE
         }
 
-        view.findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener {
-            findNavController().navigateUp()
+        view.findViewById<MaterialToolbar>(R.id.toolbar).apply {
+            setNavigationOnClickListener { findNavController().navigateUp() }
+            setupMarqueeTitle()
         }
 
         adapter = OfertaAdapter(ofertasList, { oferta -> mostrarDetalle(oferta) }, requireContext(), !esAdmin)

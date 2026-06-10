@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.service.ApiService
+import sv.ues.fia.eisi.bt.utils.setupMarqueeTitle
 
 class Servicio9Fragment : Fragment() {
 
@@ -64,7 +65,10 @@ class Servicio9Fragment : Fragment() {
         rvResultados = view.findViewById(R.id.rvResultados)
         swipeRefresh = view.findViewById(R.id.swipeRefresh)
 
-        view.findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener { findNavController().navigateUp() }
+        view.findViewById<MaterialToolbar>(R.id.toolbar).apply {
+            setNavigationOnClickListener { findNavController().navigateUp() }
+            setupMarqueeTitle()
+        }
 
         swipeRefresh.setOnRefreshListener {
             val nit = spEmpresa.tag?.toString()
