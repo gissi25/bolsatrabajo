@@ -45,7 +45,7 @@ class Servicio6Fragment : Fragment() {
     data class MuniItem(val id: String, val nombre: String) {
         override fun toString() = nombre
     }
-    data class EstadoItem(val nombre: String) {
+    data class DistItem(val id: String, val nombre: String) {
         override fun toString() = nombre
     }
     data class ResultadoOferta(
@@ -57,12 +57,6 @@ class Servicio6Fragment : Fragment() {
         val yaPostulado: Boolean = true,
         val estadoPostulacion: String? = null
     )
-    data class ResultadoPostulante(
-        val idPostulante: String, val nombre: String, val apellido: String,
-        val email: String, val telefono: String, val grado: String,
-        val idPostulacion: String, val idOferta: String, val ofertaTitulo: String,
-        val fechaAplicacion: String, val estadoProceso: String
-    )
 
     private lateinit var toolbar: MaterialToolbar
     private lateinit var progressBar: View
@@ -72,10 +66,9 @@ class Servicio6Fragment : Fragment() {
     private lateinit var tilDepartamento: TextInputLayout
     private lateinit var spMunicipio: MaterialAutoCompleteTextView
     private lateinit var tilMunicipio: TextInputLayout
+    private lateinit var spDistrito: MaterialAutoCompleteTextView
+    private lateinit var tilDistrito: TextInputLayout
     private lateinit var btnBuscar: MaterialButton
-    private lateinit var cardEstado: MaterialCardView
-    private lateinit var spEstado: MaterialAutoCompleteTextView
-    private lateinit var tilEstado: TextInputLayout
     private lateinit var cardResultados: MaterialCardView
     private lateinit var tvTituloResultados: TextView
     private lateinit var rvResultados: RecyclerView
@@ -83,17 +76,11 @@ class Servicio6Fragment : Fragment() {
 
     private var role = Constants.ROLE_POSTULANTE
     private var idPostulanteSeleccionado: String? = null
-    private var nitEmpresaSeleccionado: String? = null
 
     private val departamentos = mutableListOf<DeptoItem>()
     private val municipios = mutableListOf<MuniItem>()
+    private val distritos = mutableListOf<DistItem>()
     private val ofertasResultados = mutableListOf<ResultadoOferta>()
-    private val postulantesResultados = mutableListOf<ResultadoPostulante>()
-
-    private val estados = listOf(
-        EstadoItem(""), EstadoItem("Pendiente"), EstadoItem("Activo"),
-        EstadoItem("En Proceso"), EstadoItem("Contratado"), EstadoItem("Rechazado")
-    )
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_servicio6, container, false)
@@ -105,7 +92,6 @@ class Servicio6Fragment : Fragment() {
         val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
         role = Constants.ROLE_ADMIN
         idPostulanteSeleccionado = prefs.getString(Constants.KEY_ID_POSTULANTE, null)
-        nitEmpresaSeleccionado = prefs.getString(Constants.KEY_NIT_EMPRESA, null)
 
         toolbar = view.findViewById(R.id.toolbar)
         progressBar = view.findViewById(R.id.progressBar)
@@ -115,10 +101,9 @@ class Servicio6Fragment : Fragment() {
         tilDepartamento = view.findViewById(R.id.tilDepartamento)
         spMunicipio = view.findViewById(R.id.spMunicipio)
         tilMunicipio = view.findViewById(R.id.tilMunicipio)
+        spDistrito = view.findViewById(R.id.spDistrito)
+        tilDistrito = view.findViewById(R.id.tilDistrito)
         btnBuscar = view.findViewById(R.id.btnBuscar)
-        cardEstado = view.findViewById(R.id.cardEstado)
-        spEstado = view.findViewById(R.id.spEstado)
-        tilEstado = view.findViewById(R.id.tilEstado)
         cardResultados = view.findViewById(R.id.cardResultados)
         tvTituloResultados = view.findViewById(R.id.tvTituloResultados)
         rvResultados = view.findViewById(R.id.rvResultados)
@@ -144,37 +129,8 @@ class Servicio6Fragment : Fragment() {
     private fun configurarVistaPostulante() {
         toolbar.title = getString(R.string.s6_titulo_postulante)
         cardFiltros.visibility = View.VISIBLE
-        cardEstado.visibility = View.GONE
         btnBuscar.setOnClickListener { buscarOfertasLocal() }
         cargarDepartamentos()
-    }
-
-    private fun configurarVistaEmpresa() {
-        toolbar.title = getString(R.string.s6_titulo_empresa)
-        cardFiltros.visibility = View.GONE
-        cardEstado.visibility = View.VISIBLE
-
-        val estadoAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, estados)
-        spEstado.setAdapter(estadoAdapter)
-        spEstado.setThreshold(0)
-        spEstado.setOnItemClickListener { _, _, pos, _ ->
-            if (pos >= 0 && pos < estados.size) {
-                spEstado.setTag(estados[pos].nombre)
-                buscarPostulantesLocal()
-            }
-        }
-        tilEstado.setOnClickListener { spEstado.showDropDown() }
-
-        if (nitEmpresaSeleccionado.isNullOrBlank()) {
-            val lista = queryEmpresasParaSeleccion()
-            if (lista.isEmpty()) {
-                Snackbar.make(requireView(), getString(R.string.s5_sin_perfil), Snackbar.LENGTH_LONG).show()
-            } else {
-                mostrarDialogoSeleccionEmpresa(lista)
-            }
-        } else {
-            buscarPostulantesLocal()
-        }
     }
 
     // =========================================================================
@@ -219,6 +175,7 @@ class Servicio6Fragment : Fragment() {
                 withContext(Dispatchers.IO) {
                     municipios.clear()
                     val db = ConnectionHelper(requireContext()).writableDb
+                    municipios.add(MuniItem("", "Todos"))
                     val c = db.rawQuery("SELECT ID_MUNICIPIO, NOMBRE_MUNICIPIO FROM MUNICIPIO WHERE ID_DEPARTAMENTO = ? ORDER BY NOMBRE_MUNICIPIO", arrayOf(idDepartamento))
                     while (c.moveToNext()) {
                         municipios.add(MuniItem(c.getString(0), c.getString(1)))
@@ -232,9 +189,47 @@ class Servicio6Fragment : Fragment() {
                 spMunicipio.setOnItemClickListener { _, _, pos, _ ->
                     if (pos >= 0 && pos < municipios.size) {
                         spMunicipio.setTag(municipios[pos].id)
+                        val deptoId = spDepartamento.tag?.toString() ?: ""
+                        val muniId = municipios[pos].id
+                        if (muniId.isNotBlank()) {
+                            cargarDistritos(deptoId, muniId)
+                        } else {
+                            distritos.clear()
+                            val adapterDist = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, distritos)
+                            spDistrito.setAdapter(adapterDist)
+                            spDistrito.setText("", false)
+                            spDistrito.setTag("")
+                        }
                     }
                 }
                 tilMunicipio.setOnClickListener { spMunicipio.showDropDown() }
+            } catch (_: Exception) {}
+        }
+    }
+
+    private fun cargarDistritos(idDepartamento: String, idMunicipio: String) {
+        lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    distritos.clear()
+                    val db = ConnectionHelper(requireContext()).writableDb
+                    distritos.add(DistItem("", "Todos"))
+                    val c = db.rawQuery("SELECT ID_DISTRITO, NOMBRE_DISTRITO FROM DISTRITO WHERE ID_DEPARTAMENTO = ? AND ID_MUNICIPIO = ? ORDER BY NOMBRE_DISTRITO", arrayOf(idDepartamento, idMunicipio))
+                    while (c.moveToNext()) {
+                        distritos.add(DistItem(c.getString(0), c.getString(1)))
+                    }
+                    c.close()
+                    db.close()
+                }
+                val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, distritos)
+                spDistrito.setAdapter(adapter)
+                spDistrito.setThreshold(0)
+                spDistrito.setOnItemClickListener { _, _, pos, _ ->
+                    if (pos >= 0 && pos < distritos.size) {
+                        spDistrito.setTag(distritos[pos].id)
+                    }
+                }
+                tilDistrito.setOnClickListener { spDistrito.showDropDown() }
             } catch (_: Exception) {}
         }
     }
@@ -272,8 +267,23 @@ class Servicio6Fragment : Fragment() {
                                 if (idxMuni >= 0) {
                                     spMunicipio.setText(municipios[idxMuni].nombre, false)
                                     spMunicipio.setTag(muniId)
-                                    
-                                    buscarOfertasInicialesPostulante(deptoId, muniId, distId)
+
+                                    cargarDistritos(deptoId, muniId)
+
+                                    if (distId != null) {
+                                        spDistrito.postDelayed({
+                                            val idxDist = distritos.indexOfFirst { it.id == distId }
+                                            if (idxDist >= 0) {
+                                                spDistrito.setText(distritos[idxDist].nombre, false)
+                                                spDistrito.setTag(distId)
+                                            }
+                                            buscarOfertasInicialesPostulante(deptoId, muniId, distId)
+                                        }, 400)
+                                    } else {
+                                        spDistrito.postDelayed({
+                                            buscarOfertasInicialesPostulante(deptoId, muniId, null)
+                                        }, 400)
+                                    }
                                 }
                             }, 400)
                         } else {
@@ -303,6 +313,7 @@ class Servicio6Fragment : Fragment() {
         lifecycleScope.launch {
             try {
                 val muniId = spMunicipio.tag?.toString()
+                val distId = spDistrito.tag?.toString()
                 try {
                     val remoteData = ApiService.filtrarOfertasPorUbicacion(deptoId, muniId)
                     withContext(Dispatchers.IO) {
@@ -316,6 +327,7 @@ class Servicio6Fragment : Fragment() {
                     val lista = mutableListOf<ResultadoOferta>()
                     val db = ConnectionHelper(requireContext()).writableDb
                     val muniId = spMunicipio.tag?.toString()
+                    val distId = spDistrito.tag?.toString()
                     val sql = buildString {
                         append("SELECT o.NIT, o.ID_OFERTA, o.TITULO_PUESTO, o.FECHA_PUBLICACION, o.FECHA_CADUCIDAD, ")
                         append("o.EXPERIENCIA_ANIOS, o.EDAD_MINIMA, o.EDAD_MAXIMA, o.DESCRIPCION_OFERTA_TRABAJO, o.ID_GRADO_ACADEMICO, ")
@@ -332,12 +344,14 @@ class Servicio6Fragment : Fragment() {
                         append("LEFT JOIN POSTULACION p ON o.NIT = p.NIT AND o.ID_OFERTA = p.ID_OFERTA AND p.ID_POSTULANTE = ? ")
                         append("WHERE e.ID_DISTRITO_DEPTO = ? ")
                         if (!muniId.isNullOrBlank()) append("AND e.ID_DISTRITO_MUNICIPIO = ? ")
+                        if (!distId.isNullOrBlank()) append("AND e.ID_DISTRITO_ID = ? ")
                         append("ORDER BY o.FECHA_PUBLICACION DESC")
                     }
                     val argsList = mutableListOf<String>()
                     argsList.add(idPostulanteSeleccionado ?: "")
                     argsList.add(deptoId)
                     if (!muniId.isNullOrBlank()) argsList.add(muniId)
+                    if (!distId.isNullOrBlank()) argsList.add(distId)
                     val c = db.rawQuery(sql, argsList.toTypedArray())
                     while (c.moveToNext()) {
                         val idPostulacion = c.getString(16)
@@ -382,149 +396,6 @@ class Servicio6Fragment : Fragment() {
                 }
             }
         }
-    }
-
-    // =========================================================================
-    // BUSCAR POSTULANTES POR EMPRESA (LOCAL SQLITE)
-    // =========================================================================
-
-    private fun buscarPostulantesLocal() {
-        val nit = nitEmpresaSeleccionado
-        if (nit.isNullOrBlank()) {
-            Snackbar.make(requireView(), "No se encontró NIT de empresa", Snackbar.LENGTH_LONG).show()
-            return
-        }
-
-        progressBar.visibility = View.VISIBLE
-        cardResultados.visibility = View.GONE
-        tvSinResultados.visibility = View.GONE
-
-        lifecycleScope.launch {
-            try {
-                val estado = spEstado.tag?.toString()?.takeIf { it.isNotBlank() }
-                try {
-                    val remoteData = ApiService.filtrarPostulantesPorEmpresa(nit, estado)
-                    withContext(Dispatchers.IO) {
-                        syncPostulantesDeEmpresa(remoteData)
-                    }
-                } catch (e: Exception) {
-                    Log.e("Servicio6", "Error al sincronizar postulantes", e)
-                }
-
-                val resultados = withContext(Dispatchers.IO) {
-                    val lista = mutableListOf<ResultadoPostulante>()
-                    val db = ConnectionHelper(requireContext()).writableDb
-                    val sql = buildString {
-                        append("SELECT po.ID_POSTULANTE, po.NOMBRE, po.APELLIDO, po.EMAIL, po.TELEFONO_CELULAR, ")
-                        append("IFNULL(g.NOMBRE_GRADO,''), p.ID_POSTULACION, p.ID_OFERTA, IFNULL(o.TITULO_PUESTO,''), ")
-                        append("p.FECHA_APLICACION, p.ESTADO_PROCESO ")
-                        append("FROM POSTULACION p ")
-                        append("INNER JOIN POSTULANTE po ON p.ID_POSTULANTE = po.ID_POSTULANTE ")
-                        append("LEFT JOIN OFERTA_TRABAJO o ON p.NIT = o.NIT AND p.ID_OFERTA = o.ID_OFERTA ")
-                        append("LEFT JOIN GRADO_ACADEMICO g ON po.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO ")
-                        append("WHERE p.NIT = ? ")
-                        if (estado != null) append("AND p.ESTADO_PROCESO = ? ")
-                        append("ORDER BY p.FECHA_APLICACION DESC")
-                    }
-                    val args = if (estado != null) arrayOf(nit, estado) else arrayOf(nit)
-                    val c = db.rawQuery(sql, args)
-                    while (c.moveToNext()) {
-                        lista.add(ResultadoPostulante(
-                            idPostulante = c.getString(0), nombre = c.getString(1) ?: "",
-                            apellido = c.getString(2) ?: "", email = c.getString(3) ?: "",
-                            telefono = c.getString(4) ?: "", grado = c.getString(5) ?: "",
-                            idPostulacion = c.getString(6), idOferta = c.getString(7) ?: "",
-                            ofertaTitulo = c.getString(8) ?: "", fechaAplicacion = c.getString(9) ?: "",
-                            estadoProceso = c.getString(10) ?: ""
-                        ))
-                    }
-                    c.close()
-                    db.close()
-                    lista
-                }
-
-                postulantesResultados.clear()
-                postulantesResultados.addAll(resultados)
-
-                withContext(Dispatchers.Main) {
-                    progressBar.visibility = View.GONE
-                    if (postulantesResultados.isEmpty()) {
-                        cardResultados.visibility = View.GONE
-                        tvSinResultados.visibility = View.VISIBLE
-                    } else {
-                        tvSinResultados.visibility = View.GONE
-                        cardResultados.visibility = View.VISIBLE
-                        tvTituloResultados.text = getString(R.string.s6_n_postulantes, postulantesResultados.size)
-                        rvResultados.adapter = PostulanteAdapter(postulantesResultados) { item -> mostrarDetallePostulante(item) }
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    progressBar.visibility = View.GONE
-                    Snackbar.make(requireView(), "Error: ${e.message}", Snackbar.LENGTH_LONG).show()
-                }
-            }
-        }
-    }
-
-    // =========================================================================
-    // DIALOGO SELECCION EMPRESA
-    // =========================================================================
-
-    private fun queryEmpresasParaSeleccion(): List<Pair<String, String>> {
-        val lista = mutableListOf<Pair<String, String>>()
-        try {
-            val db = ConnectionHelper(requireContext()).writableDb
-            val c = db.rawQuery("SELECT NIT, NOMBRE_EMPRESA FROM EMPRESA ORDER BY NOMBRE_EMPRESA", null)
-            while (c.moveToNext()) lista.add(Pair(c.getString(0), c.getString(1)))
-            c.close(); db.close()
-        } catch (_: Exception) {}
-        return lista
-    }
-
-    private fun mostrarDialogoSeleccionEmpresa(lista: List<Pair<String, String>>) {
-        val context = requireContext()
-        val sv = ScrollView(context).apply { setPadding(24, 16, 24, 8) }
-        val container = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
-        val tvTitulo = TextView(context).apply {
-            text = getString(R.string.s5_seleccionar_empresa)
-            textSize = 16f
-            setTypeface(null, android.graphics.Typeface.BOLD)
-            setPadding(0, 0, 0, 12)
-            setTextColor(0xFF0D1A4A.toInt())
-        }
-        container.addView(tvTitulo)
-        val radioGroup = android.widget.RadioGroup(context)
-        val radioButtons = lista.mapIndexed { idx, (nit, nombre) ->
-            android.widget.RadioButton(context).apply {
-                text = "$nit — $nombre"
-                tag = idx
-                id = View.generateViewId()
-                setPadding(4, 8, 4, 8)
-                setTextColor(0xDD000000.toInt())
-            }
-        }
-        radioButtons.forEach { radioGroup.addView(it) }
-        if (radioButtons.isNotEmpty()) radioGroup.check(radioButtons.first().id)
-        container.addView(radioGroup)
-        sv.addView(container)
-        AlertDialog.Builder(context)
-            .setView(sv)
-            .setPositiveButton(getString(R.string.s5_confirmar)) { _, _ ->
-                val checked = radioGroup.findViewById<android.widget.RadioButton>(radioGroup.checkedRadioButtonId)
-                val idx = checked?.tag as? Int
-                if (idx != null && idx < lista.size) {
-                    nitEmpresaSeleccionado = lista[idx].first
-                    requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
-                        .edit { putString(Constants.KEY_NIT_EMPRESA, nitEmpresaSeleccionado) }
-                    buscarPostulantesLocal()
-                }
-            }
-            .setNegativeButton(getString(R.string.cancel)) { _, _ ->
-                Snackbar.make(requireView(), getString(R.string.s5_sin_perfil), Snackbar.LENGTH_LONG).show()
-                progressBar.visibility = View.GONE
-            }
-            .create().apply { setCancelable(false); show() }
     }
 
     // =========================================================================
@@ -586,87 +457,6 @@ class Servicio6Fragment : Fragment() {
             }
         }
         dialog.show()
-    }
-
-    // =========================================================================
-    // DIALOGO DETALLE POSTULANTE
-    // =========================================================================
-
-    private fun mostrarDetallePostulante(item: ResultadoPostulante) {
-        val context = requireContext()
-        val sv = ScrollView(context).apply { setPadding(24, 16, 24, 16) }
-        val container = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
-
-        val tvNombre = TextView(context).apply {
-            text = "${item.nombre} ${item.apellido}"
-            textSize = 18f
-            setTextColor(0xFF0D1A4A.toInt())
-            setTypeface(null, android.graphics.Typeface.BOLD)
-        }
-        container.addView(tvNombre)
-        container.addView(View(context).apply {
-            layoutParams = LinearLayout.LayoutParams(48, 3.toDp(context)).apply { topMargin = 6; bottomMargin = 12 }
-            setBackgroundColor(0xFF3366FF.toInt())
-        })
-        addSectionHeader(context, container, getString(R.string.s6_datos_postulante))
-        addDetailRow(context, container, "ID Postulante", item.idPostulante)
-        addDetailRow(context, container, getString(R.string.hint_correo_electronico), item.email.ifBlank { "—" })
-        addDetailRow(context, container, getString(R.string.hint_telefono_celular), item.telefono.ifBlank { "—" })
-        addDetailRow(context, container, getString(R.string.s5_grado), item.grado.ifBlank { "—" })
-
-        container.addView(View(context).apply {
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1).apply { topMargin = 16; bottomMargin = 4 }
-            setBackgroundColor(0x22000000)
-        })
-        addSectionHeader(context, container, getString(R.string.s6_datos_postulacion))
-        addDetailRow(context, container, getString(R.string.s6_oferta_aplicada), item.ofertaTitulo.ifBlank { item.idOferta })
-        addDetailRow(context, container, getString(R.string.s5_estado), item.estadoProceso.ifBlank { "—" })
-        addDetailRow(context, container, getString(R.string.s5_fecha), item.fechaAplicacion.ifBlank { "—" })
-        addDetailRow(context, container, "ID Postulación", item.idPostulacion)
-
-        if (role == Constants.ROLE_EMPRESA) {
-            container.addView(View(context).apply {
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1).apply { topMargin = 16; bottomMargin = 12 }
-                setBackgroundColor(0x22000000)
-            })
-            MaterialButton(context).apply {
-                text = getString(R.string.s6_cambiar_estado)
-                setTextColor(0xFFFFFFFF.toInt())
-                setBackgroundColor(0xFF3366FF.toInt())
-                cornerRadius = 24.toDp(context)
-                isAllCaps = false
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 56.toDp(context))
-                setOnClickListener { mostrarDialogoCambiarEstado(item) }
-            }.also { container.addView(it) }
-        }
-
-        sv.addView(container)
-        AlertDialog.Builder(context).setView(sv).setPositiveButton(getString(R.string.cerrar), null).show()
-    }
-
-    private fun mostrarDialogoCambiarEstado(item: ResultadoPostulante) {
-        val estadosList = listOf("Pendiente", "Activo", "En Proceso", "Contratado", "Rechazado")
-        val labels = estadosList.toTypedArray()
-        AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.s6_cambiar_estado_para, "${item.nombre} ${item.apellido}"))
-            .setItems(labels) { _, which ->
-                val nuevoEstado = estadosList[which]
-                lifecycleScope.launch {
-                    try {
-                        withContext(Dispatchers.IO) {
-                            val db = ConnectionHelper(requireContext()).writableDb
-                            db.execSQL("UPDATE POSTULACION SET ESTADO_PROCESO = ? WHERE ID_POSTULACION = ?", arrayOf(nuevoEstado, item.idPostulacion))
-                            db.close()
-                        }
-                        Snackbar.make(requireView(), getString(R.string.s6_estado_actualizado), Snackbar.LENGTH_SHORT).show()
-                        buscarPostulantesLocal()
-                    } catch (e: Exception) {
-                        Snackbar.make(requireView(), "Error: ${e.message}", Snackbar.LENGTH_LONG).show()
-                    }
-                }
-            }
-            .setNegativeButton(getString(R.string.cancel), null)
-            .show()
     }
 
     // =========================================================================
@@ -962,27 +752,6 @@ class Servicio6Fragment : Fragment() {
         }
     }
 
-    inner class PostulanteAdapter(
-        private val items: List<ResultadoPostulante>,
-        private val onClick: (ResultadoPostulante) -> Unit
-    ) : RecyclerView.Adapter<PostulanteAdapter.VH>() {
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val v = LayoutInflater.from(parent.context).inflate(android.R.layout.simple_list_item_2, parent, false)
-            return VH(v)
-        }
-        override fun onBindViewHolder(h: VH, pos: Int) {
-            val item = items[pos]
-            h.tv1.text = "${item.nombre} ${item.apellido} · ${item.estadoProceso}"
-            h.tv2.text = "${item.ofertaTitulo.ifBlank { item.idOferta }} · ${item.fechaAplicacion}"
-            h.itemView.setOnClickListener { onClick(item) }
-        }
-        override fun getItemCount() = items.size
-        inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-            val tv1: TextView = view.findViewById(android.R.id.text1)
-            val tv2: TextView = view.findViewById(android.R.id.text2)
-        }
-    }
-
     // =========================================================================
     // UTILIDADES
     // =========================================================================
@@ -1042,44 +811,6 @@ class Servicio6Fragment : Fragment() {
                         db.execSQL("INSERT INTO DETALLE_REQUISITO (NIT, ID_OFERTA, ID_DETALLE, DESCRIPCION_REQUISITO) VALUES ('$nit', '$idOferta', '${escapar(r.optString("ID_DETALLE"))}', '${escapar(r.optString("DESCRIPCION_REQUISITO"))}')")
                     }
                 }
-            }
-            db.setTransactionSuccessful()
-        } finally {
-            db.endTransaction()
-            db.close()
-        }
-    }
-
-    private fun syncPostulantesDeEmpresa(json: JSONObject) {
-        val db = ConnectionHelper(requireContext()).writableDb
-        try {
-            val arr = json.getJSONArray("data")
-            db.beginTransaction()
-            for (i in 0 until arr.length()) {
-                val item = arr.getJSONObject(i)
-                val idPostulante = escapar(item.optString("ID_POSTULANTE"))
-                val nombre = escapar(item.optString("NOMBRE"))
-                val apellido = escapar(item.optString("APELLIDO"))
-                val email = escapar(item.optString("EMAIL"))
-                val telCel = escapar(item.optString("TELEFONO_CELULAR"))
-                val idGrado = item.optString("ID_GRADO_ACADEMICO", "").takeIf { it.isNotEmpty() } ?: "NULL"
-                val idPostulacion = escapar(item.optString("ID_POSTULACION"))
-                val idOferta = escapar(item.optString("ID_OFERTA"))
-                val fecha = escapar(item.optString("FECHA_APLICACION"))
-                val estado = escapar(item.optString("ESTADO_PROCESO"))
-                val nit = nitEmpresaSeleccionado ?: ""
-
-                if (idGrado != "NULL") {
-                    db.execSQL("INSERT OR IGNORE INTO GRADO_ACADEMICO (ID_GRADO_ACADEMICO, NOMBRE_GRADO) VALUES ($idGrado, 'Grado $idGrado')")
-                }
-
-                db.execSQL("INSERT OR IGNORE INTO POSTULANTE (ID_POSTULANTE, ID_GENERO, ID_TIPO_DOCUMENTO, ID_GRADO_ACADEMICO, NOMBRE, APELLIDO) VALUES ('$idPostulante', 1, 1, $idGrado, '$nombre', '$apellido')")
-                db.execSQL("UPDATE POSTULANTE SET NOMBRE = '$nombre', APELLIDO = '$apellido', EMAIL = '$email', TELEFONO_CELULAR = '$telCel', ID_GRADO_ACADEMICO = $idGrado WHERE ID_POSTULANTE = '$idPostulante'")
-
-                db.execSQL("INSERT OR IGNORE INTO OFERTA_TRABAJO (NIT, ID_OFERTA, TITULO_PUESTO) VALUES ('$nit', '$idOferta', '${escapar(item.optString("TITULO_PUESTO"))}')")
-                db.execSQL("UPDATE OFERTA_TRABAJO SET TITULO_PUESTO = '${escapar(item.optString("TITULO_PUESTO"))}' WHERE NIT = '$nit' AND ID_OFERTA = '$idOferta'")
-
-                db.execSQL("INSERT OR REPLACE INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO) VALUES ('$idPostulacion', '$nit', '$idOferta', '$idPostulante', '$fecha', '$estado')")
             }
             db.setTransactionSuccessful()
         } finally {

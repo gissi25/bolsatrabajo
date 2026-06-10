@@ -88,6 +88,13 @@ class Servicio5Fragment : Fragment() {
     private lateinit var btnVerMasCatalogos: MaterialButton
     private val catalogosList = mutableListOf<PreviewItem>()
 
+    private lateinit var cardPerfil: MaterialCardView
+    private lateinit var tvPerfilNombre: TextView
+    private lateinit var tvPerfilEmail: TextView
+    private lateinit var tvPerfilTelefono: TextView
+    private lateinit var tvPerfilGrado: TextView
+    private lateinit var tvPerfilUbicacion: TextView
+
     private var role = Constants.ROLE_POSTULANTE
     private var idPostulanteSeleccionado: String? = null
     private var nitEmpresaSeleccionado: String? = null
@@ -137,6 +144,12 @@ class Servicio5Fragment : Fragment() {
         cardCatalogos = view.findViewById(R.id.cardCatalogos)
         tvBadgeCatalogos = view.findViewById(R.id.tvBadgeCatalogos); tvStatusCatalogos = view.findViewById(R.id.tvStatusCatalogos)
         rvCatalogos = view.findViewById(R.id.rvCatalogos); btnVerMasCatalogos = view.findViewById(R.id.btnVerMasCatalogos)
+        cardPerfil = view.findViewById(R.id.cardPerfil)
+        tvPerfilNombre = view.findViewById(R.id.tvPerfilNombre)
+        tvPerfilEmail = view.findViewById(R.id.tvPerfilEmail)
+        tvPerfilTelefono = view.findViewById(R.id.tvPerfilTelefono)
+        tvPerfilGrado = view.findViewById(R.id.tvPerfilGrado)
+        tvPerfilUbicacion = view.findViewById(R.id.tvPerfilUbicacion)
 
         toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
         btnReintentar.setOnClickListener { iniciarDescarga() }
@@ -154,11 +167,12 @@ class Servicio5Fragment : Fragment() {
     }
 
     private fun aplicarVisibilidadPorRol() {
-        cardCatalogos.visibility = View.VISIBLE
-        cardPostulantes.visibility = View.VISIBLE
+        cardCatalogos.visibility = View.GONE
+        cardPostulantes.visibility = View.GONE
         cardOfertas.visibility = View.VISIBLE
         cardPostulaciones.visibility = View.VISIBLE
         cardEmpresas.visibility = View.VISIBLE
+        cardPerfil.visibility = View.VISIBLE
     }
 
     private fun verificarSeleccion() {
@@ -318,6 +332,9 @@ class Servicio5Fragment : Fragment() {
             null to null
         }
 
+        // --- PERFIL ---
+        mostrarPerfil()
+
         // --- OFERTAS ---
         if (estadoOfertas) {
             tvStatusOfertas.text = getString(R.string.s5_descargado); tvStatusOfertas.setTextColor(0xFF2E7D32.toInt())
@@ -345,32 +362,8 @@ class Servicio5Fragment : Fragment() {
         } else { tvStatusEmpresas.text = "Error"; tvStatusEmpresas.setTextColor(0xFFC62828.toInt()) }
         rvEmpresas.adapter = PreviewAdapter(empresasList)
         btnVerMasEmpresas.text = getString(R.string.s5_ver_mas, empresasList.size)
-        btnVerMasEmpresas.setOnClickListener { mostrarSubDialogo("EMPRESA", null) }
+        btnVerMasEmpresas.setOnClickListener { mostrarTodasEmpresas() }
         btnVerMasEmpresas.visibility = if (empresasList.isNotEmpty()) View.VISIBLE else View.GONE
-
-        // --- POSTULANTES ---
-        if (cardPostulantes.visibility == View.VISIBLE) {
-            if (estadoPostulantes) {
-                tvStatusPostulantes.text = getString(R.string.s5_descargado); tvStatusPostulantes.setTextColor(0xFF2E7D32.toInt())
-                postulantesList.clear(); postulantesList.addAll(queryPostulantesPreview()); tvBadgePostulantes.text = postulantesList.size.toString()
-            } else { tvStatusPostulantes.text = "Error"; tvStatusPostulantes.setTextColor(0xFFC62828.toInt()) }
-            rvPostulantes.adapter = PreviewAdapter(postulantesList)
-            btnVerMasPostulantes.text = getString(R.string.s5_ver_mas, postulantesList.size)
-            btnVerMasPostulantes.setOnClickListener { mostrarSubDialogo("POSTULANTE") }
-            btnVerMasPostulantes.visibility = if (postulantesList.isNotEmpty()) View.VISIBLE else View.GONE
-        }
-
-        // --- CATALOGOS ---
-        if (cardCatalogos.visibility == View.VISIBLE) {
-            if (estadoCatalogos) {
-                tvStatusCatalogos.text = getString(R.string.s5_descargado); tvStatusCatalogos.setTextColor(0xFF2E7D32.toInt())
-                catalogosList.clear(); catalogosList.addAll(queryCatalogosPreview()); tvBadgeCatalogos.text = getString(R.string.s5_n_tablas, catalogosList.size)
-            } else { tvStatusCatalogos.text = "Error"; tvStatusCatalogos.setTextColor(0xFFC62828.toInt()) }
-            rvCatalogos.adapter = PreviewAdapter(catalogosList)
-            btnVerMasCatalogos.text = getString(R.string.s5_ver_catalogos)
-            btnVerMasCatalogos.setOnClickListener { mostrarDialogoCatalogos() }
-            btnVerMasCatalogos.visibility = if (catalogosList.isNotEmpty()) View.VISIBLE else View.GONE
-        }
     }
 
     // =========================================================================
@@ -406,7 +399,13 @@ class Servicio5Fragment : Fragment() {
         val lista = mutableListOf<PreviewItem>()
         try {
             val db = ConnectionHelper(requireContext()).writableDb
-            val c = db.rawQuery("SELECT NOMBRE_EMPRESA, NIT, CONTACTO_DIRECTO FROM EMPRESA ORDER BY NOMBRE_EMPRESA LIMIT 5", null)
+            val sql = if (!idPostulanteSeleccionado.isNullOrBlank()) {
+                "SELECT DISTINCT e.NOMBRE_EMPRESA, e.NIT, e.CONTACTO_DIRECTO FROM EMPRESA e INNER JOIN POSTULACION p ON e.NIT = p.NIT WHERE p.ID_POSTULANTE = ? ORDER BY e.NOMBRE_EMPRESA LIMIT 5"
+            } else {
+                "SELECT NOMBRE_EMPRESA, NIT, CONTACTO_DIRECTO FROM EMPRESA ORDER BY NOMBRE_EMPRESA LIMIT 5"
+            }
+            val args = if (!idPostulanteSeleccionado.isNullOrBlank()) arrayOf(idPostulanteSeleccionado!!) else null
+            val c = db.rawQuery(sql, args)
             while (c.moveToNext()) { val nombre = c.getString(0) ?: ""; val nit = c.getString(1) ?: ""; val contacto = c.getString(2) ?: ""; lista.add(PreviewItem("$nombre · $nit", if (!contacto.isNullOrBlank()) contacto else "—")) }
             c.close(); db.close()
         } catch (_: Exception) {}
@@ -423,6 +422,31 @@ class Servicio5Fragment : Fragment() {
             db.close()
         } catch (_: Exception) {}
         return lista
+    }
+
+    private fun mostrarPerfil() {
+        if (idPostulanteSeleccionado.isNullOrBlank()) {
+            tvPerfilNombre.text = getString(R.string.s5_sin_perfil)
+            tvPerfilEmail.text = ""
+            tvPerfilTelefono.text = ""
+            tvPerfilGrado.text = ""
+            tvPerfilUbicacion.text = ""
+            return
+        }
+        try {
+            val db = ConnectionHelper(requireContext()).writableDb
+            val c = db.rawQuery("SELECT p.NOMBRE, p.APELLIDO, p.EMAIL, p.TELEFONO_CELULAR, IFNULL(g.NOMBRE_GRADO,''), IFNULL(d.NOMBRE_DISTRITO,''), IFNULL(m.NOMBRE_MUNICIPIO,''), IFNULL(dep.NOMBRE_DEPARTAMENTO,'') FROM POSTULANTE p LEFT JOIN GRADO_ACADEMICO g ON p.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO LEFT JOIN DISTRITO d ON p.ID_DISTRITO_DEPTO = d.ID_DEPARTAMENTO AND p.ID_DISTRITO_MUNICIPIO = d.ID_MUNICIPIO AND p.ID_DISTRITO_ID = d.ID_DISTRITO LEFT JOIN MUNICIPIO m ON p.ID_DISTRITO_DEPTO = m.ID_DEPARTAMENTO AND p.ID_DISTRITO_MUNICIPIO = m.ID_MUNICIPIO LEFT JOIN DEPARTAMENTO dep ON p.ID_DISTRITO_DEPTO = dep.ID_DEPARTAMENTO WHERE p.ID_POSTULANTE = ?", arrayOf(idPostulanteSeleccionado!!))
+            if (c.moveToFirst()) {
+                tvPerfilNombre.text = "${c.getString(0) ?: ""} ${c.getString(1) ?: ""}"
+                tvPerfilEmail.text = c.getString(2)?.takeIf { it.isNotBlank() } ?: "—"
+                tvPerfilTelefono.text = c.getString(3)?.takeIf { it.isNotBlank() } ?: "—"
+                tvPerfilGrado.text = c.getString(4)?.takeIf { it.isNotBlank() } ?: "—"
+                val ubicacion = listOfNotNull(c.getString(5)?.takeIf { it.isNotBlank() }, c.getString(6)?.takeIf { it.isNotBlank() }, c.getString(7)?.takeIf { it.isNotBlank() }).joinToString(", ")
+                tvPerfilUbicacion.text = ubicacion.ifBlank { "—" }
+            }
+            c.close()
+            db.close()
+        } catch (_: Exception) {}
     }
 
     private fun queryCatalogosPreview(): List<PreviewItem> {
@@ -460,6 +484,58 @@ class Servicio5Fragment : Fragment() {
                 else for (fila in datos) { val tv = TextView(context).apply { text = fila; textSize = 12f; setPadding(0, 6, 0, 6); setTextColor(0xDD000000.toInt()) }; container.addView(tv); container.addView(View(context).apply { layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1); setBackgroundColor(0x11000000) }) }
                 sv.addView(container); AlertDialog.Builder(context).setTitle("$nombreTabla — ${datos.size} ${getString(R.string.records)}").setView(sv).setPositiveButton(getString(R.string.cerrar), null).show()
             } catch (e: Exception) { Snackbar.make(requireView(), "Error: ${e.message}", Snackbar.LENGTH_SHORT).show() }
+        }
+    }
+
+    private fun mostrarTodasEmpresas() {
+        lifecycleScope.launch {
+            try {
+                val db = ConnectionHelper(requireContext()).writableDb
+                val sql = if (!idPostulanteSeleccionado.isNullOrBlank()) {
+                    "SELECT DISTINCT e.NOMBRE_EMPRESA, e.NIT, e.CONTACTO_DIRECTO FROM EMPRESA e INNER JOIN POSTULACION p ON e.NIT = p.NIT WHERE p.ID_POSTULANTE = ? ORDER BY e.NOMBRE_EMPRESA"
+                } else {
+                    "SELECT NOMBRE_EMPRESA, NIT, CONTACTO_DIRECTO FROM EMPRESA ORDER BY NOMBRE_EMPRESA"
+                }
+                val args = if (!idPostulanteSeleccionado.isNullOrBlank()) arrayOf(idPostulanteSeleccionado!!) else null
+                val c = db.rawQuery(sql, args)
+                val lista = mutableListOf<PreviewItem>()
+                while (c.moveToNext()) {
+                    val nombre = c.getString(0) ?: ""
+                    val nit = c.getString(1) ?: ""
+                    val contacto = c.getString(2) ?: ""
+                    lista.add(PreviewItem("$nombre · $nit", if (!contacto.isNullOrBlank()) contacto else "—", nit = nit))
+                }
+                c.close()
+                db.close()
+
+                val context = requireContext()
+                val sv = ScrollView(context).apply { setPadding(24, 16, 24, 16) }
+                val container = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+
+                if (lista.isEmpty()) {
+                    val tv = TextView(context).apply { text = getString(R.string.s3_sin_datos); textSize = 14f; gravity = Gravity.CENTER; setPadding(0, 24, 0, 24) }
+                    container.addView(tv)
+                } else {
+                    for (item in lista) {
+                        val itemView = LayoutInflater.from(context).inflate(R.layout.card_preview_fila, container, false)
+                        itemView.findViewById<TextView>(R.id.tvLinea1).text = item.linea1
+                        itemView.findViewById<TextView>(R.id.tvLinea2).text = item.linea2
+                        container.addView(itemView)
+                        container.addView(View(context).apply {
+                            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1)
+                            setBackgroundColor(0x11000000)
+                        })
+                    }
+                }
+                sv.addView(container)
+                AlertDialog.Builder(context)
+                    .setTitle("Empresas — ${lista.size} registros")
+                    .setView(sv)
+                    .setPositiveButton(getString(R.string.cerrar), null)
+                    .show()
+            } catch (e: Exception) {
+                Snackbar.make(requireView(), "Error: ${e.message}", Snackbar.LENGTH_SHORT).show()
+            }
         }
     }
 
