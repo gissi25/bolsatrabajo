@@ -214,12 +214,12 @@ class Servicio7Fragment : Fragment() {
                 val chip = h.tvEstadoChip
                 chip.visibility = View.VISIBLE
                 when (estado) {
-                    "Activo" -> {
+                    "activo" -> {
                         chip.text = context.getString(R.string.s7_chip_activo)
                         chip.setTextColor(Color.parseColor("#FFFFFF"))
                         chip.setBackgroundColor(Color.parseColor("#2196F3"))
                     }
-                    "En Proceso" -> {
+                    "en proceso" -> {
                         chip.text = context.getString(R.string.s7_chip_en_proceso)
                         chip.setTextColor(Color.parseColor("#FFFFFF"))
                         chip.setBackgroundColor(Color.parseColor("#FF9800"))

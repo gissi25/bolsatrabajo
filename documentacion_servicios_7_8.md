@@ -36,7 +36,7 @@ Además, si el postulante está registrado en el sistema, puede ver si ya se ha 
    - Verifica que el postulante no se haya postulado anteriormente a la misma oferta.
 5. Si todo está correcto:
    - Genera un nuevo identificador de postulación con formato POS### (ej. POS001, POS002).
-   - Registra la postulación en la tabla de postulaciones con estado "En Proceso".
+   - Registra la postulación en la tabla de postulaciones con estado "en proceso".
 6. Si ocurre algún error:
    - La postulación no se registra.
    - El servidor devuelve un mensaje claro indicando el motivo (oferta no existe, ya caducó, ya postulado).
@@ -75,7 +75,7 @@ Este servicio le da a la empresa un panel de control (dashboard) donde puede ver
    - Así la empresa sabe rápidamente qué vacantes están llamando más la atención.
 
    **Postulaciones por estado:**
-   - Un desglose que muestra cuántos postulantes están en cada etapa del proceso (En Proceso, Activo, Contratado, Rechazado, etc.).
+   - Un desglose que muestra cuántos postulantes están en cada etapa del proceso (activo, en proceso, contratado, rechazado, etc.).
    - Cada estado se muestra con su cantidad y su porcentaje.
 
 5. Toda esta información se actualiza cada vez que la empresa carga el dashboard.

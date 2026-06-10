@@ -111,7 +111,7 @@ switch ($action) {
 
         $stmt = $conn->prepare("
             INSERT INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO)
-            VALUES (?, ?, ?, ?, CURDATE(), 'En Proceso')
+            VALUES (?, ?, ?, ?, CURDATE(), 'en proceso')
         ");
         $stmt->bind_param("ssss", $idPostulacion, $nit, $idOferta, $idPostulante);
         $stmt->execute();
@@ -120,7 +120,7 @@ switch ($action) {
             "exito" => true,
             "mensaje" => "Postulación exitosa",
             "id_postulacion" => $idPostulacion,
-            "estado" => "En Proceso"
+            "estado" => "en proceso"
         ], JSON_UNESCAPED_UNICODE);
         break;
 }
