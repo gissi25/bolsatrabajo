@@ -29,14 +29,15 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:orientation="horizontal"
             android:padding="16dp">
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilNit"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="12dp"
                 android:hint="@string/s8_hint_nit"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
@@ -45,50 +46,20 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="text"
+                    android:imeOptions="actionDone"
                     android:paddingTop="16dp"
                     android:paddingBottom="16dp" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCargar"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:weightSum="3">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnResumen"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="4dp"
-                    android:text="@string/s8_btn_resumen"
-                    android:textSize="11sp"
-                    style="@style/AestheticButton" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnRanking"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginHorizontal="4dp"
-                    android:text="@string/s8_btn_ranking"
-                    android:textSize="11sp"
-                    style="@style/Widget.Material3.Button.TonalButton"
-                    android:textColor="?attr/colorPrimary" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnEstados"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="4dp"
-                    android:text="@string/s8_btn_estados"
-                    android:textSize="11sp"
-                    style="@style/Widget.Material3.Button.TonalButton"
-                    android:textColor="?attr/colorPrimary" />
-
-            </LinearLayout>
+                android:layout_gravity="center"
+                android:text="@string/s8_btn_cargar"
+                android:paddingHorizontal="20dp"
+                style="@style/AestheticButton" />
 
         </LinearLayout>
 
@@ -103,35 +74,22 @@
         android:indeterminateTint="?attr/colorPrimary"
         android:visibility="gone" />
 
-    <FrameLayout
+    <ScrollView
+        android:id="@+id/scrollDashboard"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="8dp"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="16dp"
+        android:visibility="gone">
 
-        <ScrollView
-            android:id="@+id/scrollResultados"
+        <LinearLayout
+            android:id="@+id/containerDashboard"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingHorizontal="12dp"
-            android:paddingBottom="16dp">
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
 
-            <LinearLayout
-                android:id="@+id/containerResultados"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-
-        </ScrollView>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvRanking"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingHorizontal="12dp"
-            android:paddingBottom="16dp"
-            android:visibility="gone" />
-
-    </FrameLayout>
+    </ScrollView>
 
 </LinearLayout>

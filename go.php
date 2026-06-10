@@ -31,11 +31,12 @@ $route = [
     'filtrar_postulantes_empresa_estado' => 6,
     // Servicio 7: busqueda de ofertas y postulacion
     'ofertas_por_edad' => 7, 'postular' => 7,
-    // Servicio 8: inteligencia empresarial
+    // Servicio 8: dashboard de empresa
     'subir_postulaciones' => 8,
     'resumen_reclutamiento' => 8,
     'ranking_ofertas' => 8,
     'postulantes_por_estado' => 8,
+    'dashboard_empresa' => 8,
     // Servicio 9: matching postulante ↔ oferta
     'postulantes' => 9, 'matching_postulante' => 9, 'matching_oferta' => 9, 'ofertas_vigentes' => 9,
     // Servicio 10: mis postulaciones

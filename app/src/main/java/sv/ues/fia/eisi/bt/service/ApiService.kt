@@ -223,6 +223,10 @@ object ApiService {
         (0 until arr.length()).map { arr.getJSONObject(it) }
     }
 
+    suspend fun getDashboardEmpresa(nit: String): JSONObject = withContext(Dispatchers.Main) {
+        fetch("dashboard_empresa&nit=$nit")
+    }
+
     suspend fun recomendarFormacion(idPostulante: String): JSONObject = withContext(Dispatchers.Main) {
         val body = JSONObject().apply { put("id_postulante", idPostulante) }
         fetch("recomendar_formacion", "POST", body.toString())

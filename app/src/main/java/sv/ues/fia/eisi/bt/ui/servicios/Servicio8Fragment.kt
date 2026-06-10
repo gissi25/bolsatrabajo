@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.ScrollView
@@ -12,8 +13,6 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
@@ -27,16 +26,17 @@ import sv.ues.fia.eisi.bt.service.ApiService
 class Servicio8Fragment : Fragment() {
 
     private lateinit var etNit: TextInputEditText
-    private lateinit var btnResumen: MaterialButton
-    private lateinit var btnRanking: MaterialButton
-    private lateinit var btnEstados: MaterialButton
+    private lateinit var btnCargar: MaterialButton
     private lateinit var progressBar: ProgressBar
-    private lateinit var scrollResultados: ScrollView
-    private lateinit var containerResultados: LinearLayout
-    private lateinit var rvRanking: RecyclerView
-    private lateinit var rankingAdapter: RankingAdapter
+    private lateinit var scrollDashboard: ScrollView
+    private lateinit var containerDashboard: LinearLayout
 
-    private val rankingList = mutableListOf<JSONObject>()
+    private val mapaColores = mapOf(
+        "Activo" to Color.parseColor("#2196F3"),
+        "En Proceso" to Color.parseColor("#FF9800"),
+        "Contratado" to Color.parseColor("#4CAF50"),
+        "Rechazado" to Color.parseColor("#F44336")
+    )
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_servicio8, container, false)
@@ -46,25 +46,22 @@ class Servicio8Fragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         etNit = view.findViewById(R.id.etNit)
-        btnResumen = view.findViewById(R.id.btnResumen)
-        btnRanking = view.findViewById(R.id.btnRanking)
-        btnEstados = view.findViewById(R.id.btnEstados)
+        btnCargar = view.findViewById(R.id.btnCargar)
         progressBar = view.findViewById(R.id.progressBar)
-        scrollResultados = view.findViewById(R.id.scrollResultados)
-        containerResultados = view.findViewById(R.id.containerResultados)
-        rvRanking = view.findViewById(R.id.rvRanking)
+        scrollDashboard = view.findViewById(R.id.scrollDashboard)
+        containerDashboard = view.findViewById(R.id.containerDashboard)
 
         view.findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener {
             findNavController().navigateUp()
         }
 
-        rankingAdapter = RankingAdapter(rankingList)
-        rvRanking.layoutManager = LinearLayoutManager(requireContext())
-        rvRanking.adapter = rankingAdapter
-
-        btnResumen.setOnClickListener { consultarResumen() }
-        btnRanking.setOnClickListener { consultarRanking() }
-        btnEstados.setOnClickListener { consultarEstados() }
+        btnCargar.setOnClickListener { cargarDashboard() }
+        etNit.setOnEditorActionListener { _, action, _ ->
+            if (action == EditorInfo.IME_ACTION_DONE) {
+                cargarDashboard()
+                true
+            } else false
+        }
     }
 
     private fun getNit(): String? {
@@ -78,198 +75,215 @@ class Servicio8Fragment : Fragment() {
 
     private fun mostrarCargando(mostrar: Boolean) {
         progressBar.visibility = if (mostrar) View.VISIBLE else View.GONE
-        btnResumen.isEnabled = !mostrar
-        btnRanking.isEnabled = !mostrar
-        btnEstados.isEnabled = !mostrar
+        btnCargar.isEnabled = !mostrar
         etNit.isEnabled = !mostrar
-    }
-
-    private fun mostrarCards() {
-        scrollResultados.visibility = View.VISIBLE
-        rvRanking.visibility = View.GONE
-        containerResultados.removeAllViews()
-    }
-
-    private fun mostrarRanking() {
-        scrollResultados.visibility = View.GONE
-        rvRanking.visibility = View.VISIBLE
-        rankingList.clear()
-        rankingAdapter.notifyDataSetChanged()
-    }
-
-    private fun agregarKpi(valor: String, label: String) {
-        val card = layoutInflater.inflate(R.layout.card_s8_kpi, containerResultados, false)
-        card.findViewById<TextView>(R.id.tvKpiValue).text = valor
-        card.findViewById<TextView>(R.id.tvKpiLabel).text = label
-        containerResultados.addView(card)
+        if (mostrar) {
+            scrollDashboard.visibility = View.GONE
+            containerDashboard.removeAllViews()
+        }
     }
 
     private fun agregarTituloSeccion(titulo: String) {
         val tv = TextView(requireContext())
         tv.text = titulo
-        tv.setTextSize(16f)
+        tv.setTextSize(17f)
         tv.setTypeface(null, android.graphics.Typeface.BOLD)
         tv.setTextColor(requireContext().getColor(R.color.primary))
-        tv.setPadding(0, 24, 0, 12)
-        containerResultados.addView(tv)
+        tv.setPadding(0, 20, 0, 8)
+        containerDashboard.addView(tv)
     }
 
-    private fun consultarResumen() {
-        val nit = getNit() ?: return
-        mostrarCargando(true)
-        mostrarCards()
+    private fun agregarKpiRow(ofertasActivas: Int, ofertasVencidas: Int, totalPostulaciones: Int) {
+        val row = LinearLayout(requireContext())
+        row.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        row.orientation = LinearLayout.HORIZONTAL
 
-        lifecycleScope.launch {
-            try {
-                val res = ApiService.getResumenReclutamiento(nit)
-                if (res.optBoolean("exito", false)) {
-                    agregarTituloSeccion("Resumen de reclutamiento")
+        val inflater = LayoutInflater.from(requireContext())
 
-                    val row = LinearLayout(requireContext())
-                    row.layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    )
-                    row.orientation = LinearLayout.HORIZONTAL
+        val card1 = inflater.inflate(R.layout.card_s8_kpi, row, false)
+        card1.findViewById<TextView>(R.id.tvKpiValue).text = ofertasActivas.toString()
+        card1.findViewById<TextView>(R.id.tvKpiLabel).text = getString(R.string.s8_ofertas_activas)
+        row.addView(card1)
 
-                    val inflater = LayoutInflater.from(requireContext())
+        val card2 = inflater.inflate(R.layout.card_s8_kpi, row, false)
+        card2.findViewById<TextView>(R.id.tvKpiValue).text = ofertasVencidas.toString()
+        card2.findViewById<TextView>(R.id.tvKpiLabel).text = getString(R.string.s8_ofertas_vencidas)
+        row.addView(card2)
 
-                    val card1 = inflater.inflate(R.layout.card_s8_kpi, row, false)
-                    card1.findViewById<TextView>(R.id.tvKpiValue).text = res.optInt("ofertas_activas", 0).toString()
-                    card1.findViewById<TextView>(R.id.tvKpiLabel).text = getString(R.string.s8_ofertas_activas)
-                    row.addView(card1)
+        val card3 = inflater.inflate(R.layout.card_s8_kpi, row, false)
+        card3.findViewById<TextView>(R.id.tvKpiValue).text = totalPostulaciones.toString()
+        card3.findViewById<TextView>(R.id.tvKpiLabel).text = getString(R.string.s8_total_postulaciones)
+        row.addView(card3)
 
-                    val card2 = inflater.inflate(R.layout.card_s8_kpi, row, false)
-                    card2.findViewById<TextView>(R.id.tvKpiValue).text = res.optInt("ofertas_vencidas", 0).toString()
-                    card2.findViewById<TextView>(R.id.tvKpiLabel).text = getString(R.string.s8_ofertas_vencidas)
-                    row.addView(card2)
-
-                    val card3 = inflater.inflate(R.layout.card_s8_kpi, row, false)
-                    card3.findViewById<TextView>(R.id.tvKpiValue).text = res.optInt("total_postulaciones", 0).toString()
-                    card3.findViewById<TextView>(R.id.tvKpiLabel).text = getString(R.string.s8_total_postulaciones)
-                    row.addView(card3)
-
-                    containerResultados.addView(row)
-                } else {
-                    throw Exception(res.optString("error", "Error del servidor"))
-                }
-            } catch (e: Exception) {
-                Snackbar.make(requireView(), e.message?.take(300) ?: "Error de conexión", Snackbar.LENGTH_LONG).show()
-            } finally {
-                mostrarCargando(false)
-            }
-        }
+        containerDashboard.addView(row)
     }
 
-    private fun consultarRanking() {
-        val nit = getNit() ?: return
-        mostrarCargando(true)
-        mostrarRanking()
-
-        lifecycleScope.launch {
-            try {
-                val ofertas = ApiService.getRankingOfertas(nit)
-                rankingList.addAll(ofertas)
-                rankingAdapter.notifyDataSetChanged()
-                if (ofertas.isEmpty()) {
-                    Snackbar.make(requireView(), "No se encontraron ofertas para este NIT.", Snackbar.LENGTH_LONG).show()
-                }
-            } catch (e: Exception) {
-                Snackbar.make(requireView(), e.message?.take(300) ?: "Error de conexión", Snackbar.LENGTH_LONG).show()
-            } finally {
-                mostrarCargando(false)
-            }
-        }
-    }
-
-    private fun consultarEstados() {
-        val nit = getNit() ?: return
-        mostrarCargando(true)
-        mostrarCards()
-
-        lifecycleScope.launch {
-            try {
-                val estados = ApiService.getPostulantesPorEstado(nit)
-                if (estados.isEmpty()) {
-                    Snackbar.make(requireView(), "No hay postulaciones registradas para este NIT.", Snackbar.LENGTH_LONG).show()
-                } else {
-                    agregarTituloSeccion("Postulantes por estado")
-
-                    val mapaColores = mapOf(
-                        "Activo" to Color.parseColor("#2196F3"),
-                        "En Proceso" to Color.parseColor("#FF9800"),
-                        "Contratado" to Color.parseColor("#4CAF50"),
-                        "Rechazado" to Color.parseColor("#F44336")
-                    )
-                    val mapaEstados = mapOf(
-                        "Activo" to getString(R.string.s8_estado_activo),
-                        "En Proceso" to getString(R.string.s8_estado_en_proceso),
-                        "Contratado" to getString(R.string.s8_estado_contratado),
-                        "Rechazado" to getString(R.string.s8_estado_rechazado)
-                    )
-
-                    val row = LinearLayout(requireContext())
-                    row.layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    )
-                    row.orientation = LinearLayout.HORIZONTAL
-
-                    val inflater = LayoutInflater.from(requireContext())
-
-                    estados.forEach { e ->
-                        val estado = e.optString("ESTADO_PROCESO", "—")
-                        val total = e.optInt("total", 0)
-                        val label = mapaEstados[estado] ?: estado
-                        val color = mapaColores[estado] ?: Color.parseColor("#9E9E9E")
-
-                        val card = inflater.inflate(R.layout.card_s8_estado, row, false)
-                        card.findViewById<TextView>(R.id.tvEstadoCount).text = total.toString()
-                        card.findViewById<TextView>(R.id.tvEstadoLabel).text = label
-                        (card as MaterialCardView).strokeColor = color
-                        row.addView(card)
-                    }
-
-                    containerResultados.addView(row)
-                }
-            } catch (e: Exception) {
-                Snackbar.make(requireView(), e.message?.take(300) ?: "Error de conexión", Snackbar.LENGTH_LONG).show()
-            } finally {
-                mostrarCargando(false)
-            }
-        }
-    }
-
-    private class RankingAdapter(
-        private val items: List<JSONObject>
-    ) : RecyclerView.Adapter<RankingAdapter.VH>() {
-        override fun onCreateViewHolder(p: ViewGroup, vt: Int): VH {
-            val v = LayoutInflater.from(p.context).inflate(R.layout.card_s8_ranking, p, false)
-            return VH(v)
+    private fun agregarRanking(ranking: List<JSONObject>) {
+        if (ranking.isEmpty()) {
+            val tv = TextView(requireContext())
+            tv.text = getString(R.string.s8_sin_ofertas)
+            tv.setTextSize(14f)
+            tv.setPadding(4, 8, 0, 0)
+            containerDashboard.addView(tv)
+            return
         }
 
-        override fun onBindViewHolder(h: VH, pos: Int) {
-            val item = items[pos]
-            h.tvPosicion.text = "#${pos + 1}"
-            h.tvTitulo.text = item.optString("TITULO_PUESTO", "—")
-            h.tvIdOferta.text = "ID: ${item.optString("ID_OFERTA", "—")}"
-            h.tvPostulaciones.text = "${item.optInt("total_postulaciones", 0)} postulaciones"
+        val inflater = LayoutInflater.from(requireContext())
+
+        ranking.forEachIndexed { index, item ->
+            val card = inflater.inflate(R.layout.card_s8_ranking, containerDashboard, false)
+            card.findViewById<TextView>(R.id.tvPosicion).text = "#${index + 1}"
+            card.findViewById<TextView>(R.id.tvTitulo).text = item.optString("TITULO_PUESTO", "—")
+            card.findViewById<TextView>(R.id.tvIdOferta).text = "ID: ${item.optString("ID_OFERTA", "—")}"
+            card.findViewById<TextView>(R.id.tvPostulaciones).text = getString(R.string.s8_postulaciones_count, item.optInt("total_postulaciones", 0))
 
             val pub = item.optString("FECHA_PUBLICACION", "").take(10)
             val cad = item.optString("FECHA_CADUCIDAD", "").take(10)
-            h.tvPublicacion.text = "Publicación: $pub"
-            h.tvCaducidad.text = "Caducidad: $cad"
+            card.findViewById<TextView>(R.id.tvPublicacion).text = "${getString(R.string.s8_publicacion)}: $pub"
+            card.findViewById<TextView>(R.id.tvCaducidad).text = "${getString(R.string.s8_caducidad)}: $cad"
+
+            containerDashboard.addView(card)
+        }
+    }
+
+    private fun agregarEstados(estados: List<JSONObject>) {
+        if (estados.isEmpty()) {
+            val tv = TextView(requireContext())
+            tv.text = getString(R.string.s8_sin_postulaciones)
+            tv.setTextSize(14f)
+            tv.setPadding(4, 8, 0, 0)
+            containerDashboard.addView(tv)
+            return
         }
 
-        override fun getItemCount() = items.size
+        val mapaEstados = mapOf(
+            "Activo" to getString(R.string.s8_estado_activo),
+            "En Proceso" to getString(R.string.s8_estado_en_proceso),
+            "Contratado" to getString(R.string.s8_estado_contratado),
+            "Rechazado" to getString(R.string.s8_estado_rechazado)
+        )
 
-        class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            val tvPosicion: TextView = itemView.findViewById(R.id.tvPosicion)
-            val tvTitulo: TextView = itemView.findViewById(R.id.tvTitulo)
-            val tvIdOferta: TextView = itemView.findViewById(R.id.tvIdOferta)
-            val tvPostulaciones: TextView = itemView.findViewById(R.id.tvPostulaciones)
-            val tvPublicacion: TextView = itemView.findViewById(R.id.tvPublicacion)
-            val tvCaducidad: TextView = itemView.findViewById(R.id.tvCaducidad)
+        val row = LinearLayout(requireContext())
+        row.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        row.orientation = LinearLayout.HORIZONTAL
+
+        val inflater = LayoutInflater.from(requireContext())
+
+        estados.forEach { e ->
+            val estado = e.optString("ESTADO_PROCESO", "—")
+            val total = e.optInt("total", 0)
+            val label = mapaEstados[estado] ?: estado
+            val color = mapaColores[estado] ?: Color.parseColor("#9E9E9E")
+
+            val card = inflater.inflate(R.layout.card_s8_estado, row, false)
+            card.findViewById<TextView>(R.id.tvEstadoCount).text = total.toString()
+            card.findViewById<TextView>(R.id.tvEstadoLabel).text = label
+            (card as MaterialCardView).strokeColor = color
+            row.addView(card)
+        }
+
+        containerDashboard.addView(row)
+
+        val total = estados.sumOf { it.optInt("total", 0) }
+        estados.forEach { e ->
+            val count = e.optInt("total", 0)
+            val pct = if (total > 0) (count * 100 / total) else 0
+            val label = mapaEstados[e.optString("ESTADO_PROCESO", "—")] ?: e.optString("ESTADO_PROCESO", "—")
+            agregarBarraProgreso(label, count, pct)
+        }
+    }
+
+    private fun agregarBarraProgreso(label: String, count: Int, pct: Int) {
+        val color = mapaColores.entries.firstOrNull { e ->
+            label.lowercase().contains(e.key.lowercase())
+        }?.value ?: Color.parseColor("#9E9E9E")
+
+        val row = LinearLayout(requireContext())
+        row.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        row.orientation = LinearLayout.HORIZONTAL
+        row.setPadding(4, 6, 4, 6)
+
+        val tvLabel = TextView(requireContext())
+        tvLabel.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 0.35f)
+        tvLabel.text = label
+        tvLabel.setTextSize(13f)
+        row.addView(tvLabel)
+
+        val barContainer = LinearLayout(requireContext())
+        barContainer.layoutParams = LinearLayout.LayoutParams(0, 24, 0.5f)
+        barContainer.orientation = LinearLayout.HORIZONTAL
+        barContainer.setBackgroundColor(Color.parseColor("#E0E0E0"))
+
+        val fill = View(requireContext())
+        fill.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, pct.toFloat())
+        fill.setBackgroundColor(color)
+        barContainer.addView(fill)
+        row.addView(barContainer)
+
+        val tvPct = TextView(requireContext())
+        tvPct.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 0.15f)
+        tvPct.text = "$pct%"
+        tvPct.setTextSize(12f)
+        tvPct.gravity = android.view.Gravity.END
+        row.addView(tvPct)
+
+        containerDashboard.addView(row)
+    }
+
+    private fun cargarDashboard() {
+        val nit = getNit() ?: return
+        mostrarCargando(true)
+
+        lifecycleScope.launch {
+            try {
+                val res = ApiService.getDashboardEmpresa(nit)
+                if (!res.optBoolean("exito", false)) {
+                    throw Exception(res.optString("error", "Error del servidor"))
+                }
+
+                scrollDashboard.visibility = View.VISIBLE
+
+                agregarTituloSeccion(getString(R.string.s8_seccion_resumen))
+                agregarKpiRow(
+                    res.optInt("ofertas_activas", 0),
+                    res.optInt("ofertas_vencidas", 0),
+                    res.optInt("total_postulaciones", 0)
+                )
+
+                val rankingArray = res.optJSONArray("ranking")
+                val ranking = if (rankingArray != null) {
+                    (0 until rankingArray.length()).map { rankingArray.getJSONObject(it) }
+                } else emptyList()
+
+                if (ranking.isNotEmpty()) {
+                    agregarTituloSeccion(getString(R.string.s8_seccion_ranking))
+                    agregarRanking(ranking)
+                }
+
+                val estadosArray = res.optJSONArray("estados")
+                val estados = if (estadosArray != null) {
+                    (0 until estadosArray.length()).map { estadosArray.getJSONObject(it) }
+                } else emptyList()
+
+                if (estados.isNotEmpty()) {
+                    agregarTituloSeccion(getString(R.string.s8_seccion_estados))
+                    agregarEstados(estados)
+                }
+
+            } catch (e: Exception) {
+                Snackbar.make(requireView(), e.message?.take(300) ?: "Error de conexión", Snackbar.LENGTH_LONG).show()
+            } finally {
+                mostrarCargando(false)
+            }
         }
     }
 }
