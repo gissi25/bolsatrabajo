@@ -80,7 +80,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="💼"
+                            android:text=""
                             android:textSize="15sp" />
 
                         <TextView
@@ -106,7 +106,7 @@
                             android:id="@+id/tvStatusOfertas"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="⏳"
+                            android:text=""
                             android:textSize="16sp" />
 
                     </LinearLayout>
@@ -162,7 +162,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="📋"
+                            android:text=""
                             android:textSize="15sp" />
 
                         <TextView
@@ -188,7 +188,7 @@
                             android:id="@+id/tvStatusPostulaciones"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="⏳"
+                            android:text=""
                             android:textSize="16sp" />
 
                     </LinearLayout>
@@ -244,7 +244,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="🏢"
+                            android:text=""
                             android:textSize="15sp" />
 
                         <TextView
@@ -270,7 +270,7 @@
                             android:id="@+id/tvStatusEmpresas"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="⏳"
+                            android:text=""
                             android:textSize="16sp" />
 
                     </LinearLayout>
@@ -326,7 +326,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="👤"
+                            android:text=""
                             android:textSize="15sp" />
 
                         <TextView
@@ -352,7 +352,7 @@
                             android:id="@+id/tvStatusPostulantes"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="⏳"
+                            android:text=""
                             android:textSize="16sp" />
 
                     </LinearLayout>
@@ -408,7 +408,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="📁"
+                            android:text=""
                             android:textSize="15sp" />
 
                         <TextView
@@ -434,7 +434,7 @@
                             android:id="@+id/tvStatusCatalogos"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="⏳"
+                            android:text=""
                             android:textSize="16sp" />
 
                     </LinearLayout>
