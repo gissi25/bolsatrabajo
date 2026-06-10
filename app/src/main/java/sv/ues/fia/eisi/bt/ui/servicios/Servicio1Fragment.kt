@@ -1,6 +1,7 @@
 package sv.ues.fia.eisi.bt.ui.servicios
 
 import android.app.DatePickerDialog
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -52,6 +53,7 @@ class Servicio1Fragment : Fragment() {
     private lateinit var etReqId: TextInputEditText
     private lateinit var etReqDesc: TextInputEditText
     private lateinit var btnAgregarOtra: MaterialButton
+    private lateinit var btnDescargarFormato: MaterialButton
     private lateinit var btnCargarCSV: MaterialButton
     private lateinit var btnInsertarTodas: MaterialButton
     private lateinit var btnSubirLocales: MaterialButton
@@ -92,6 +94,7 @@ class Servicio1Fragment : Fragment() {
         etDescripcion = view.findViewById(R.id.etDescripcion)
         etReqId = view.findViewById(R.id.etReqId); etReqDesc = view.findViewById(R.id.etReqDesc)
         btnAgregarOtra = view.findViewById(R.id.btnAgregarOtra)
+        btnDescargarFormato = view.findViewById(R.id.btnDescargarFormato)
         btnCargarCSV = view.findViewById(R.id.btnCargarCSV)
         btnInsertarTodas = view.findViewById(R.id.btnInsertarTodas)
         btnSubirLocales = view.findViewById(R.id.btnSubirLocales)
@@ -116,6 +119,11 @@ class Servicio1Fragment : Fragment() {
         view.findViewById<TextInputLayout>(R.id.tilFechaCad).setEndIconOnClickListener { showDatePicker(etFechaCad) }
 
         btnAgregarOtra.setOnClickListener { agregarOferta() }
+        btnDescargarFormato.setOnClickListener {
+            val url = "https://bolsadetrabajopdm.gt.tc/go.php?action=descargar_formato"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            startActivity(intent)
+        }
         btnCargarCSV.setOnClickListener { filePicker.launch("*/*") }
         btnInsertarTodas.setOnClickListener { mostrarPreview() }
         btnSubirLocales.setOnClickListener { subirDatosLocales() }
