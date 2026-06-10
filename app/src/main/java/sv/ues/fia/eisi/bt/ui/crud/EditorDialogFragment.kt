@@ -587,6 +587,8 @@ class EditorDialogFragment : DialogFragment() {
                 val optionIndex = estadoOptions.indexOfFirst { it.first == currentValue }
                 if (optionIndex >= 0) {
                     autoComplete.setText(displayOptions[optionIndex], false)
+                } else {
+                    autoComplete.setText(getString(R.string.estado_activo), false)
                 }
             }
 
@@ -1674,10 +1676,6 @@ class EditorDialogFragment : DialogFragment() {
                             return
                         }
                         val estadoValue = when (selectedText) {
-                            getString(R.string.estado_activo) -> "activo"
-                            getString(R.string.estado_en_proceso) -> "en proceso"
-                            getString(R.string.estado_contratado) -> "contratado"
-                            getString(R.string.estado_rechazado) -> "rechazado"
                             getString(R.string.estado_activo) -> "activo"
                             getString(R.string.estado_en_proceso) -> "en proceso"
                             getString(R.string.estado_contratado) -> "contratado"

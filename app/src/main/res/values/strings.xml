@@ -154,6 +154,8 @@
     <!-- Dashboard service card titles -->
     <string name="servicio_1_titulo">Carga Masiva de Ofertas</string>
     <string name="servicio_2_titulo">Recomendador de Formación</string>
+    <string name="servicio_5_titulo">Sincronización de Datos y Postulación a Ofertas</string>
+    <string name="servicio_6_titulo">Filtrado de Ofertas por Ubicación</string>
 
     <!-- Language selector -->
     <string name="idiomas">Idiomas</string>

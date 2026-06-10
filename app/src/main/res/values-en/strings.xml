@@ -154,6 +154,8 @@
     <!-- Dashboard service card titles -->
     <string name="servicio_1_titulo">Bulk Offer Upload</string>
     <string name="servicio_2_titulo">Education Recommender</string>
+    <string name="servicio_5_titulo">Data Sync and Offer Application</string>
+    <string name="servicio_6_titulo">Offer Filtering by Location</string>
 
     <!-- Language selector -->
     <string name="idiomas">Languages</string>
@@ -550,7 +552,7 @@
     <string name="req_btn_agregar">+ Add requirement</string>
 
     <!-- Servicio 5 -->
-    <string name="s5_titulo">Download from Server</string>
+    <string name="s5_titulo">Service 5 — Data Sync and Offer Application</string>
     <string name="s5_btn_descargar">Download</string>
     <string name="s5_btn_descargar_todo">Download All</string>
     <string name="s5_descargado">Downloaded</string>
@@ -602,7 +604,7 @@
     <string name="s5_confirmar">Confirm</string>
 
     <!-- Servicio 6 -->
-    <string name="s6_titulo">Filter offers</string>
+    <string name="s6_titulo">Service 6 — Offer Filtering by Location</string>
     <string name="s6_titulo_postulante">Search offers by location</string>
     <string name="s6_titulo_empresa">Applicants to my offers</string>
     <string name="s6_filtro_titulo">Filter by location</string>

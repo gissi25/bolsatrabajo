@@ -145,6 +145,7 @@ class Servicio6Fragment : Fragment() {
             try {
                 withContext(Dispatchers.IO) {
                     departamentos.clear()
+                    departamentos.add(DeptoItem("", "Todos los departamentos"))
                     val db = ConnectionHelper(requireContext()).writableDb
                     val c = db.rawQuery("SELECT ID_DEPARTAMENTO, NOMBRE_DEPARTAMENTO FROM DEPARTAMENTO ORDER BY NOMBRE_DEPARTAMENTO", null)
                     while (c.moveToNext()) {
@@ -158,8 +159,20 @@ class Servicio6Fragment : Fragment() {
                 spDepartamento.setThreshold(0)
                 spDepartamento.setOnItemClickListener { _, _, pos, _ ->
                     if (pos >= 0 && pos < departamentos.size) {
-                        spDepartamento.setTag(departamentos[pos].id)
-                        cargarMunicipios(departamentos[pos].id)
+                        val item = departamentos[pos]
+                        spDepartamento.setTag(item.id)
+                        if (item.id.isNotBlank()) {
+                            cargarMunicipios(item.id)
+                        } else {
+                            municipios.clear()
+                            distritos.clear()
+                            spMunicipio.setText("", false)
+                            spMunicipio.setTag("")
+                            spMunicipio.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, emptyList<MuniItem>()))
+                            spDistrito.setText("", false)
+                            spDistrito.setTag("")
+                            spDistrito.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, emptyList<DistItem>()))
+                        }
                     }
                 }
                 tilDepartamento.setOnClickListener { spDepartamento.showDropDown() }
@@ -302,11 +315,7 @@ class Servicio6Fragment : Fragment() {
     // =========================================================================
 
     private fun buscarOfertasLocal() {
-        val deptoId = spDepartamento.tag?.toString()
-        if (deptoId.isNullOrEmpty()) {
-            Snackbar.make(requireView(), getString(R.string.s6_error_depto), Snackbar.LENGTH_LONG).show()
-            return
-        }
+        val deptoId = spDepartamento.tag?.toString() ?: ""
 
         progressBar.visibility = View.VISIBLE
         cardResultados.visibility = View.GONE
@@ -316,13 +325,15 @@ class Servicio6Fragment : Fragment() {
             try {
                 val muniId = spMunicipio.tag?.toString()
                 val distId = spDistrito.tag?.toString()
-                try {
-                    val remoteData = ApiService.filtrarOfertasPorUbicacion(deptoId, muniId)
-                    withContext(Dispatchers.IO) {
-                        syncOfertas(remoteData)
+                if (deptoId.isNotBlank()) {
+                    try {
+                        val remoteData = ApiService.filtrarOfertasPorUbicacion(deptoId, muniId)
+                        withContext(Dispatchers.IO) {
+                            syncOfertas(remoteData)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("Servicio6", "Error al sincronizar ofertas", e)
                     }
-                } catch (e: Exception) {
-                    Log.e("Servicio6", "Error al sincronizar ofertas", e)
                 }
 
                 val resultados = withContext(Dispatchers.IO) {
@@ -344,14 +355,15 @@ class Servicio6Fragment : Fragment() {
                         append("LEFT JOIN DEPARTAMENTO dep ON e.ID_DISTRITO_DEPTO = dep.ID_DEPARTAMENTO ")
                         append("LEFT JOIN GRADO_ACADEMICO g ON o.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO ")
                         append("LEFT JOIN POSTULACION p ON o.NIT = p.NIT AND o.ID_OFERTA = p.ID_OFERTA AND p.ID_POSTULANTE = ? ")
-                        append("WHERE e.ID_DISTRITO_DEPTO = ? ")
+                        append("WHERE 1=1 ")
+                        if (deptoId.isNotBlank()) append("AND e.ID_DISTRITO_DEPTO = ? ")
                         if (!muniId.isNullOrBlank()) append("AND e.ID_DISTRITO_MUNICIPIO = ? ")
                         if (!distId.isNullOrBlank()) append("AND e.ID_DISTRITO_ID = ? ")
                         append("ORDER BY o.FECHA_PUBLICACION DESC")
                     }
                     val argsList = mutableListOf<String>()
                     argsList.add(idPostulanteSeleccionado ?: "")
-                    argsList.add(deptoId)
+                    if (deptoId.isNotBlank()) argsList.add(deptoId)
                     if (!muniId.isNullOrBlank()) argsList.add(muniId)
                     if (!distId.isNullOrBlank()) argsList.add(distId)
                     val c = db.rawQuery(sql, argsList.toTypedArray())
@@ -389,6 +401,15 @@ class Servicio6Fragment : Fragment() {
                         cardResultados.visibility = View.VISIBLE
                         tvTituloResultados.text = getString(R.string.s6_n_ofertas, ofertasResultados.size)
                         rvResultados.adapter = OfertaAdapter(ofertasResultados) { item -> mostrarDetalleOferta(item) }
+                        rvResultados.post {
+                            rvResultados.measure(
+                                View.MeasureSpec.makeMeasureSpec(rvResultados.width, View.MeasureSpec.EXACTLY),
+                                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+                            )
+                            rvResultados.layoutParams = rvResultados.layoutParams.apply {
+                                height = rvResultados.measuredHeight
+                            }
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -496,7 +517,7 @@ class Servicio6Fragment : Fragment() {
                 val fecha = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
                 withContext(Dispatchers.IO) {
                     val db = ConnectionHelper(requireContext()).writableDb
-                    db.execSQL("INSERT INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO) VALUES (?,?,?,?,?,'Pendiente')", arrayOf(idPostulacion, nit, idOferta, idPostulante, fecha))
+                    db.execSQL("INSERT INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO) VALUES (?,?,?,?,?,'activo')", arrayOf(idPostulacion, nit, idOferta, idPostulante, fecha))
                     db.close()
                 }
                 try {
@@ -506,7 +527,7 @@ class Servicio6Fragment : Fragment() {
                         put("id_oferta", idOferta)
                         put("id_postulante", idPostulante)
                         put("fecha_aplicacion", fecha)
-                        put("estado_proceso", "Pendiente")
+                        put("estado_proceso", "activo")
                     }
                     ApiService.insertarPostulacion(json)
                 } catch (e: Exception) {
@@ -515,6 +536,7 @@ class Servicio6Fragment : Fragment() {
                     return@launch
                 }
                 Snackbar.make(requireView(), getString(R.string.s5_postulacion_exitosa), Snackbar.LENGTH_LONG).show()
+                buscarOfertasLocal()
             } catch (e: Exception) {
                 Snackbar.make(requireView(), "Error: ${e.message}", Snackbar.LENGTH_LONG).show()
             }
@@ -525,15 +547,11 @@ class Servicio6Fragment : Fragment() {
         val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
         idPostulanteSeleccionado = prefs.getString(Constants.KEY_ID_POSTULANTE, null)
 
-        if (idPostulanteSeleccionado == null) {
-            val lista = queryPostulantesParaSeleccion()
-            if (lista.isEmpty()) {
-                configurarVistaPostulante()
-            } else {
-                mostrarDialogoSeleccionPostulanteAlInicio(lista)
-            }
-        } else {
+        val lista = queryPostulantesParaSeleccion()
+        if (lista.isEmpty()) {
             configurarVistaPostulante()
+        } else {
+            mostrarDialogoSeleccionPostulanteAlInicio(lista, idPostulanteSeleccionado)
         }
     }
 
@@ -548,7 +566,7 @@ class Servicio6Fragment : Fragment() {
         return lista
     }
 
-    private fun mostrarDialogoSeleccionPostulanteAlInicio(lista: List<Pair<String, String>>) {
+    private fun mostrarDialogoSeleccionPostulanteAlInicio(lista: List<Pair<String, String>>, preSeleccionado: String? = null) {
         val context = requireContext()
         val sv = ScrollView(context).apply { setPadding(24, 16, 24, 8) }
         val container = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
@@ -559,7 +577,10 @@ class Servicio6Fragment : Fragment() {
             RadioButton(context).apply { text = "$id — $nombre"; tag = idx; this.id = View.generateViewId(); setPadding(4, 8, 4, 8); setTextColor(0xDD000000.toInt()) }
         }
         radioButtons.forEach { radioGroup.addView(it) }
-        if (radioButtons.isNotEmpty()) radioGroup.check(radioButtons.first().id)
+        if (radioButtons.isNotEmpty()) {
+            val preIdx = if (!preSeleccionado.isNullOrBlank()) lista.indexOfFirst { it.first == preSeleccionado } else -1
+            radioGroup.check(radioButtons[if (preIdx >= 0) preIdx else 0].id)
+        }
         container.addView(radioGroup)
         sv.addView(container)
         AlertDialog.Builder(context)
@@ -710,6 +731,15 @@ class Servicio6Fragment : Fragment() {
                         cardResultados.visibility = View.VISIBLE
                         tvTituloResultados.text = getString(R.string.s6_n_ofertas, ofertasResultados.size)
                         rvResultados.adapter = OfertaAdapter(ofertasResultados) { item -> mostrarDetalleOferta(item) }
+                        rvResultados.post {
+                            rvResultados.measure(
+                                View.MeasureSpec.makeMeasureSpec(rvResultados.width, View.MeasureSpec.EXACTLY),
+                                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+                            )
+                            rvResultados.layoutParams = rvResultados.layoutParams.apply {
+                                height = rvResultados.measuredHeight
+                            }
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -737,7 +767,7 @@ class Servicio6Fragment : Fragment() {
             val item = items[pos]
             if (item.yaPostulado) {
                 h.tv1.text = "${item.titulo} — ${item.empresa} (Postulado)"
-                val estado = item.estadoPostulacion ?: "Pendiente"
+                val estado = item.estadoPostulacion ?: "activo"
                 h.tv2.text = "[Mis Postulaciones] · Estado: $estado · ${item.municipio}, ${item.departamento}"
                 h.tv1.setTextColor(0xFF2E7D32.toInt())
             } else {

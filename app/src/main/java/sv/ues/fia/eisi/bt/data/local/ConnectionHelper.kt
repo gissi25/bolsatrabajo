@@ -641,6 +641,7 @@ class ConnectionHelper(context: Context) :
 
     override fun onOpen(db: SQLiteDatabase) {
         super.onOpen(db)
+        db.execSQL("UPDATE POSTULACION SET ESTADO_PROCESO = 'activo' WHERE LOWER(ESTADO_PROCESO) = 'pendiente'")
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
