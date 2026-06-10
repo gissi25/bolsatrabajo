@@ -9,8 +9,11 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import java.net.URLEncoder
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -29,6 +32,7 @@ object ApiService {
     private var webView: WebView? = null
     private var challengeDone = false
     private var pendingCallback: ((JSONObject) -> Unit)? = null
+    private val fetchMutex = Mutex()
 
     private val okHttpClient = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -44,7 +48,8 @@ object ApiService {
                     val obj = JSONObject(json)
                     pendingCallback?.invoke(obj)
                 } catch (e: Exception) {
-                    pendingCallback?.invoke(JSONObject().apply { put("_error", json.take(200)) })
+                    val detalle = json.trim().ifBlank { "respuesta vacía del servidor" }
+                    pendingCallback?.invoke(JSONObject().apply { put("_error", detalle.take(200)) })
                 }
                 pendingCallback = null
             }
@@ -74,7 +79,28 @@ object ApiService {
         Log.d(TAG, "Challenge iniciado...")
     }
 
-    private suspend fun fetch(action: String, method: String = "GET", body: String? = null): JSONObject {
+    private fun parseJsonResponse(jsonStr: String): JSONObject {
+        val trimmed = jsonStr.trim()
+        if (trimmed.isEmpty()) throw Exception("Respuesta vacía del servidor")
+        if (trimmed.startsWith("<")) throw Exception("El servidor devolvió HTML en lugar de JSON")
+        val obj = JSONObject(trimmed)
+        if (obj.has("error")) throw Exception(obj.getString("error"))
+        return obj
+    }
+
+    private fun buildHttpRequest(url: String, body: String? = null): Request {
+        val builder = Request.Builder().url(url)
+        CookieManager.getInstance().getCookie(url)?.takeIf { it.isNotBlank() }?.let {
+            builder.addHeader("Cookie", it)
+        }
+        return if (body != null) {
+            builder.post(body.toRequestBody("application/json".toMediaType())).build()
+        } else {
+            builder.build()
+        }
+    }
+
+    private suspend fun fetch(action: String, method: String = "GET", body: String? = null): JSONObject = fetchMutex.withLock {
         val wv = webView ?: throw Exception("initChallenge() no llamado aún")
 
         val jsCode = when (method) {
@@ -87,6 +113,7 @@ object ApiService {
                         let r = await fetch('${BASE_URL}$action', {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
+                            credentials: 'include',
                             body: bodyStr
                         });
                         let t = await r.text();
@@ -100,7 +127,7 @@ object ApiService {
             else -> """
                 (async function() {
                     try {
-                        let r = await fetch('${BASE_URL}$action');
+                        let r = await fetch('${BASE_URL}$action', {credentials: 'include'});
                         let t = await r.text();
                         BTBridge.onResult(t);
                     } catch(e) {
@@ -117,7 +144,8 @@ object ApiService {
                     done = true
                     try {
                         if (json.has("_error")) {
-                            cont.resumeWithException(Exception("Respuesta inválida: ${json.optString("_error")}"))
+                            val detalle = json.optString("_error").ifBlank { "formato JSON no reconocido" }
+                            cont.resumeWithException(Exception("Respuesta inválida: $detalle"))
                         } else if (json.has("error")) {
                             cont.resumeWithException(Exception(json.getString("error")))
                         } else {
@@ -147,17 +175,21 @@ object ApiService {
     private suspend fun fetchDirect(action: String, body: String? = null): JSONObject = withContext(Dispatchers.IO) {
         val url = "${BASE_URL}${action}"
         Log.d(TAG, "OkHttp $url")
-        val request = if (body != null) {
-            Request.Builder().url(url)
-                .post(body.toRequestBody("application/json".toMediaType()))
-                .build()
-        } else {
-            Request.Builder().url(url).build()
-        }
-        val response = okHttpClient.newCall(request).execute()
+        val response = okHttpClient.newCall(buildHttpRequest(url, body)).execute()
         val jsonStr = response.body?.string() ?: throw Exception("Respuesta vacía")
         Log.d(TAG, "OkHttp response: ${jsonStr.take(300)}")
-        JSONObject(jsonStr)
+        parseJsonResponse(jsonStr)
+    }
+
+    private suspend fun fetchWithFallback(action: String, body: String? = null): JSONObject {
+        return try {
+            fetchDirect(action, body)
+        } catch (e: Exception) {
+            Log.w(TAG, "OkHttp falló, usando WebView: ${e.message}")
+            withContext(Dispatchers.Main) {
+                if (body != null) fetch(action, "POST", body) else fetch(action)
+            }
+        }
     }
 
     suspend fun getEmpresas(): List<JSONObject> = withContext(Dispatchers.Main) {
@@ -183,21 +215,27 @@ object ApiService {
         fetch("sincronizar_postulantes", "POST", postulante.toString())
     }
 
-    suspend fun buscarOfertasPorEdad(edad: Int, idPostulante: String = ""): List<JSONObject> = withContext(Dispatchers.Main) {
-        val action = if (idPostulante.isNotBlank()) "ofertas_por_edad&edad=$edad&id_postulante=$idPostulante"
-                     else "ofertas_por_edad&edad=$edad"
-        val json = fetch(action)
+    suspend fun buscarOfertasPorEdad(edad: Int, idPostulante: String = ""): List<JSONObject> {
+        val action = buildString {
+            append("ofertas_por_edad&edad=$edad")
+            if (idPostulante.isNotBlank()) {
+                append("&id_postulante=${URLEncoder.encode(idPostulante, "UTF-8")}")
+            }
+        }
+        val json = fetchWithFallback(action)
         val arr = json.getJSONArray("data")
-        (0 until arr.length()).map { arr.getJSONObject(it) }
+        return (0 until arr.length()).map { arr.getJSONObject(it) }
     }
 
     suspend fun postularOferta(idPostulante: String, nit: String, idOferta: String): JSONObject = withContext(Dispatchers.Main) {
-        val body = JSONObject().apply {
-            put("id_postulante", idPostulante)
-            put("nit", nit)
-            put("id_oferta", idOferta)
+        // InfinityFree (openresty) rechaza POST con 400; GET via WebView funciona.
+        val action = buildString {
+            append("postular")
+            append("&id_postulante=${URLEncoder.encode(idPostulante, "UTF-8")}")
+            append("&nit=${URLEncoder.encode(nit, "UTF-8")}")
+            append("&id_oferta=${URLEncoder.encode(idOferta, "UTF-8")}")
         }
-        fetch("postular", "POST", body.toString())
+        fetch(action)
     }
 
     suspend fun getDashboardEmpresa(nit: String): JSONObject = withContext(Dispatchers.Main) {
@@ -306,13 +344,6 @@ object ApiService {
 
     suspend fun getMisPostulaciones(idPostulante: String): JSONObject {
         val body = JSONObject().apply { put("id_postulante", idPostulante) }
-        return try {
-            fetchDirect("mis_postulaciones", body.toString())
-        } catch (e: Exception) {
-            Log.w(TAG, "OkHttp falló, usando WebView: ${e.message}")
-            withContext(Dispatchers.Main) {
-                fetch("mis_postulaciones", "POST", body.toString())
-            }
-        }
+        return fetchWithFallback("mis_postulaciones", body.toString())
     }
 }
