@@ -25,6 +25,7 @@ import org.json.JSONObject
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.service.ApiService
 import sv.ues.fia.eisi.bt.utils.Constants
+import sv.ues.fia.eisi.bt.utils.setupMarqueeTitle
 
 class Servicio7Fragment : Fragment() {
 
@@ -63,8 +64,9 @@ class Servicio7Fragment : Fragment() {
             tilPostulante.visibility = View.GONE
         }
 
-        view.findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener {
-            findNavController().navigateUp()
+        view.findViewById<MaterialToolbar>(R.id.toolbar).apply {
+            setNavigationOnClickListener { findNavController().navigateUp() }
+            setupMarqueeTitle()
         }
 
         adapter = OfertaAdapter(ofertasList, { oferta -> mostrarDetalle(oferta) }, requireContext(), !esAdmin)
@@ -209,17 +211,23 @@ class Servicio7Fragment : Fragment() {
             val cad = item.optString("FECHA_CADUCIDAD", "").take(10)
             h.tvFechas.text = "${context.getString(R.string.s7_publicacion)}: $pub  |  ${context.getString(R.string.s7_caducidad)}: $cad"
 
+            h.tvEstadoChip.visibility = View.GONE
             if (mostrarChips) {
-                val estado = item.optString("ESTADO_POSTULACION", "")
                 val chip = h.tvEstadoChip
+                val estado = normalizarEstadoPostulacion(item.opt("ESTADO_POSTULACION"))
                 chip.visibility = View.VISIBLE
                 when (estado) {
-                    "Activo" -> {
+                    "" -> {
+                        chip.text = context.getString(R.string.s7_chip_no_postulado)
+                        chip.setTextColor(Color.parseColor("#616161"))
+                        chip.setBackgroundColor(Color.parseColor("#E0E0E0"))
+                    }
+                    "activo", "pendiente" -> {
                         chip.text = context.getString(R.string.s7_chip_activo)
                         chip.setTextColor(Color.parseColor("#FFFFFF"))
                         chip.setBackgroundColor(Color.parseColor("#2196F3"))
                     }
-                    "En Proceso" -> {
+                    "en proceso" -> {
                         chip.text = context.getString(R.string.s7_chip_en_proceso)
                         chip.setTextColor(Color.parseColor("#FFFFFF"))
                         chip.setBackgroundColor(Color.parseColor("#FF9800"))
@@ -234,12 +242,21 @@ class Servicio7Fragment : Fragment() {
                         chip.setTextColor(Color.parseColor("#FFFFFF"))
                         chip.setBackgroundColor(Color.parseColor("#F44336"))
                     }
-                    else -> chip.visibility = View.GONE
+                    else -> {
+                        chip.text = estado.replaceFirstChar { it.uppercase() }
+                        chip.setTextColor(Color.parseColor("#FFFFFF"))
+                        chip.setBackgroundColor(Color.parseColor("#9E9E9E"))
+                    }
                 }
             }
         }
 
         override fun getItemCount() = items.size
+
+        private fun normalizarEstadoPostulacion(raw: Any?): String {
+            if (raw == null || raw == JSONObject.NULL) return ""
+            return raw.toString().trim().lowercase()
+        }
 
         class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
             val tvEmpresa: TextView = itemView.findViewById(R.id.tvEmpresa)

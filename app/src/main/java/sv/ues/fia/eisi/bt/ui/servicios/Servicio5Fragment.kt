@@ -36,6 +36,7 @@ import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.data.local.ConnectionHelper
 import sv.ues.fia.eisi.bt.service.ApiService
 import sv.ues.fia.eisi.bt.utils.Constants
+import sv.ues.fia.eisi.bt.utils.setupMarqueeTitle
 
 class Servicio5Fragment : Fragment() {
 
@@ -114,6 +115,7 @@ class Servicio5Fragment : Fragment() {
         role = Constants.ROLE_ADMIN
 
         toolbar = view.findViewById(R.id.toolbar)
+        toolbar.setupMarqueeTitle()
         toolbar.menu.clear()
         toolbar.menu.add("Cambiar Perfil").setOnMenuItemClickListener {
             val lista = queryPostulantesParaSeleccion()

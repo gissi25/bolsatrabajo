@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.service.ApiService
+import sv.ues.fia.eisi.bt.utils.setupMarqueeTitle
 
 class Servicio8Fragment : Fragment() {
 
@@ -32,10 +33,10 @@ class Servicio8Fragment : Fragment() {
     private lateinit var containerDashboard: LinearLayout
 
     private val mapaColores = mapOf(
-        "Activo" to Color.parseColor("#2196F3"),
-        "En Proceso" to Color.parseColor("#FF9800"),
-        "Contratado" to Color.parseColor("#4CAF50"),
-        "Rechazado" to Color.parseColor("#F44336")
+        "activo" to Color.parseColor("#2196F3"),
+        "en proceso" to Color.parseColor("#FF9800"),
+        "contratado" to Color.parseColor("#4CAF50"),
+        "rechazado" to Color.parseColor("#F44336")
     )
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -51,8 +52,9 @@ class Servicio8Fragment : Fragment() {
         scrollDashboard = view.findViewById(R.id.scrollDashboard)
         containerDashboard = view.findViewById(R.id.containerDashboard)
 
-        view.findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener {
-            findNavController().navigateUp()
+        view.findViewById<MaterialToolbar>(R.id.toolbar).apply {
+            setNavigationOnClickListener { findNavController().navigateUp() }
+            setupMarqueeTitle()
         }
 
         btnCargar.setOnClickListener { cargarDashboard() }
@@ -160,10 +162,10 @@ class Servicio8Fragment : Fragment() {
         }
 
         val mapaEstados = mapOf(
-            "Activo" to getString(R.string.s8_estado_activo),
-            "En Proceso" to getString(R.string.s8_estado_en_proceso),
-            "Contratado" to getString(R.string.s8_estado_contratado),
-            "Rechazado" to getString(R.string.s8_estado_rechazado)
+            "activo" to getString(R.string.s8_estado_activo),
+            "en proceso" to getString(R.string.s8_estado_en_proceso),
+            "contratado" to getString(R.string.s8_estado_contratado),
+            "rechazado" to getString(R.string.s8_estado_rechazado)
         )
 
         val row = LinearLayout(requireContext())
@@ -176,7 +178,7 @@ class Servicio8Fragment : Fragment() {
         val inflater = LayoutInflater.from(requireContext())
 
         estados.forEach { e ->
-            val estado = e.optString("ESTADO_PROCESO", "—")
+            val estado = e.optString("ESTADO_PROCESO", "—").lowercase()
             val total = e.optInt("total", 0)
             val label = mapaEstados[estado] ?: estado
             val color = mapaColores[estado] ?: Color.parseColor("#9E9E9E")
@@ -194,7 +196,7 @@ class Servicio8Fragment : Fragment() {
         estados.forEach { e ->
             val count = e.optInt("total", 0)
             val pct = if (total > 0) (count * 100 / total) else 0
-            val label = mapaEstados[e.optString("ESTADO_PROCESO", "—")] ?: e.optString("ESTADO_PROCESO", "—")
+            val label = mapaEstados[e.optString("ESTADO_PROCESO", "—").lowercase()] ?: e.optString("ESTADO_PROCESO", "—")
             agregarBarraProgreso(label, count, pct)
         }
     }
