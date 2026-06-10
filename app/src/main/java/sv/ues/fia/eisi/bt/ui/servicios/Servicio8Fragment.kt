@@ -32,10 +32,10 @@ class Servicio8Fragment : Fragment() {
     private lateinit var containerDashboard: LinearLayout
 
     private val mapaColores = mapOf(
-        "Activo" to Color.parseColor("#2196F3"),
-        "En Proceso" to Color.parseColor("#FF9800"),
-        "Contratado" to Color.parseColor("#4CAF50"),
-        "Rechazado" to Color.parseColor("#F44336")
+        "activo" to Color.parseColor("#2196F3"),
+        "en proceso" to Color.parseColor("#FF9800"),
+        "contratado" to Color.parseColor("#4CAF50"),
+        "rechazado" to Color.parseColor("#F44336")
     )
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -160,10 +160,10 @@ class Servicio8Fragment : Fragment() {
         }
 
         val mapaEstados = mapOf(
-            "Activo" to getString(R.string.s8_estado_activo),
-            "En Proceso" to getString(R.string.s8_estado_en_proceso),
-            "Contratado" to getString(R.string.s8_estado_contratado),
-            "Rechazado" to getString(R.string.s8_estado_rechazado)
+            "activo" to getString(R.string.s8_estado_activo),
+            "en proceso" to getString(R.string.s8_estado_en_proceso),
+            "contratado" to getString(R.string.s8_estado_contratado),
+            "rechazado" to getString(R.string.s8_estado_rechazado)
         )
 
         val row = LinearLayout(requireContext())
