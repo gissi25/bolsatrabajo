@@ -154,6 +154,8 @@
     <!-- Dashboard service card titles -->
     <string name="servicio_1_titulo">Carga Masiva Ofertas</string>
     <string name="servicio_2_titulo">Recomendador de Formación</string>
+    <string name="servicio_5_titulo">Sincronización de Datos y Postulación a Ofertas</string>
+    <string name="servicio_6_titulo">Filtrado de Ofertas por Ubicación</string>
 
     <!-- Language selector -->
     <string name="idiomas">Idiomas</string>
@@ -620,7 +622,7 @@
     <string name="s4_sincronizado_ok">Sincronizado correctamente</string>
 
     <!-- Servicio 5 -->
-    <string name="s5_titulo">Descargar del Servidor</string>
+    <string name="s5_titulo">Servicio 5 — Sincronización de Datos y Postulación a Ofertas</string>
     <string name="s5_btn_descargar">Descargar</string>
     <string name="s5_btn_descargar_todo">Descargar Todo</string>
     <string name="s5_descargado">Descargado</string>
@@ -673,7 +675,7 @@
     <string name="s5_confirmar">Confirmar</string>
 
     <!-- Servicio 6 - Filtro de ofertas por ubicacion y postulantes por empresa -->
-    <string name="s6_titulo">Filtro de ofertas</string>
+    <string name="s6_titulo">Servicio 6 — Filtrado de Ofertas por Ubicación</string>
     <string name="s6_titulo_postulante">Buscar ofertas por ubicación</string>
     <string name="s6_titulo_empresa">Postulantes de mis ofertas</string>
     <string name="s6_filtro_titulo">Filtrar por ubicación</string>

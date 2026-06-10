@@ -45,7 +45,7 @@ class Servicio5Fragment : Fragment() {
         val tablas: List<ResultadoTabla>, val exito: Boolean,
         val error: String? = null
     )
-    data class PreviewItem(val linea1: String, val linea2: String, val nit: String = "", val idOferta: String = "", val idPostulacion: String = "")
+    data class PreviewItem(val linea1: String, val linea2: String, val nit: String = "", val idOferta: String = "", val idPostulacion: String = "", val yaPostulado: Boolean = false, val estadoPostulacion: String? = null)
 
     private lateinit var toolbar: MaterialToolbar
     private lateinit var progressBar: View
@@ -180,15 +180,11 @@ class Servicio5Fragment : Fragment() {
         idPostulanteSeleccionado = prefs.getString(Constants.KEY_ID_POSTULANTE, null)
         nitEmpresaSeleccionado = prefs.getString(Constants.KEY_NIT_EMPRESA, null)
 
-        if (idPostulanteSeleccionado == null) {
-            val lista = queryPostulantesParaSeleccion()
-            if (lista.isEmpty()) {
-                iniciarDescarga()
-            } else {
-                mostrarDialogoSeleccionPostulante(lista)
-            }
-        } else {
+        val lista = queryPostulantesParaSeleccion()
+        if (lista.isEmpty()) {
             iniciarDescarga()
+        } else {
+            mostrarDialogoSeleccionPostulante(lista, idPostulanteSeleccionado)
         }
     }
 
@@ -203,7 +199,7 @@ class Servicio5Fragment : Fragment() {
         return lista
     }
 
-    private fun mostrarDialogoSeleccionPostulante(lista: List<Pair<String, String>>) {
+    private fun mostrarDialogoSeleccionPostulante(lista: List<Pair<String, String>>, preSeleccionado: String? = null) {
         val context = requireContext()
         val sv = ScrollView(context).apply { setPadding(24, 16, 24, 8) }
         val container = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
@@ -214,7 +210,10 @@ class Servicio5Fragment : Fragment() {
             RadioButton(context).apply { text = "$id — $nombre"; tag = idx; this.id = View.generateViewId(); setPadding(4, 8, 4, 8); setTextColor(0xDD000000.toInt()) }
         }
         radioButtons.forEach { radioGroup.addView(it) }
-        if (radioButtons.isNotEmpty()) radioGroup.check(radioButtons.first().id)
+        if (radioButtons.isNotEmpty()) {
+            val preIdx = if (!preSeleccionado.isNullOrBlank()) lista.indexOfFirst { it.first == preSeleccionado } else -1
+            radioGroup.check(radioButtons[if (preIdx >= 0) preIdx else 0].id)
+        }
         container.addView(radioGroup)
         sv.addView(container)
         AlertDialog.Builder(context)
@@ -374,8 +373,13 @@ class Servicio5Fragment : Fragment() {
         val lista = mutableListOf<PreviewItem>()
         try {
             val db = ConnectionHelper(requireContext()).writableDb
-            val c = db.rawQuery("SELECT o.TITULO_PUESTO, e.NOMBRE_EMPRESA, o.FECHA_PUBLICACION, o.NIT, o.ID_OFERTA FROM OFERTA_TRABAJO o LEFT JOIN EMPRESA e ON o.NIT = e.NIT ORDER BY o.FECHA_PUBLICACION DESC LIMIT 5", null)
-            while (c.moveToNext()) { val titulo = c.getString(0) ?: ""; val empresa = c.getString(1) ?: ""; val fecha = c.getString(2) ?: ""; val nit = c.getString(3) ?: ""; val idOf = c.getString(4) ?: ""; lista.add(PreviewItem(titulo, "$empresa · $fecha", nit = nit, idOferta = idOf)) }
+            val (join, args) = if (!idPostulanteSeleccionado.isNullOrBlank()) {
+                " LEFT JOIN POSTULACION p ON o.NIT = p.NIT AND o.ID_OFERTA = p.ID_OFERTA AND p.ID_POSTULANTE = ?" to arrayOf(idPostulanteSeleccionado!!)
+            } else {
+                " LEFT JOIN POSTULACION p ON o.NIT = p.NIT AND o.ID_OFERTA = p.ID_OFERTA AND p.ID_POSTULANTE = ''" to null
+            }
+            val c = db.rawQuery("SELECT o.TITULO_PUESTO, e.NOMBRE_EMPRESA, o.FECHA_PUBLICACION, o.NIT, o.ID_OFERTA, p.ID_POSTULACION, p.ESTADO_PROCESO FROM OFERTA_TRABAJO o LEFT JOIN EMPRESA e ON o.NIT = e.NIT$join ORDER BY o.FECHA_PUBLICACION DESC LIMIT 5", args)
+            while (c.moveToNext()) { val titulo = c.getString(0) ?: ""; val empresa = c.getString(1) ?: ""; val fecha = c.getString(2) ?: ""; val nit = c.getString(3) ?: ""; val idOf = c.getString(4) ?: ""; val idPost = c.getString(5); val estPost = c.getString(6); lista.add(PreviewItem(if (idPost != null) "$titulo (Postulado)" else titulo, if (idPost != null) "${estPost ?: "activo"} · $empresa · $fecha" else "$empresa · $fecha", nit = nit, idOferta = idOf, yaPostulado = idPost != null, estadoPostulacion = estPost)) }
             c.close(); db.close()
         } catch (_: Exception) {}
         return lista
@@ -543,7 +547,12 @@ class Servicio5Fragment : Fragment() {
         lifecycleScope.launch {
             try {
                 val db = ConnectionHelper(requireContext()).writableDb
-                val c = db.rawQuery("SELECT o.TITULO_PUESTO, e.NOMBRE_EMPRESA, o.FECHA_PUBLICACION, o.NIT, o.ID_OFERTA FROM OFERTA_TRABAJO o LEFT JOIN EMPRESA e ON o.NIT = e.NIT ORDER BY o.FECHA_PUBLICACION DESC", null)
+                val (join, args) = if (!idPostulanteSeleccionado.isNullOrBlank()) {
+                    " LEFT JOIN POSTULACION p ON o.NIT = p.NIT AND o.ID_OFERTA = p.ID_OFERTA AND p.ID_POSTULANTE = ?" to arrayOf(idPostulanteSeleccionado!!)
+                } else {
+                    " LEFT JOIN POSTULACION p ON o.NIT = p.NIT AND o.ID_OFERTA = p.ID_OFERTA AND p.ID_POSTULANTE = ''" to null
+                }
+                val c = db.rawQuery("SELECT o.TITULO_PUESTO, e.NOMBRE_EMPRESA, o.FECHA_PUBLICACION, o.NIT, o.ID_OFERTA, p.ID_POSTULACION, p.ESTADO_PROCESO FROM OFERTA_TRABAJO o LEFT JOIN EMPRESA e ON o.NIT = e.NIT$join ORDER BY o.FECHA_PUBLICACION DESC", args)
                 val lista = mutableListOf<PreviewItem>()
                 while (c.moveToNext()) {
                     val titulo = c.getString(0) ?: ""
@@ -551,7 +560,10 @@ class Servicio5Fragment : Fragment() {
                     val fecha = c.getString(2) ?: ""
                     val nit = c.getString(3) ?: ""
                     val idOf = c.getString(4) ?: ""
-                    lista.add(PreviewItem(titulo, "$empresa · $fecha", nit = nit, idOferta = idOf))
+                    val idPost = c.getString(5)
+                    val estPost = c.getString(6)
+                    val yaPost = idPost != null
+                    lista.add(PreviewItem(if (yaPost) "$titulo (Postulado)" else titulo, if (yaPost) "${estPost ?: "activo"} · $empresa · $fecha" else "$empresa · $fecha", nit = nit, idOferta = idOf, yaPostulado = yaPost, estadoPostulacion = estPost))
                 }
                 c.close()
                 db.close()
@@ -567,8 +579,11 @@ class Servicio5Fragment : Fragment() {
                 } else {
                     for (item in lista) {
                         val itemView = LayoutInflater.from(context).inflate(R.layout.card_preview_fila, container, false)
-                        itemView.findViewById<TextView>(R.id.tvLinea1).text = item.linea1
-                        itemView.findViewById<TextView>(R.id.tvLinea2).text = item.linea2
+                        val tv1 = itemView.findViewById<TextView>(R.id.tvLinea1)
+                        val tv2 = itemView.findViewById<TextView>(R.id.tvLinea2)
+                        tv1.text = item.linea1
+                        tv2.text = item.linea2
+                        if (item.yaPostulado) tv1.setTextColor(0xFF2E7D32.toInt()) else tv1.setTextColor(0xFF0D1A4A.toInt())
                         itemView.setOnClickListener {
                             dialog?.dismiss()
                             mostrarDetalleOferta(item.nit, item.idOferta)
@@ -794,9 +809,9 @@ class Servicio5Fragment : Fragment() {
                 if (yaPostulado) { Snackbar.make(requireView(), getString(R.string.s5_error_ya_postulado), Snackbar.LENGTH_LONG).show(); return@launch }
                 val idPostulacion = withContext(Dispatchers.IO) { val db = ConnectionHelper(requireContext()).writableDb; val c = db.rawQuery("SELECT MAX(CAST(SUBSTR(ID_POSTULACION, 4) AS INTEGER)) FROM POSTULACION", null); val next = if (c.moveToFirst() && !c.isNull(0)) c.getInt(0) + 1 else 1; c.close(); db.close(); "POS${next.toString().padStart(3, '0')}" }
                 val fecha = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-                withContext(Dispatchers.IO) { val db = ConnectionHelper(requireContext()).writableDb; db.execSQL("INSERT INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO) VALUES ('$idPostulacion', '$nit', '$idOferta', '$idPostulante', '$fecha', 'Pendiente')"); db.close() }
+                withContext(Dispatchers.IO) { val db = ConnectionHelper(requireContext()).writableDb; db.execSQL("INSERT INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO) VALUES ('$idPostulacion', '$nit', '$idOferta', '$idPostulante', '$fecha', 'activo')"); db.close() }
                 try {
-                    val json = JSONObject().apply { put("id_postulacion", idPostulacion); put("nit", nit); put("id_oferta", idOferta); put("id_postulante", idPostulante); put("fecha_aplicacion", fecha); put("estado_proceso", "Pendiente") }
+                    val json = JSONObject().apply { put("id_postulacion", idPostulacion); put("nit", nit); put("id_oferta", idOferta); put("id_postulante", idPostulante); put("fecha_aplicacion", fecha); put("estado_proceso", "activo") }
                     ApiService.insertarPostulacion(json)
                 } catch (e: Exception) {
                     Log.e("Servicio5", "Error al sincronizar postulacion", e)
@@ -804,6 +819,14 @@ class Servicio5Fragment : Fragment() {
                     return@launch
                 }
                 Snackbar.make(requireView(), getString(R.string.s5_postulacion_exitosa), Snackbar.LENGTH_LONG).show()
+                try {
+                    val data = ApiService.getPostulacionesFull(null)
+                    withContext(Dispatchers.IO) { syncPostulaciones(data) }
+                    estadoPostulaciones = true
+                } catch (e: Exception) {
+                    Log.e("Servicio5", "Error al resincronizar postulaciones", e)
+                }
+                populateSecciones()
             } catch (e: Exception) { Snackbar.make(requireView(), "Error: ${e.message}", Snackbar.LENGTH_LONG).show() }
         }
     }
@@ -919,7 +942,7 @@ class Servicio5Fragment : Fragment() {
 
     private class PreviewAdapter(private val items: List<PreviewItem>, private val onClick: ((PreviewItem) -> Unit)? = null) : RecyclerView.Adapter<PreviewAdapter.VH>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH { val v = LayoutInflater.from(parent.context).inflate(R.layout.card_preview_fila, parent, false); return VH(v) }
-        override fun onBindViewHolder(holder: VH, pos: Int) { val item = items[pos]; holder.tvLinea1.text = item.linea1; holder.tvLinea2.text = item.linea2; if (onClick != null) holder.itemView.setOnClickListener { onClick(item) } }
+        override fun onBindViewHolder(holder: VH, pos: Int) { val item = items[pos]; holder.tvLinea1.text = item.linea1; holder.tvLinea2.text = item.linea2; if (item.yaPostulado) holder.tvLinea1.setTextColor(0xFF2E7D32.toInt()) else holder.tvLinea1.setTextColor(0xFF0D1A4A.toInt()); if (onClick != null) holder.itemView.setOnClickListener { onClick(item) } }
         override fun getItemCount() = items.size
         class VH(itemView: View) : RecyclerView.ViewHolder(itemView) { val tvLinea1: TextView = itemView.findViewById(R.id.tvLinea1); val tvLinea2: TextView = itemView.findViewById(R.id.tvLinea2) }
     }

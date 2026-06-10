@@ -220,7 +220,7 @@
         $idOferta = $conn->real_escape_string($p['id_oferta'] ?? '');
         $idPostulante = $conn->real_escape_string($p['id_postulante'] ?? '');
         $fecha = $conn->real_escape_string($p['fecha_aplicacion'] ?? '');
-        $estado = $conn->real_escape_string($p['estado_proceso'] ?? 'Pendiente');
+        $estado = $conn->real_escape_string($p['estado_proceso'] ?? 'activo');
 
         $conn->query("
             INSERT INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO)

@@ -51,6 +51,8 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         val title = when (id) {
             1 -> getApplication<Application>().getString(R.string.servicio_1_titulo)
             2 -> getApplication<Application>().getString(R.string.servicio_2_titulo)
+            5 -> getApplication<Application>().getString(R.string.servicio_5_titulo)
+            6 -> getApplication<Application>().getString(R.string.servicio_6_titulo)
             7 -> "Filtrado de ofertas por edad"
             8 -> getApplication<Application>().getString(R.string.s8_titulo)
             else -> "Servicio $id"

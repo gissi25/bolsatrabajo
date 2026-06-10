@@ -142,7 +142,7 @@ class Servicio10Fragment : Fragment() {
                         lista.add(MainRepository.PostulacionCompleta(
                             idPostulacion = item.optString("ID_POSTULACION", ""),
                             fechaAplicacion = item.optString("FECHA_APLICACION", ""),
-                            estadoProceso = item.optString("ESTADO_PROCESO", "activo").lowercase(),
+                            estadoProceso = item.optString("ESTADO_PROCESO", "activo"),
                             tituloPuesto = item.optString("TITULO_PUESTO", ""),
                             fechaPublicacion = item.optString("FECHA_PUBLICACION", ""),
                             fechaCaducidad = item.optString("FECHA_CADUCIDAD", ""),
