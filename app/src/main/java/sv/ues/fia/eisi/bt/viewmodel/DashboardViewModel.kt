@@ -141,6 +141,8 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         val filtered = webServices.filter { sv ->
             when (sv.id) {
                 1 -> currentRole == Constants.ROLE_ADMIN || currentRole == Constants.ROLE_EMPRESA
+                5 -> currentRole == Constants.ROLE_ADMIN || currentRole == Constants.ROLE_POSTULANTE
+                6 -> currentRole == Constants.ROLE_ADMIN || currentRole == Constants.ROLE_POSTULANTE
                 7 -> currentRole == Constants.ROLE_ADMIN || currentRole == Constants.ROLE_POSTULANTE
                 8 -> currentRole == Constants.ROLE_ADMIN || currentRole == Constants.ROLE_EMPRESA
                 9 -> currentRole == Constants.ROLE_EMPRESA || currentRole == Constants.ROLE_ADMIN

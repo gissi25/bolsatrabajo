@@ -625,6 +625,7 @@
     <string name="s5_desc_ofertas">Ofertas laborales publicadas con sus requisitos</string>
     <string name="s5_titulo_postulantes">Perfiles de Postulantes</string>
     <string name="s5_desc_postulantes">CVs completos con formación, experiencia, certificaciones, habilidades y redes sociales</string>
+    <string name="s5_titulo_perfil">Mi Perfil</string>
     <string name="s5_titulo_postulaciones">Postulaciones</string>
     <string name="s5_desc_postulaciones">Aplicaciones a ofertas con su estado actual</string>
     <string name="s5_hint_id_postulante">Tu ID de Postulante</string>
@@ -670,6 +671,7 @@
     <string name="s6_filtro_titulo">Filtrar por ubicación</string>
     <string name="s6_departamento">Departamento</string>
     <string name="s6_municipio">Municipio (opcional)</string>
+    <string name="s6_distrito">Distrito (opcional)</string>
     <string name="s6_buscar">Buscar ofertas</string>
     <string name="s6_sin_resultados">No se encontraron resultados</string>
     <string name="s6_error_depto">Debe seleccionar un departamento</string>
