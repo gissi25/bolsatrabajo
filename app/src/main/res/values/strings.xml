@@ -151,6 +151,10 @@
     <string name="tabla_red_social_postulante">Red social postulante</string>
     <string name="tabla_postulacion">Postulación</string>
 
+    <!-- Dashboard service card titles -->
+    <string name="servicio_1_titulo">Carga Masiva Ofertas</string>
+    <string name="servicio_2_titulo">Recomendador de Formación</string>
+
     <!-- Language selector -->
     <string name="idiomas">Idiomas</string>
     <string name="espanol">Español</string>

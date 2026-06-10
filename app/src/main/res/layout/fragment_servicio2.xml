@@ -64,7 +64,27 @@
                 android:layout_marginTop="16dp">
 
                 <TextView
+                    android:id="@+id/tvPostulante"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:padding="12dp"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
                     android:id="@+id/tvGrados"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:textSize="13sp"
+                    android:lineSpacingExtra="2dp"
+                    android:padding="12dp"
+                    android:background="?attr/colorSurfaceVariant"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/tvRecomendaciones"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="monospace"

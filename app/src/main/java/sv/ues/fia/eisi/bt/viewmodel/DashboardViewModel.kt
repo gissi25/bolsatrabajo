@@ -47,7 +47,14 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     private val _seedResult = MutableLiveData<Resource?>()
     val seedResult: LiveData<Resource?> get() = _seedResult
 
-    private val webServices = (1..10).map { DashboardItem.WebService(it, "Servicio $it") }
+    private val webServices = (1..10).map { id ->
+        val title = when (id) {
+            1 -> getApplication<Application>().getString(R.string.servicio_1_titulo)
+            2 -> getApplication<Application>().getString(R.string.servicio_2_titulo)
+            else -> "Servicio $id"
+        }
+        DashboardItem.WebService(id, title)
+    }
 
     private val catalogTables = setOf(
         "CATEGORIA_HABILIDAD", "GENERO", "TIPO_DOCUMENTO", "DEPARTAMENTO",

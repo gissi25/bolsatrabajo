@@ -22,7 +22,9 @@ class Servicio2Fragment : Fragment() {
     private lateinit var etIdPostulante: TextInputEditText
     private lateinit var btnAnalizar: MaterialButton
     private lateinit var progressBar: ProgressBar
+    private lateinit var tvPostulante: TextView
     private lateinit var tvGrados: TextView
+    private lateinit var tvRecomendaciones: TextView
     private lateinit var tvInstituciones: TextView
     private lateinit var tvSkills: TextView
     private lateinit var tvSkillsFaltan: TextView
@@ -39,7 +41,9 @@ class Servicio2Fragment : Fragment() {
         etIdPostulante = view.findViewById(R.id.etIdPostulante)
         btnAnalizar = view.findViewById(R.id.btnAnalizar)
         progressBar = view.findViewById(R.id.progressBar)
+        tvPostulante = view.findViewById(R.id.tvPostulante)
         tvGrados = view.findViewById(R.id.tvGrados)
+        tvRecomendaciones = view.findViewById(R.id.tvRecomendaciones)
         tvInstituciones = view.findViewById(R.id.tvInstituciones)
         tvSkills = view.findViewById(R.id.tvSkills)
         tvSkillsFaltan = view.findViewById(R.id.tvSkillsFaltan)
@@ -80,21 +84,48 @@ class Servicio2Fragment : Fragment() {
 
     private fun mostrarResultado(data: org.json.JSONObject) {
         val postulante = data.getJSONObject("postulante")
+        val nombrePostulante = postulante.optString("nombre", "Postulante #${postulante.optString("id", "?")}")
+        tvPostulante.text = "Analizando perfil de $nombrePostulante"
 
         val arrGrados = data.getJSONArray("grados_mas_demandados")
-        val gradosText = StringBuilder("Grados mas demandados:\n")
+        val gradosText = StringBuilder(">> Grados mas demandados:\n")
         if (arrGrados.length() == 0) {
             gradosText.append("  (no hay ofertas activas aun)\n")
         } else {
             for (i in 0 until minOf(arrGrados.length(), 5)) {
                 val g = arrGrados.getJSONObject(i)
-                val marca = if (g.optBoolean("es_tu_grado", false)) " <-- tu grado" else ""
+                val marca = if (g.optBoolean("es_tu_grado", false)) " <-- TU GRADO" else ""
                 gradosText.append("  ${g.getString("NOMBRE_GRADO")}: ${g.getInt("total_ofertas")} ofertas$marca\n")
             }
         }
 
+        val arrRecom = data.optJSONArray("recomendaciones_carrera")
+        val recomText = StringBuilder(">> Recomendaciones de carrera:\n")
+        if (arrRecom != null && arrRecom.length() > 0) {
+            for (i in 0 until minOf(arrRecom.length(), 10)) {
+                val r = arrRecom.getJSONObject(i)
+                val impacto = r.optString("impacto", "baja")
+                val marca = when (impacto) {
+                    "alta" -> " ***"
+                    "media" -> " **"
+                    else -> " *"
+                }
+                recomText.append("  ${r.getString("NOMBRE_GRADO")}: ${r.getInt("total_ofertas")} ofertas$marca\n")
+            }
+        } else {
+            // Fallback: mostrar grados que no tenes (old format)
+            val arrFaltanOld = data.optJSONArray("grados_que_no_tenes")
+            if (arrFaltanOld != null && arrFaltanOld.length() > 0) {
+                for (i in 0 until minOf(arrFaltanOld.length(), 10)) {
+                    recomText.append("  - ${arrFaltanOld.getJSONObject(i).getString("NOMBRE_GRADO")}\n")
+                }
+            } else {
+                recomText.append("  (sin datos de mercado disponibles)\n")
+            }
+        }
+
         val arrInst = data.getJSONArray("instituciones_top")
-        val instText = StringBuilder("Instituciones con mas egresados:\n")
+        val instText = StringBuilder(">> Instituciones con mas egresados:\n")
         if (arrInst.length() == 0) {
             instText.append("  (sin datos aun)\n")
         } else {
@@ -105,7 +136,7 @@ class Servicio2Fragment : Fragment() {
         }
 
         val arrFaltan = data.getJSONArray("skills_que_te_faltan")
-        val faltanText = StringBuilder("Skills que te faltan (${arrFaltan.length()}):\n")
+        val faltanText = StringBuilder(">> Skills que te faltan (${arrFaltan.length()}):\n")
         if (arrFaltan.length() == 0) {
             faltanText.append("  Tenes todas las skills del sistema\n")
         } else {
@@ -117,7 +148,7 @@ class Servicio2Fragment : Fragment() {
         }
 
         val arrComunes = data.getJSONArray("skills_mas_comunes")
-        val comunesText = StringBuilder("Skills mas comunes entre postulantes:\n")
+        val comunesText = StringBuilder(">> Skills mas comunes entre postulantes:\n")
         if (arrComunes.length() == 0) {
             comunesText.append("  (sin datos)\n")
         } else {
@@ -136,6 +167,7 @@ class Servicio2Fragment : Fragment() {
         }
 
         tvGrados.text = gradosText.trimEnd()
+        tvRecomendaciones.text = recomText.trimEnd()
         tvInstituciones.text = instText.trimEnd()
         tvSkillsFaltan.text = faltanText.trimEnd()
         tvSkills.text = comunesText.trimEnd()

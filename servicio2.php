@@ -121,27 +121,44 @@ function recomendarFormacion() {
     $resGrados->free();
     $resultado['grados_mas_demandados'] = $gradosDemandados;
     
-    // ─── Sección 2: Grados que NO tenés y están en demanda ───
-    $sqlGradosFaltantes = "
+    // ─── Sección 2: Recomendaciones de carrera ───
+    //  Muestra los grados que NO tenés pero que SÍ están siendo pedidos
+    //  por ofertas activas, ordenados por demanda.
+    $sqlRecomendaciones = "
         SELECT 
             ga.ID_GRADO_ACADEMICO,
-            ga.NOMBRE_GRADO
+            ga.NOMBRE_GRADO,
+            COUNT(*) as total_ofertas,
+            CASE 
+                WHEN COUNT(*) >= 10 THEN 'alta'
+                WHEN COUNT(*) >= 3 THEN 'media'
+                ELSE 'baja'
+            END as impacto
         FROM GRADO_ACADEMICO ga
-        WHERE ga.ID_GRADO_ACADEMICO != ?
-          AND LOWER(ga.NOMBRE_GRADO) != 'bachiller'
-        ORDER BY ga.ID_GRADO_ACADEMICO
+        LEFT JOIN OFERTA_TRABAJO ot 
+            ON ga.ID_GRADO_ACADEMICO = ot.ID_GRADO_ACADEMICO
+            AND (ot.FECHA_CADUCIDAD >= CURDATE() OR ot.FECHA_CADUCIDAD IS NULL)
+        WHERE ga.ID_GRADO_ACADEMICO NOT IN (
+            SELECT ID_GRADO_ACADEMICO FROM GRADO_ACADEMICO 
+            WHERE LOWER(NOMBRE_GRADO) LIKE '%bachiller%'
+        )
+          AND ga.ID_GRADO_ACADEMICO != ?
+        GROUP BY ga.ID_GRADO_ACADEMICO, ga.NOMBRE_GRADO
+        HAVING total_ofertas > 0
+        ORDER BY total_ofertas DESC
+        LIMIT 10
     ";
     
-    $stmtGradFalt = $conn->prepare($sqlGradosFaltantes);
-    $stmtGradFalt->bind_param("i", $gradoPostulante);
-    $stmtGradFalt->execute();
-    $resGradFalt = $stmtGradFalt->get_result();
-    $gradosFaltantes = [];
-    while ($row = $resGradFalt->fetch_assoc()) {
-        $gradosFaltantes[] = $row;
+    $stmtRec = $conn->prepare($sqlRecomendaciones);
+    $stmtRec->bind_param("i", $gradoPostulante);
+    $stmtRec->execute();
+    $resRec = $stmtRec->get_result();
+    $recomendaciones = [];
+    while ($row = $resRec->fetch_assoc()) {
+        $recomendaciones[] = $row;
     }
-    $stmtGradFalt->close();
-    $resultado['grados_que_no_tenes'] = $gradosFaltantes;
+    $stmtRec->close();
+    $resultado['recomendaciones_carrera'] = $recomendaciones;
     
     // ─── Sección 3: Instituciones con más egresados ───
     $sqlInstituciones = "

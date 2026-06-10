@@ -151,6 +151,10 @@
     <string name="tabla_red_social_postulante">Applicant social network</string>
     <string name="tabla_postulacion">Application</string>
 
+    <!-- Dashboard service card titles -->
+    <string name="servicio_1_titulo">Bulk Offer Upload</string>
+    <string name="servicio_2_titulo">Education Recommender</string>
+
     <!-- Language selector -->
     <string name="idiomas">Languages</string>
     <string name="espanol">Spanish</string>

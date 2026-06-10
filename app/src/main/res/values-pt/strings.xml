@@ -151,6 +151,10 @@
     <string name="tabla_red_social_postulante">Rede social do candidato</string>
     <string name="tabla_postulacion">Candidatura</string>
 
+    <!-- Dashboard service card titles -->
+    <string name="servicio_1_titulo">Carga em Massa de Vagas</string>
+    <string name="servicio_2_titulo">Recomendador de Formação</string>
+
     <!-- Language selector -->
     <string name="idiomas">Idiomas</string>
     <string name="espanol">Espanhol</string>

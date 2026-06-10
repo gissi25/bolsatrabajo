@@ -16,8 +16,6 @@ $user = 'if0_42097646';
 $pass = 'vBl5vfa4CsPNjUD';
 $db   = 'if0_42097646_bolsadetrabajo';
 
-header('Content-Type: application/json; charset=utf-8');
-
 // ═══════════════════════════════════════════════════════════
 // FUNCIONES AUXILIARES
 // ═══════════════════════════════════════════════════════════
@@ -27,6 +25,7 @@ function conectar() {
     $conn = new mysqli($host, $user, $pass, $db);
     if ($conn->connect_error) {
         http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
         die(json_encode(["exito" => false, "error" => "Error de conexión a la BD"]));
     }
     $conn->set_charset("utf8mb4");
@@ -34,6 +33,7 @@ function conectar() {
 }
 
 function responder($data) {
+    header('Content-Type: application/json; charset=utf-8');
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -61,6 +61,9 @@ switch ($action) {
         break;
     case 'insertar_ofertas':
         insertarOfertas();
+        break;
+    case 'descargar_formato':
+        descargarFormato();
         break;
     default:
         error("Acción desconocida: $action");
@@ -319,4 +322,24 @@ function validarOferta($oferta, $empresasCache, $gradosCache) {
     }
     
     return $errores;
+}
+
+// ═══════════════════════════════════════════════════════════
+// 4. DESCARGAR FORMATO XLSX
+// ═══════════════════════════════════════════════════════════
+function descargarFormato() {
+    // Template XLSX pre-generado, codificado en base64 — sin dependencias
+    $base64 = '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';
+
+    $data = base64_decode($base64);
+    if ($data === false) {
+        header('Content-Type: text/plain; charset=utf-8');
+        die("Error al decodificar el archivo XLSX");
+    }
+
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="formato_carga_ofertas.xlsx"');
+    header('Content-Length: ' . strlen($data));
+    echo $data;
+    exit;
 }
