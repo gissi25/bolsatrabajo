@@ -28,6 +28,7 @@ import org.json.JSONObject
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.data.local.ConnectionHelper
 import sv.ues.fia.eisi.bt.service.ApiService
+import sv.ues.fia.eisi.bt.utils.setupMarqueeTitle
 
 class Servicio4Fragment : Fragment() {
 
@@ -63,7 +64,10 @@ class Servicio4Fragment : Fragment() {
         progressBar = view.findViewById(R.id.progressBar)
         tvResultado = view.findViewById(R.id.tvResultado)
 
-        view.findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener { findNavController().navigateUp() }
+        view.findViewById<MaterialToolbar>(R.id.toolbar).apply {
+            setNavigationOnClickListener { findNavController().navigateUp() }
+            setupMarqueeTitle()
+        }
 
         adapter = ResultadoAdapter(resultados) { mostrarDetalle(it) }
         rvResultados.layoutManager = LinearLayoutManager(requireContext())

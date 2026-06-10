@@ -48,14 +48,20 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     val seedResult: LiveData<Resource?> get() = _seedResult
 
     private val webServices = (1..10).map { id ->
-        val title = when (id) {
-            1 -> getApplication<Application>().getString(R.string.servicio_1_titulo)
-            2 -> getApplication<Application>().getString(R.string.servicio_2_titulo)
-            7 -> "Filtrado de ofertas por edad"
-            8 -> getApplication<Application>().getString(R.string.s8_titulo)
-            else -> "Servicio $id"
+        val titleRes = when (id) {
+            1 -> R.string.servicio_1_titulo
+            2 -> R.string.servicio_2_titulo
+            3 -> R.string.s3_titulo
+            4 -> R.string.s4_titulo
+            5 -> R.string.s5_titulo
+            6 -> R.string.s6_titulo
+            7 -> R.string.s7_titulo
+            8 -> R.string.s8_titulo
+            9 -> R.string.s9_titulo
+            10 -> R.string.s10_titulo
+            else -> R.string.app_name
         }
-        DashboardItem.WebService(id, title)
+        DashboardItem.WebService(id, getApplication<Application>().getString(titleRes))
     }
 
     private val catalogTables = setOf(
@@ -143,6 +149,8 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         val filtered = webServices.filter { sv ->
             when (sv.id) {
                 1 -> currentRole == Constants.ROLE_ADMIN || currentRole == Constants.ROLE_EMPRESA
+                3 -> currentRole == Constants.ROLE_ADMIN || currentRole == Constants.ROLE_POSTULANTE
+                4 -> currentRole == Constants.ROLE_ADMIN || currentRole == Constants.ROLE_EMPRESA
                 5 -> currentRole == Constants.ROLE_ADMIN || currentRole == Constants.ROLE_POSTULANTE
                 6 -> currentRole == Constants.ROLE_ADMIN || currentRole == Constants.ROLE_POSTULANTE
                 7 -> currentRole == Constants.ROLE_ADMIN || currentRole == Constants.ROLE_POSTULANTE

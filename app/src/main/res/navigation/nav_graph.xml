@@ -160,7 +160,7 @@
     <fragment
         android:id="@+id/servicio2Fragment"
         android:name="sv.ues.fia.eisi.bt.ui.servicios.Servicio2Fragment"
-        android:label="Recomendador de Formacion"
+        android:label="@string/servicio_2_titulo"
         tools:layout="@layout/fragment_servicio2" />
 
     <fragment

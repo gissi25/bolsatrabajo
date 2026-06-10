@@ -27,6 +27,7 @@ import org.json.JSONArray
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
 import sv.ues.fia.eisi.bt.service.ApiService
+import sv.ues.fia.eisi.bt.utils.setupMarqueeTitle
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -66,7 +67,10 @@ class Servicio10Fragment : Fragment() {
         tvSelectorLabel = view.findViewById(R.id.tvSelectorLabel)
         swipeRefresh = view.findViewById(R.id.swipeRefresh)
 
-        view.findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener { findNavController().navigateUp() }
+        view.findViewById<MaterialToolbar>(R.id.toolbar).apply {
+            setNavigationOnClickListener { findNavController().navigateUp() }
+            setupMarqueeTitle()
+        }
 
         swipeRefresh.setOnRefreshListener { cargarPostulaciones() }
 

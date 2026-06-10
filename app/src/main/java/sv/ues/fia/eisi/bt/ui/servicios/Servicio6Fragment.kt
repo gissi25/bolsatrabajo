@@ -33,6 +33,7 @@ import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.data.local.ConnectionHelper
 import sv.ues.fia.eisi.bt.service.ApiService
 import sv.ues.fia.eisi.bt.utils.Constants
+import sv.ues.fia.eisi.bt.utils.setupMarqueeTitle
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -94,6 +95,7 @@ class Servicio6Fragment : Fragment() {
         idPostulanteSeleccionado = prefs.getString(Constants.KEY_ID_POSTULANTE, null)
 
         toolbar = view.findViewById(R.id.toolbar)
+        toolbar.setupMarqueeTitle()
         progressBar = view.findViewById(R.id.progressBar)
         scrollView = view.findViewById(R.id.scrollView)
         cardFiltros = view.findViewById(R.id.cardFiltros)

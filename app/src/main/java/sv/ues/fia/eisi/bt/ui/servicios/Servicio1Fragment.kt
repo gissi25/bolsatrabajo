@@ -30,6 +30,7 @@ import org.json.JSONObject
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.data.repository.MainRepository
 import sv.ues.fia.eisi.bt.service.ApiService
+import sv.ues.fia.eisi.bt.utils.setupMarqueeTitle
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.Calendar
@@ -114,7 +115,10 @@ class Servicio1Fragment : Fragment() {
         spEmpresa.setOnItemClickListener { _, _, pos, _ -> if (pos >= 0 && pos < empresas.size) spEmpresa.setTag(empresas[pos].nit) }
         spGrado.setOnItemClickListener { _, _, pos, _ -> if (pos >= 0 && pos < grados.size) spGrado.setTag(grados[pos].id.toString()) }
 
-        view.findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener { findNavController().navigateUp() }
+        view.findViewById<MaterialToolbar>(R.id.toolbar).apply {
+            setNavigationOnClickListener { findNavController().navigateUp() }
+            setupMarqueeTitle()
+        }
         view.findViewById<TextInputLayout>(R.id.tilFechaPub).setEndIconOnClickListener { showDatePicker(etFechaPub) }
         view.findViewById<TextInputLayout>(R.id.tilFechaCad).setEndIconOnClickListener { showDatePicker(etFechaCad) }
 

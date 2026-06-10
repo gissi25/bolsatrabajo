@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import sv.ues.fia.eisi.bt.R
 import sv.ues.fia.eisi.bt.service.ApiService
+import sv.ues.fia.eisi.bt.utils.setupMarqueeTitle
 
 class Servicio8Fragment : Fragment() {
 
@@ -51,8 +52,9 @@ class Servicio8Fragment : Fragment() {
         scrollDashboard = view.findViewById(R.id.scrollDashboard)
         containerDashboard = view.findViewById(R.id.containerDashboard)
 
-        view.findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener {
-            findNavController().navigateUp()
+        view.findViewById<MaterialToolbar>(R.id.toolbar).apply {
+            setNavigationOnClickListener { findNavController().navigateUp() }
+            setupMarqueeTitle()
         }
 
         btnCargar.setOnClickListener { cargarDashboard() }
