@@ -610,16 +610,22 @@
     <string name="s4_titulo">Búsqueda de Postulantes por Certificación</string>
     <string name="s4_hint_tipo">Tipo de certificacion</string>
     <string name="s4_hint_nombre">Nombre (opcional)</string>
-    <string name="s4_hint_anio">Anio (opcional)</string>
+    <string name="s4_hint_vigencia">Vigencia</string>
+    <string name="s4_vigencia_todos">Todos</string>
+    <string name="s4_vigencia_vigentes">Solo Vigentes</string>
+    <string name="s4_vigencia_vencidos">Solo Vencidos</string>
     <string name="s4_btn_buscar">Buscar</string>
     <string name="s4_resultados">%d postulante(s) encontrado(s)</string>
     <string name="s4_sin_resultados">No se encontraron resultados</string>
     <string name="s4_total_cert">%d certificacion(es)</string>
     <string name="s4_error_tipo">Debe seleccionar un tipo de certificacion</string>
     <string name="s4_cargando">Buscando...</string>
-    <string name="s4_sincronizar">Sincronizar con servidor</string>
-    <string name="s4_sincronizando">Sincronizando...</string>
-    <string name="s4_sincronizado_ok">Sincronizado correctamente</string>
+    <string name="s4_vigente">Vigente</string>
+    <string name="s4_vencida">Vencida</string>
+    <string name="s4_fecha_vencimiento">Vence el</string>
+    <string name="s4_guardar_local">Guardar resultados en local</string>
+    <string name="s4_guardando">Guardando...</string>
+    <string name="s4_guardado_ok">Resultados guardados en local</string>
 
     <!-- Servicio 5 -->
     <string name="s5_titulo">Sincronización de Datos y Postulación a Ofertas</string>

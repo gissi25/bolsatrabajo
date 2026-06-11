@@ -90,18 +90,19 @@
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/tilAnio"
+                        android:id="@+id/tilVigencia"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:hint="@string/s4_hint_anio"
-                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+                        android:hint="@string/s4_hint_vigencia"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        app:endIconMode="dropdown_menu">
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etAnio"
+                        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                            android:id="@+id/spVigencia"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="number"
+                            android:inputType="none"
                             android:paddingTop="16dp"
                             android:paddingBottom="16dp" />
 
@@ -135,6 +136,15 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:nestedScrollingEnabled="false" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnGuardarLocal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/s4_guardar_local"
+                android:visibility="gone"
+                style="@style/AestheticButton" />
 
             <View
                 android:layout_width="match_parent"

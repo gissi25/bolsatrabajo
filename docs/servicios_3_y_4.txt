@@ -123,8 +123,8 @@ Postulante (para crear su perfil) y Administrador (para subir lotes al servidor)
 
 ================================================================================
 
-SERVICIO 4: Busqueda de Postulantes por Certificacion
-======================================================
+SERVICIO 4: Busqueda de Postulantes por Certificacion (ACTUALIZADO)
+=====================================================================
 
 Archivos:
   - Android: app/src/main/java/sv/ues/fia/eisi/bt/ui/servicios/Servicio4Fragment.kt
@@ -135,92 +135,125 @@ Archivos:
 
 A) En que consiste
 ------------------
-Buscador de postulantes que poseen un tipo especifico de certificacion, con
-filtros opcionales de nombre y ano. Busca primero en la base local SQLite,
-muestra los resultados al instante, y sincroniza automaticamente los datos
-encontrados al servidor InfinityFree en segundo plano. Soporta sincronizacion
-manual individual desde el detalle del postulante.
+Buscador de postulantes que poseen un tipo especifico de certificacion.
+Los filtros son: tipo de certificacion (requerido), nombre (opcional) y
+vigencia (Todos / Solo Vigentes / Solo Vencidos). La busqueda se realiza
+contra el servidor InfinityFree, NO contra la base local. Los resultados
+muestran el estado de cada certificacion (vigente/vencida) con su fecha de
+vencimiento calculada. Ademas, hay un boton "Guardar resultados en local"
+para descargar los datos del servidor a SQLite.
+
+La fecha de vencimiento se calcula sumando la duracion de vigencia (en
+anios, segun el tipo de certificacion) a FECHA_CERTIFICACION. Las
+duraciones estan hardcodeadas en servicio4.php:
+
+  Tipo                      | Duracion
+  --------------------------|:--------:
+  Certificacion Profesional | 5 anios
+  Diplomado                 | 3 anios
+  Curso                     | 3 anios
+  Idioma                    | 3 anios
+  Seminario                 | 1 anio
 
 B) Tablas que toca
 --------------------
 
 LOCAL (SQLite) - Solo lectura:
-  POSTULANTE                  - datos del postulante (SELECT con JOIN)
-  CERTIFICACION               - certificaciones (filtro principal)
-  TIPO_CERTIFICACION          - tipo (filtro y JOIN, tambien fallback dropdown)
-  GRADO_ACADEMICO             - nombre del grado (JOIN)
-  INSTITUCION                 - nombre de la institucion (JOIN)
+  TIPO_CERTIFICACION          - fallback del dropdown de tipos (si no hay server)
+
+LOCAL (SQLite) - Escritura (solo al tocar "Guardar en local"):
+  POSTULANTE                  - INSERT OR IGNORE + UPDATE (upsert)
+  CERTIFICACION               - INSERT OR IGNORE + UPDATE (upsert)
 
 SERVIDOR (MySQL InfinityFree) - Lectura:
-  TIPO_CERTIFICACION          - SELECT para llenar dropdown de tipos
+  TIPO_CERTIFICACION          - SELECT para llenar dropdown de tipos (con DURACION_VIGENCIA_ANIOS)
+  POSTULANTE                  - SELECT con JOIN para busqueda
+  CERTIFICACION               - SELECT con JOIN para busqueda
+  GRADO_ACADEMICO             - JOIN para nombre del grado
+  INSTITUCION                 - JOIN para nombre de la institucion
 
-SERVIDOR (MySQL InfinityFree) - Escritura:
-  POSTULANTE                  - INSERT ... ON DUPLICATE KEY UPDATE
-  CERTIFICACION               - INSERT ... ON DUPLICATE KEY UPDATE
+SERVIDOR (MySQL InfinityFree) - Escritura (NO se usa desde este servicio):
+  (El endpoint sincronizar_certificaciones sigue existiendo para uso externo)
 
 C) Local vs Servidor
 ---------------------
-Operacion                        | Lugar       | Tipo
----------------------------------|-------------|----------
-Cargar dropdown tipos (intento)  | MySQL       | Remoto
-Cargar dropdown tipos (fallback) | SQLite      | Local
-Buscar postulantes por filtros   | SQLite      | Local
-Mostrar resultados               | Android UI  | Cliente
-Sincronizar automatica (fondo)   | MySQL       | Remoto
-Sincronizar manual (desde dialogo)| MySQL      | Remoto
+Operacion                           | Lugar       | Tipo
+------------------------------------|-------------|----------
+Cargar dropdown tipos (intento)     | MySQL       | Remoto
+Cargar dropdown tipos (fallback)    | SQLite      | Local
+Buscar postulantes por filtros      | MySQL       | Remoto
+Calcular fecha vencimiento/vigencia | PHP         | Remoto
+Mostrar resultados con badge        | Android UI  | Cliente
+Guardar resultados en local (boton) | SQLite      | Local
 
 D) Flujo detallado
 -------------------
 1. Al abrir la pantalla:
-   a) Se cargan los tipos de certificacion en el dropdown
+   a) Se cargan los tipos de certificacion en el dropdown (spinner)
    b) Intenta 3 veces (con 3s de espera) obtenerlos del servidor:
-      GET go.php?action=tipos_certificacion -> SELECT ID_TIPO, NOMBRE_TIPO
+      GET go.php?action=tipos_certificacion
+      -> SELECT ID_TIPO, NOMBRE_TIPO desde MySQL
+      -> PHP agrega DURACION_VIGENCIA_ANIOS hardcodeado a cada tipo
    c) Si falla, lee desde SQLite local: SELECT de TIPO_CERTIFICACION
+      (en ese caso, no hay informacion de vigencia)
 
 2. El usuario selecciona:
-   - Tipo de certificacion (requerido)
-   - Nombre de certificacion (opcional, busqueda LIKE %texto%)
-   - Ano (opcional, filtro por rango de fechas YYYY-01-01 a YYYY-12-31)
+   - Tipo de certificacion (requerido) - Spinner
+   - Nombre de certificacion (opcional, texto LIKE %texto%) - campo de texto
+   - Vigencia (requerido) - Spinner con opciones: "Todos", "Solo Vigentes", "Solo Vencidos"
 
 3. Toca "Buscar":
    a) Valida que haya seleccionado un tipo
    b) Muestra ProgressBar y deshabilita boton
-   c) Ejecuta en SQLite:
-      SELECT p.*, ga.NOMBRE_GRADO, c.*, tc.NOMBRE_TIPO, i.NOMBRE_INSTITUCION
-      FROM POSTULANTE p
-      JOIN CERTIFICACION c ON p.ID_POSTULANTE = c.ID_POSTULANTE
-      LEFT JOIN TIPO_CERTIFICACION tc ON c.ID_TIPO_CERTIFICACION = tc.ID_TIPO_CERTIFICACION
-      LEFT JOIN INSTITUCION i ON c.ID_INSTITUCION = i.ID_INSTITUCION
-      LEFT JOIN GRADO_ACADEMICO ga ON p.ID_GRADO_ACADEMICO = ga.ID_GRADO_ACADEMICO
-      WHERE c.ID_TIPO_CERTIFICACION = ?
-        [AND c.NOMBRE_CERTIFICACION LIKE ?]
-        [AND c.FECHA_CERTIFICACION BETWEEN ? AND ?]
-      ORDER BY p.ID_POSTULANTE, c.FECHA_CERTIFICACION DESC
-   d) Agrupa resultados por postulante (linkedMapOf)
-   e) Arma JSON por postulante con array de certificaciones
-   f) Muestra resultados en RecyclerView (inmediato)
-   g) En segundo plano, si hay resultados:
-      - POST a go.php?action=sincronizar_certificaciones
-      - El servidor hace UPSERT (INSERT ON DUPLICATE KEY UPDATE)
-        en POSTULANTE y CERTIFICACION
-      - Ajusta fechas para cumplir triggers de MySQL
-      - Retorna {"nuevas": N, "actualizadas": M}
+   c) Llama al servidor:
+      GET go.php?action=buscar_certificaciones&tipo=X&nombre=Y&vigente=Z
+   d) El servidor PHP:
+      - Ejecuta query a MySQL con JOIN a POSTULANTE, CERTIFICACION,
+        TIPO_CERTIFICACION, INSTITUCION, GRADO_ACADEMICO
+      - Filtra por tipo (obligatorio) y nombre (opcional, LIKE)
+      - NO filtra por anio (reemplazado por vigencia)
+      - Por cada certificacion, calcula:
+        aniosVigencia = vigenciaPorTipo[idTipo]
+        fechaVencimiento = FECHA_CERTIFICACION + aniosVigencia
+        vigente = fechaVencimiento >= hoy
+      - Si el filtro es "vigentes", excluye certificaciones vencidas
+      - Si el filtro es "vencidos", excluye certificaciones vigentes
+      - Agrupa por postulante, ordena por cantidad de certificaciones
+      - Retorna JSON con postulantes y certificaciones (cada una con
+        fecha_vencimiento y estado vigente)
+   e) Muestra resultados en RecyclerView con badge de estado:
+      - "VIGENTE" (fondo verde) si todas las certificaciones estan vigentes
+      - "VENCIDA" (fondo rojo) si alguna esta vencida
+      - Muestra resumen: "N vigente(s), M vencida(s)"
+   f) Aparece boton "Guardar resultados en local"
 
-4. Toca una tarjeta de resultado:
+4. Toca "Guardar resultados en local":
+   a) Recorre todos los postulantes del resultado
+   b) Por cada uno, hace INSERT OR IGNORE + UPDATE en SQLite:
+      - POSTULANTE: todos los campos (16 columnas), con FKs desactivadas temporalmente
+      - CERTIFICACION: todas las certificaciones del postulante
+   c) Muestra Snackbar "Resultados guardados en local"
+
+5. Toca una tarjeta de resultado:
    a) Dialogo con datos personales (nombre, email, ID, grado)
-   b) Lista de certificaciones del postulante
-   c) Boton "Sincronizar con servidor": sube solo ese postulante
-   d) Boton "Cerrar"
+   b) Lista de certificaciones con estado y fecha de vencimiento:
+      "Certificado X — Instituto Y (2020) [VIGENTE - Vence el 2025-06-15]"
+   c) Boton "Cerrar"
+   (Ya no tiene boton "Sincronizar con servidor")
 
 E) Por que es util
 ------------------
 - Las empresas pueden buscar candidatos por certificacion especifica
-  (ej: "Python", "Ingles", "Project Management").
-- Busqueda local-first: funciona sin internet.
-- Sincronizacion automatica al servidor mantiene datos actualizados.
-- Filtros combinados (tipo + nombre + ano) permiten busqueda precisa.
-- El servidor ajusta fechas automaticamente para cumplir restricciones
-  de la BD (triggers), evitando errores de insercion.
+  (ej: "Python", "Ingles", "Project Management") consultando datos reales
+  del servidor.
+- Cada certificacion muestra si esta vigente o vencida, con la fecha de
+  vencimiento calculada segun el tipo de certificacion.
+- Filtro de vigencia permite encontrar solo candidatos con certificaciones
+  actualizadas.
+- Boton "Guardar en local" permite descargar resultados para consulta
+  offline o para poblar la base local.
+- Las duraciones estan centralizadas en el PHP (un solo lugar para
+  mantener), no se modifico el esquema de la BD.
 
 F) Rol dirigido
 ----------------

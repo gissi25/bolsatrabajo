@@ -26,6 +26,9 @@
 │    ?action=recomendar_formacion → servicio2.php          │
 │    ?action=panorama_mercado  → servicio2.php             │
 │    ?action=sincronizar_postulantes → servicio3.php       │
+│    ?action=tipos_certificacion    → servicio4.php        │
+│    ?action=buscar_certificaciones → servicio4.php        │
+│    ?action=sincronizar_certificaciones → servicio4.php   │
 │                                                          │
 │  Cada servicioX.php se conecta a:                        │
 │    MySQL → if0_42097646_bolsadetrabajo                   │
@@ -42,6 +45,7 @@
 | `servicio1.php` | Carga masiva de ofertas | `empresas`, `grados`, `insertar_ofertas` |
 | `servicio2.php` | Recomendador de formación | `recomendar_formacion`, `panorama_mercado` |
 | `servicio3.php` | Sincronización de postulantes | `sincronizar_postulantes` |
+| `servicio4.php` | Búsqueda por certificaciones | `tipos_certificacion`, `buscar_certificaciones`, `sincronizar_certificaciones` |
 
 ---
 
@@ -61,6 +65,9 @@ $route = [
     'recomendar_formacion'      => 2,
     'panorama_mercado'          => 2,
     'sincronizar_postulantes'   => 3,
+    'tipos_certificacion'       => 4,
+    'buscar_certificaciones'    => 4,
+    'sincronizar_certificaciones' => 4,
 ];
 
 $serviceFile = "servicio{$route[$action]}.php";
@@ -288,9 +295,79 @@ POST /go.php?action=recomendar_formacion
 
 ---
 
+## Servicio 4 — Búsqueda de Postulantes por Certificación (ACTUALIZADO)
+
+### ¿Qué hace?
+
+Permite buscar postulantes que tengan un tipo específico de certificación. La búsqueda se realiza **contra el servidor (InfinityFree)**, no contra la base de datos local. Adicionalmente, cada certificación incluye su **fecha de vencimiento calculada** y el estado **vigente/vencida** según el tipo de certificación.
+
+### ¿Cómo se calcula la vigencia?
+
+Cada tipo de certificación tiene una duración de vigencia hardcodeada en el PHP:
+
+| Tipo | Duración |
+|------|:--------:|
+| Certificación Profesional | 5 años |
+| Diplomado | 3 años |
+| Curso | 3 años |
+| Idioma | 3 años |
+| Seminario | 1 año |
+
+La fecha de vencimiento se calcula como: `FECHA_CERTIFICACION + DURACION_VIGENCIA`. Si la fecha actual es posterior, la certificación está **vencida**.
+
+### Acciones
+
+| Acción | Método | Parámetros | Respuesta |
+|--------|--------|------------|-----------|
+| `tipos_certificacion` | GET | — | Lista de tipos con `ID_TIPO_CERTIFICACION`, `NOMBRE_TIPO`, `DURACION_VIGENCIA_ANIOS` |
+| `buscar_certificaciones` | GET | `tipo` (requerido), `nombre` (opcional), `vigente` (`"todos"`/`"vigentes"`/`"vencidos"`) | Postulantes agrupados con sus certificaciones y estado de vigencia |
+| `sincronizar_certificaciones` | POST | `{"postulantes": [...]}` | Sube/actualiza postulantes y certificaciones al servidor |
+
+### Flujo actual (Android)
+
+```
+1. Cargar tipos → servidor (tipos_certificacion)
+2. Usuario selecciona tipo, nombre (opcional), vigencia (Todos/Vigentes/Vencidos)
+3. Buscar → servidor (buscar_certificaciones)
+4. Mostrar resultados con badge VIGENTE/VENCIDA + fecha de vencimiento
+5. Botón "Guardar resultados en local" → INSERT OR REPLACE en SQLite local
+```
+
+### Respuesta de `buscar_certificaciones`
+
+Cada certificación ahora incluye:
+
+```json
+{
+  "id_certificacion": "CER001",
+  "id_institucion": "INS001",
+  "id_tipo_certificacion": 1,
+  "nombre": "Desarrollo Android Avanzado",
+  "tipo": "Certificacion Profesional",
+  "fecha_certificacion": "2020-06-15",
+  "fecha_inicio": "2020-01-15",
+  "fecha_fin": "2020-06-15",
+  "anio": "2020",
+  "institucion": "Universidad de El Salvador (UES)",
+  "fecha_vencimiento": "2025-06-15",
+  "vigente": false
+}
+```
+
+### Diferencia con la versión anterior
+
+| Antes | Ahora |
+|-------|-------|
+| Buscaba en SQLite local | Busca en servidor (InfinityFree) |
+| Campo "Año" para filtrar | Spinner "Vigencia" (Todos/Vigentes/Vencidos) |
+| No mostraba vencimiento | Muestra badge vigente/vencida con fecha de vencimiento |
+| Sync subía resultados al servidor | Botón "Guardar en local" descarga a SQLite |
+
+---
+
 ## Convención para crear nuevos servicios
 
-Si en el futuro querés agregar un `servicio4.php`, seguí este patrón:
+Si en el futuro querés agregar un `servicioN.php`, seguí este patrón:
 
 ```php
 <?php
@@ -325,6 +402,8 @@ function miFuncion() {
 Y en `go.php` agregás la ruta:
 ```php
 'mi_accion' => 4,  // servicio4.php
+// o
+'mi_otra_accion' => 5,  // servicio5.php
 ```
 
 ---
@@ -349,4 +428,13 @@ curl -X POST "https://bolsadetrabajopdm.gt.tc/go.php?action=recomendar_formacion
 curl -X POST "https://bolsadetrabajopdm.gt.tc/go.php?action=insertar_ofertas" \
   -H "Content-Type: application/json" \
   -d '{"ofertas":[{...}]}'
+
+# Probar tipos de certificación (GET)
+curl "https://bolsadetrabajopdm.gt.tc/go.php?action=tipos_certificacion"
+
+# Probar búsqueda de certificaciones (GET)
+curl "https://bolsadetrabajopdm.gt.tc/go.php?action=buscar_certificaciones&tipo=1&vigente=vigentes"
+
+# Probar búsqueda con nombre (GET)
+curl "https://bolsadetrabajopdm.gt.tc/go.php?action=buscar_certificaciones&tipo=1&nombre=android&vigente=todos"
 ```

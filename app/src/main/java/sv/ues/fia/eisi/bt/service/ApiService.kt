@@ -257,11 +257,11 @@ object ApiService {
         (0 until arr.length()).map { arr.getJSONObject(it) }
     }
 
-    suspend fun buscarCertificaciones(tipo: Int, nombre: String?, anio: Int?): JSONObject = withContext(Dispatchers.Main) {
+    suspend fun buscarCertificaciones(tipo: Int, nombre: String?, vigente: String = "todos"): JSONObject = withContext(Dispatchers.Main) {
         val params = mutableListOf<String>()
         params.add("tipo=$tipo")
         if (!nombre.isNullOrBlank()) params.add("nombre=${java.net.URLEncoder.encode(nombre, "UTF-8")}")
-        if (anio != null && anio > 0) params.add("anio=$anio")
+        params.add("vigente=$vigente")
         fetch("buscar_certificaciones&${params.joinToString("&")}")
     }
 

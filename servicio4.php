@@ -12,11 +12,16 @@ $conn->set_charset("utf8");
 
 $method = $_SERVER['REQUEST_METHOD'];
 
+$vigenciaPorTipo = [1 => 5, 2 => 3, 3 => 3, 4 => 3, 5 => 1];
+
 switch ($action) {
 
     case 'tipos_certificacion':
         $rs = $conn->query("SELECT ID_TIPO_CERTIFICACION, NOMBRE_TIPO FROM TIPO_CERTIFICACION ORDER BY NOMBRE_TIPO");
         $data = $rs->fetch_all(MYSQLI_ASSOC);
+        foreach ($data as &$tipo) {
+            $tipo['DURACION_VIGENCIA_ANIOS'] = $vigenciaPorTipo[$tipo['ID_TIPO_CERTIFICACION']] ?? null;
+        }
         echo json_encode(["exito" => true, "data" => $data], JSON_UNESCAPED_UNICODE);
         break;
 
@@ -154,7 +159,7 @@ switch ($action) {
     case 'buscar_certificaciones':
         $tipo = isset($_GET['tipo']) ? intval($_GET['tipo']) : 0;
         $nombre = isset($_GET['nombre']) ? trim($_GET['nombre']) : '';
-        $anio = isset($_GET['anio']) ? intval($_GET['anio']) : 0;
+        $vigente = isset($_GET['vigente']) ? trim($_GET['vigente']) : 'todos';
 
         if ($tipo <= 0) {
             http_response_code(400);
@@ -162,8 +167,14 @@ switch ($action) {
         }
 
         $sql = "
-            SELECT p.ID_POSTULANTE, p.NOMBRE, p.APELLIDO, p.EMAIL, ga.NOMBRE_GRADO,
-                   c.NOMBRE_CERTIFICACION, c.FECHA_CERTIFICACION, tc.NOMBRE_TIPO, i.NOMBRE_INSTITUCION
+            SELECT p.ID_POSTULANTE, p.ID_GENERO, p.ID_TIPO_DOCUMENTO, p.NUM_DOCUMENTO,
+                   p.ID_GRADO_ACADEMICO, p.NOMBRE, p.APELLIDO, p.EMAIL, p.FECHA_NACIMIENTO,
+                   p.NUP, p.ID_DISTRITO_DEPTO, p.ID_DISTRITO_MUNICIPIO, p.ID_DISTRITO_ID,
+                   p.DIRECCION_DETALLE, p.TELEFONO_CASA, p.TELEFONO_CELULAR,
+                   ga.NOMBRE_GRADO,
+                   c.ID_CERTIFICACION, c.ID_INSTITUCION, c.ID_TIPO_CERTIFICACION,
+                   c.NOMBRE_CERTIFICACION, c.FECHA_CERTIFICACION, c.FECHA_INICIO, c.FECHA_FIN,
+                   tc.NOMBRE_TIPO, i.NOMBRE_INSTITUCION
             FROM POSTULANTE p
             JOIN CERTIFICACION c ON p.ID_POSTULANTE = c.ID_POSTULANTE
             LEFT JOIN TIPO_CERTIFICACION tc ON c.ID_TIPO_CERTIFICACION = tc.ID_TIPO_CERTIFICACION
@@ -180,13 +191,6 @@ switch ($action) {
             $types .= "s";
         }
 
-        if ($anio > 0) {
-            $sql .= " AND c.FECHA_CERTIFICACION BETWEEN ? AND ?";
-            $params[] = "$anio-01-01";
-            $params[] = "$anio-12-31";
-            $types .= "ss";
-        }
-
         $sql .= " ORDER BY p.ID_POSTULANTE, c.FECHA_CERTIFICACION DESC";
 
         $stmt = $conn->prepare($sql);
@@ -201,25 +205,62 @@ switch ($action) {
 
         $rows = $rs->fetch_all(MYSQLI_ASSOC);
 
+        $hoy = new DateTime();
         $postulantes = [];
         foreach ($rows as $row) {
+            $idTipo = intval($row['ID_TIPO_CERTIFICACION']);
+            $aniosVigencia = $vigenciaPorTipo[$idTipo] ?? null;
+            $fechaCert = $row['FECHA_CERTIFICACION'];
+
+            $fechaVencimiento = null;
+            $vigenteCert = null;
+            if ($aniosVigencia !== null && $fechaCert) {
+                $fv = new DateTime($fechaCert);
+                $fv->modify("+$aniosVigencia years");
+                $fechaVencimiento = $fv->format('Y-m-d');
+                $vigenteCert = $fv >= $hoy;
+            }
+
+            if ($vigente === 'vigentes' && $vigenteCert !== true) continue;
+            if ($vigente === 'vencidos' && $vigenteCert !== false) continue;
+
             $id = $row['ID_POSTULANTE'];
             if (!isset($postulantes[$id])) {
                 $postulantes[$id] = [
                     "id_postulante" => $row['ID_POSTULANTE'],
+                    "id_genero" => intval($row['ID_GENERO']),
+                    "id_tipo_documento" => intval($row['ID_TIPO_DOCUMENTO']),
+                    "id_grado_academico" => intval($row['ID_GRADO_ACADEMICO']),
+                    "id_distrito_depto" => $row['ID_DISTRITO_DEPTO'] ? intval($row['ID_DISTRITO_DEPTO']) : null,
+                    "id_distrito_municipio" => $row['ID_DISTRITO_MUNICIPIO'] ? intval($row['ID_DISTRITO_MUNICIPIO']) : null,
+                    "id_distrito_id" => $row['ID_DISTRITO_ID'] ? intval($row['ID_DISTRITO_ID']) : null,
                     "nombre" => $row['NOMBRE'],
                     "apellido" => $row['APELLIDO'],
                     "email" => $row['EMAIL'],
+                    "num_documento" => $row['NUM_DOCUMENTO'] ?? '',
+                    "nup" => $row['NUP'] ?? '',
+                    "fecha_nacimiento" => $row['FECHA_NACIMIENTO'] ?? '',
+                    "direccion" => $row['DIRECCION_DETALLE'] ?? '',
+                    "telefono_casa" => $row['TELEFONO_CASA'] ?? '',
+                    "telefono_celular" => $row['TELEFONO_CELULAR'] ?? '',
                     "grado" => $row['NOMBRE_GRADO'] ?? '',
                     "certificaciones" => [],
                     "total_cert" => 0
                 ];
             }
             $postulantes[$id]['certificaciones'][] = [
+                "id_certificacion" => $row['ID_CERTIFICACION'],
+                "id_institucion" => $row['ID_INSTITUCION'],
+                "id_tipo_certificacion" => $idTipo,
                 "nombre" => $row['NOMBRE_CERTIFICACION'],
                 "tipo" => $row['NOMBRE_TIPO'],
-                "anio" => $row['FECHA_CERTIFICACION'] ? substr($row['FECHA_CERTIFICACION'], 0, 4) : '',
-                "institucion" => $row['NOMBRE_INSTITUCION'] ?? ''
+                "fecha_certificacion" => $fechaCert,
+                "fecha_inicio" => $row['FECHA_INICIO'],
+                "fecha_fin" => $row['FECHA_FIN'],
+                "anio" => $fechaCert ? substr($fechaCert, 0, 4) : '',
+                "institucion" => $row['NOMBRE_INSTITUCION'] ?? '',
+                "fecha_vencimiento" => $fechaVencimiento,
+                "vigente" => $vigenteCert
             ];
             $postulantes[$id]['total_cert']++;
         }
