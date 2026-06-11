@@ -62,6 +62,7 @@ switch ($action) {
                    o.FECHA_PUBLICACION, o.FECHA_CADUCIDAD, o.EXPERIENCIA_ANIOS,
                    o.EDAD_MINIMA, o.EDAD_MAXIMA, o.DESCRIPCION_OFERTA_TRABAJO,
                    e.NOMBRE_EMPRESA, e.CONTACTO_DIRECTO,
+                   e.ID_DISTRITO_DEPTO, e.ID_DISTRITO_MUNICIPIO, e.ID_DISTRITO_ID,
                    d.NOMBRE_DISTRITO, m.NOMBRE_MUNICIPIO, dep.NOMBRE_DEPARTAMENTO,
                    g.NOMBRE_GRADO
             FROM OFERTA_TRABAJO o
