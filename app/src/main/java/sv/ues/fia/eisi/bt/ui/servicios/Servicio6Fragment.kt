@@ -91,7 +91,7 @@ class Servicio6Fragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
-        role = Constants.ROLE_ADMIN
+        role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_ADMIN) ?: Constants.ROLE_ADMIN
         idPostulanteSeleccionado = prefs.getString(Constants.KEY_ID_POSTULANTE, null)
 
         toolbar = view.findViewById(R.id.toolbar)
@@ -517,7 +517,7 @@ class Servicio6Fragment : Fragment() {
                 val fecha = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
                 withContext(Dispatchers.IO) {
                     val db = ConnectionHelper(requireContext()).writableDb
-                    db.execSQL("INSERT INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO) VALUES (?,?,?,?,?,'activo')", arrayOf(idPostulacion, nit, idOferta, idPostulante, fecha))
+                    db.execSQL("INSERT INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO) VALUES (?,?,?,?,?,'en proceso')", arrayOf(idPostulacion, nit, idOferta, idPostulante, fecha))
                     db.close()
                 }
                 try {
@@ -527,7 +527,7 @@ class Servicio6Fragment : Fragment() {
                         put("id_oferta", idOferta)
                         put("id_postulante", idPostulante)
                         put("fecha_aplicacion", fecha)
-                        put("estado_proceso", "activo")
+                        put("estado_proceso", "en proceso")
                     }
                     ApiService.insertarPostulacion(json)
                 } catch (e: Exception) {
@@ -824,9 +824,12 @@ class Servicio6Fragment : Fragment() {
                 val edadMin = o.optString("EDAD_MINIMA", "").takeIf { it.isNotEmpty() } ?: "NULL"
                 val edadMax = o.optString("EDAD_MAXIMA", "").takeIf { it.isNotEmpty() } ?: "NULL"
                 val descripcion = escapar(o.optString("DESCRIPCION_OFERTA_TRABAJO"))
-                
+
                 val nombreEmpresa = escapar(o.optString("NOMBRE_EMPRESA"))
-                db.execSQL("INSERT OR IGNORE INTO EMPRESA (NIT, ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID, NOMBRE_EMPRESA) VALUES ('$nit', 1, 1, 1, '$nombreEmpresa')")
+                val deptoEmp = o.optString("ID_DISTRITO_DEPTO", "").takeIf { it.isNotEmpty() } ?: "NULL"
+                val muniEmp = o.optString("ID_DISTRITO_MUNICIPIO", "").takeIf { it.isNotEmpty() } ?: "NULL"
+                val distEmp = o.optString("ID_DISTRITO_ID", "").takeIf { it.isNotEmpty() } ?: "NULL"
+                db.execSQL("INSERT OR IGNORE INTO EMPRESA (NIT, ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID, NOMBRE_EMPRESA) VALUES ('$nit', $deptoEmp, $muniEmp, $distEmp, '$nombreEmpresa')")
                 db.execSQL("UPDATE EMPRESA SET NOMBRE_EMPRESA = '$nombreEmpresa' WHERE NIT = '$nit'")
 
                 if (idGrado != "NULL") {

@@ -266,33 +266,25 @@ object ApiService {
     }
 
     // Servicio 5: descargar datos del servidor
-    suspend fun getCatalogos(): JSONObject = withContext(Dispatchers.Main) {
-        fetch("catalogos")
-    }
+    suspend fun getCatalogos(): JSONObject = fetchWithFallback("catalogos")
 
-    suspend fun getEmpresasFull(): JSONObject = withContext(Dispatchers.Main) {
-        fetch("empresas_full")
-    }
+    suspend fun getEmpresasFull(): JSONObject = fetchWithFallback("empresas_full")
 
-    suspend fun getOfertasFull(): JSONObject = withContext(Dispatchers.Main) {
-        fetch("ofertas_full")
-    }
+    suspend fun getOfertasFull(): JSONObject = fetchWithFallback("ofertas_full")
 
-    suspend fun getPostulantesFull(): JSONObject = withContext(Dispatchers.Main) {
-        fetch("postulantes_full")
-    }
+    suspend fun getPostulantesFull(): JSONObject = fetchWithFallback("postulantes_full")
 
-    suspend fun getPostulacionesFull(idPostulante: String? = null): JSONObject = withContext(Dispatchers.Main) {
+    suspend fun getPostulacionesFull(idPostulante: String? = null): JSONObject {
         val action = if (!idPostulante.isNullOrBlank()) {
             "postulaciones_full&id_postulante=${java.net.URLEncoder.encode(idPostulante, "UTF-8")}"
         } else {
             "postulaciones_full"
         }
-        fetch(action)
+        return fetchWithFallback(action)
     }
 
-    suspend fun insertarPostulacion(postulacion: JSONObject): JSONObject = withContext(Dispatchers.Main) {
-        fetch("insertar_postulacion", "POST", postulacion.toString())
+    suspend fun insertarPostulacion(postulacion: JSONObject): JSONObject {
+        return fetchWithFallback("insertar_postulacion", postulacion.toString())
     }
 
     // Servicio 6: filtros geográficos y de postulantes

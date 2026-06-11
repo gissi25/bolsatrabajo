@@ -24,9 +24,11 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.async
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -104,6 +106,11 @@ class Servicio5Fragment : Fragment() {
     private var estadoOfertas = false
     private var estadoPostulantes = false
     private var estadoPostulaciones = false
+    private var errorCatalogos: String? = null
+    private var errorEmpresas: String? = null
+    private var errorOfertas: String? = null
+    private var errorPostulantes: String? = null
+    private var errorPostulaciones: String? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_servicio5, container, false)
@@ -112,7 +119,7 @@ class Servicio5Fragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val prefs = requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
-        role = Constants.ROLE_ADMIN
+        role = prefs.getString(Constants.KEY_USER_ROLE, Constants.ROLE_ADMIN) ?: Constants.ROLE_ADMIN
 
         toolbar = view.findViewById(R.id.toolbar)
         toolbar.setupMarqueeTitle()
@@ -276,38 +283,49 @@ class Servicio5Fragment : Fragment() {
         tvEstadoDescarga.visibility = View.VISIBLE; tvEstadoDescarga.text = getString(R.string.s5_descargando)
         estadoCatalogos = false; estadoEmpresas = false; estadoOfertas = false
         estadoPostulantes = false; estadoPostulaciones = false
+        errorCatalogos = null; errorEmpresas = null; errorOfertas = null; errorPostulantes = null; errorPostulaciones = null
 
         lifecycleScope.launch {
-            try {
-                val data = ApiService.getCatalogos()
-                withContext(Dispatchers.IO) { syncCatalogos(data) }
-                estadoCatalogos = true
-            } catch (e: Exception) {
-                Log.e("Servicio5", "Error syncCatalogos", e)
+            var jsonCatalogos: JSONObject? = null
+            var jsonEmpresas: JSONObject? = null
+            var jsonOfertas: JSONObject? = null
+            var jsonPostulantes: JSONObject? = null
+
+            coroutineScope {
+                val jobCatalogos = async {
+                    try { jsonCatalogos = ApiService.getCatalogos() }
+                    catch (e: Exception) { Log.e("Servicio5", "Error fetch catalogos", e) }
+                }
+                val jobEmpresas = async {
+                    try { jsonEmpresas = ApiService.getEmpresasFull() }
+                    catch (e: Exception) { Log.e("Servicio5", "Error fetch empresas", e) }
+                }
+                val jobOfertas = async {
+                    try { jsonOfertas = ApiService.getOfertasFull() }
+                    catch (e: Exception) { Log.e("Servicio5", "Error fetch ofertas", e) }
+                }
+                val jobPostulantes = async {
+                    try { jsonPostulantes = ApiService.getPostulantesFull() }
+                    catch (e: Exception) { Log.e("Servicio5", "Error fetch postulantes", e) }
+                }
+                listOf(jobCatalogos, jobEmpresas, jobOfertas, jobPostulantes).awaitAll()
             }
 
-            try {
-                val data = ApiService.getEmpresasFull()
-                withContext(Dispatchers.IO) { syncEmpresas(data) }
-                estadoEmpresas = true
-            } catch (e: Exception) {
-                Log.e("Servicio5", "Error syncEmpresas", e)
+            if (jsonCatalogos != null) {
+                try { withContext(Dispatchers.IO) { syncCatalogos(jsonCatalogos!!) }; estadoCatalogos = true }
+                catch (e: Exception) { Log.e("Servicio5", "Error syncCatalogos", e); errorCatalogos = e.message ?: "Error desconocido" }
             }
-
-            try {
-                val data = ApiService.getOfertasFull()
-                withContext(Dispatchers.IO) { syncOfertas(data) }
-                estadoOfertas = true
-            } catch (e: Exception) {
-                Log.e("Servicio5", "Error syncOfertas", e)
+            if (jsonEmpresas != null) {
+                try { withContext(Dispatchers.IO) { syncEmpresas(jsonEmpresas!!) }; estadoEmpresas = true }
+                catch (e: Exception) { Log.e("Servicio5", "Error syncEmpresas", e); errorEmpresas = e.message ?: "Error desconocido" }
             }
-
-            try {
-                val data = ApiService.getPostulantesFull()
-                withContext(Dispatchers.IO) { syncPostulantes(data) }
-                estadoPostulantes = true
-            } catch (e: Exception) {
-                Log.e("Servicio5", "Error syncPostulantes", e)
+            if (jsonOfertas != null) {
+                try { withContext(Dispatchers.IO) { syncOfertas(jsonOfertas!!) }; estadoOfertas = true }
+                catch (e: Exception) { Log.e("Servicio5", "Error syncOfertas", e); errorOfertas = e.message ?: "Error desconocido" }
+            }
+            if (jsonPostulantes != null) {
+                try { withContext(Dispatchers.IO) { syncPostulantes(jsonPostulantes!!) }; estadoPostulantes = true }
+                catch (e: Exception) { Log.e("Servicio5", "Error syncPostulantes", e); errorPostulantes = e.message ?: "Error desconocido" }
             }
 
             try {
@@ -316,12 +334,23 @@ class Servicio5Fragment : Fragment() {
                 estadoPostulaciones = true
             } catch (e: Exception) {
                 Log.e("Servicio5", "Error syncPostulaciones", e)
+                errorPostulaciones = e.message ?: "Error desconocido"
+                try {
+                    val db = ConnectionHelper(requireContext()).readableDatabase
+                    val c = db.rawQuery("SELECT COUNT(*) FROM POSTULACION", null)
+                    if (c.moveToFirst() && c.getInt(0) > 0) estadoPostulaciones = true
+                    c.close(); db.close()
+                } catch (_: Exception) {}
             }
 
             withContext(Dispatchers.Main) {
                 populateSecciones()
                 progressBar.visibility = View.GONE; tvEstadoDescarga.visibility = View.GONE
                 scrollView.visibility = View.VISIBLE; btnReintentar.isEnabled = true; btnReintentar.visibility = View.VISIBLE
+                if (idPostulanteSeleccionado.isNullOrBlank()) {
+                    val lista = queryPostulantesParaSeleccion()
+                    if (lista.isNotEmpty()) mostrarDialogoSeleccionPostulante(lista, null)
+                }
             }
         }
     }
@@ -340,7 +369,7 @@ class Servicio5Fragment : Fragment() {
         if (estadoOfertas) {
             tvStatusOfertas.text = getString(R.string.s5_descargado); tvStatusOfertas.setTextColor(0xFF2E7D32.toInt())
             ofertasList.clear(); ofertasList.addAll(queryOfertasPreview()); tvBadgeOfertas.text = ofertasList.size.toString()
-        } else { tvStatusOfertas.text = "Error"; tvStatusOfertas.setTextColor(0xFFC62828.toInt()) }
+        } else { tvStatusOfertas.text = errorOfertas ?: "Error"; tvStatusOfertas.setTextColor(0xFFC62828.toInt()) }
         rvOfertas.adapter = PreviewAdapter(ofertasList) { item -> mostrarDetalleOferta(item.nit, item.idOferta) }
         btnVerMasOfertas.text = getString(R.string.s5_ver_mas, ofertasList.size)
         btnVerMasOfertas.setOnClickListener { mostrarTodosOfertas() }
@@ -350,7 +379,7 @@ class Servicio5Fragment : Fragment() {
         if (estadoPostulaciones) {
             tvStatusPostulaciones.text = getString(R.string.s5_descargado); tvStatusPostulaciones.setTextColor(0xFF2E7D32.toInt())
             postulacionesList.clear(); postulacionesList.addAll(queryPostulacionesPreview()); tvBadgePostulaciones.text = postulacionesList.size.toString()
-        } else { tvStatusPostulaciones.text = "Error"; tvStatusPostulaciones.setTextColor(0xFFC62828.toInt()) }
+        } else { tvStatusPostulaciones.text = errorPostulaciones ?: "Error"; tvStatusPostulaciones.setTextColor(0xFFC62828.toInt()) }
         rvPostulaciones.adapter = PreviewAdapter(postulacionesList) { item -> mostrarDetallePostulacion(item.idPostulacion) }
         btnVerMasPostulaciones.text = getString(R.string.s5_ver_mas, postulacionesList.size)
         btnVerMasPostulaciones.setOnClickListener { mostrarTodasPostulaciones(filtroPostulaciones, argsPostulaciones) }
@@ -360,7 +389,7 @@ class Servicio5Fragment : Fragment() {
         if (estadoEmpresas) {
             tvStatusEmpresas.text = getString(R.string.s5_descargado); tvStatusEmpresas.setTextColor(0xFF2E7D32.toInt())
             empresasList.clear(); empresasList.addAll(queryEmpresasPreview()); tvBadgeEmpresas.text = empresasList.size.toString()
-        } else { tvStatusEmpresas.text = "Error"; tvStatusEmpresas.setTextColor(0xFFC62828.toInt()) }
+        } else { tvStatusEmpresas.text = errorEmpresas ?: "Error"; tvStatusEmpresas.setTextColor(0xFFC62828.toInt()) }
         rvEmpresas.adapter = PreviewAdapter(empresasList)
         btnVerMasEmpresas.text = getString(R.string.s5_ver_mas, empresasList.size)
         btnVerMasEmpresas.setOnClickListener { mostrarTodasEmpresas() }
@@ -811,14 +840,13 @@ class Servicio5Fragment : Fragment() {
                 if (yaPostulado) { Snackbar.make(requireView(), getString(R.string.s5_error_ya_postulado), Snackbar.LENGTH_LONG).show(); return@launch }
                 val idPostulacion = withContext(Dispatchers.IO) { val db = ConnectionHelper(requireContext()).writableDb; val c = db.rawQuery("SELECT MAX(CAST(SUBSTR(ID_POSTULACION, 4) AS INTEGER)) FROM POSTULACION", null); val next = if (c.moveToFirst() && !c.isNull(0)) c.getInt(0) + 1 else 1; c.close(); db.close(); "POS${next.toString().padStart(3, '0')}" }
                 val fecha = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-                withContext(Dispatchers.IO) { val db = ConnectionHelper(requireContext()).writableDb; db.execSQL("INSERT INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO) VALUES ('$idPostulacion', '$nit', '$idOferta', '$idPostulante', '$fecha', 'activo')"); db.close() }
+                withContext(Dispatchers.IO) { val db = ConnectionHelper(requireContext()).writableDb; db.execSQL("INSERT INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO) VALUES ('$idPostulacion', '$nit', '$idOferta', '$idPostulante', '$fecha', 'en proceso')"); db.close() }
                 try {
-                    val json = JSONObject().apply { put("id_postulacion", idPostulacion); put("nit", nit); put("id_oferta", idOferta); put("id_postulante", idPostulante); put("fecha_aplicacion", fecha); put("estado_proceso", "activo") }
+                    val json = JSONObject().apply { put("id_postulacion", idPostulacion); put("nit", nit); put("id_oferta", idOferta); put("id_postulante", idPostulante); put("fecha_aplicacion", fecha); put("estado_proceso", "en proceso") }
                     ApiService.insertarPostulacion(json)
                 } catch (e: Exception) {
-                    Log.e("Servicio5", "Error al sincronizar postulacion", e)
+                    Log.e("Servicio5", "Error al sincronizar postulacion a InfinityFree", e)
                     Snackbar.make(requireView(), "Guardado local. No se pudo sincronizar: ${e.message}", Snackbar.LENGTH_LONG).show()
-                    return@launch
                 }
                 Snackbar.make(requireView(), getString(R.string.s5_postulacion_exitosa), Snackbar.LENGTH_LONG).show()
                 try {
@@ -910,31 +938,91 @@ class Servicio5Fragment : Fragment() {
 
     private fun syncEmpresas(json: JSONObject) {
         val db = ConnectionHelper(requireContext()).writableDb
-        try { val arr = json.getJSONArray("data"); db.beginTransaction(); for (i in 0 until arr.length()) { val e = arr.getJSONObject(i); val nit = escapar(e.optString("NIT")); val depto = e.optString("ID_DISTRITO_DEPTO", "").takeIf { it.isNotEmpty() } ?: "NULL"; val muni = e.optString("ID_DISTRITO_MUNICIPIO", "").takeIf { it.isNotEmpty() } ?: "NULL"; val dist = e.optString("ID_DISTRITO_ID", "").takeIf { it.isNotEmpty() } ?: "NULL"; val nombre = escapar(e.optString("NOMBRE_EMPRESA")); val contacto = escapar(e.optString("CONTACTO_DIRECTO")); db.execSQL("INSERT OR REPLACE INTO EMPRESA (NIT, ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID, NOMBRE_EMPRESA, CONTACTO_DIRECTO) VALUES ('$nit', $depto, $muni, $dist, '$nombre', '$contacto')") }; db.setTransactionSuccessful() }
+        try { val arr = json.getJSONArray("data"); db.beginTransaction(); for (i in 0 until arr.length()) { db.execSQL("SAVEPOINT sp$i"); try { val e = arr.getJSONObject(i); val nit = escapar(e.optString("NIT")); val depto = e.optString("ID_DISTRITO_DEPTO", "").takeIf { it.isNotEmpty() } ?: "NULL"; val muni = e.optString("ID_DISTRITO_MUNICIPIO", "").takeIf { it.isNotEmpty() } ?: "NULL"; val dist = e.optString("ID_DISTRITO_ID", "").takeIf { it.isNotEmpty() } ?: "NULL"; val nombre = escapar(e.optString("NOMBRE_EMPRESA")); val contacto = escapar(e.optString("CONTACTO_DIRECTO")); db.execSQL("INSERT OR IGNORE INTO EMPRESA (NIT, ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID, NOMBRE_EMPRESA, CONTACTO_DIRECTO) VALUES ('$nit', $depto, $muni, $dist, '$nombre', '$contacto')"); db.execSQL("UPDATE EMPRESA SET ID_DISTRITO_DEPTO=$depto, ID_DISTRITO_MUNICIPIO=$muni, ID_DISTRITO_ID=$dist, NOMBRE_EMPRESA='$nombre', CONTACTO_DIRECTO='$contacto' WHERE NIT='$nit'"); db.execSQL("RELEASE sp$i") } catch (_: Exception) { db.execSQL("ROLLBACK TO sp$i") } }; db.setTransactionSuccessful() }
         finally { db.endTransaction(); db.close() }
     }
 
     private fun syncOfertas(json: JSONObject) {
         val db = ConnectionHelper(requireContext()).writableDb
-        try { val arr = json.getJSONArray("data"); db.beginTransaction(); for (i in 0 until arr.length()) { val o = arr.getJSONObject(i); val nit = escapar(o.optString("NIT")); val idOferta = escapar(o.optString("ID_OFERTA")); val idGrado = o.optString("ID_GRADO_ACADEMICO", "").takeIf { it.isNotEmpty() } ?: "NULL"; val titulo = escapar(o.optString("TITULO_PUESTO")); val fechaPub = escaparNullable(o.optString("FECHA_PUBLICACION")); val fechaCad = escaparNullable(o.optString("FECHA_CADUCIDAD")); val expAnios = o.optString("EXPERIENCIA_ANIOS", "").takeIf { it.isNotEmpty() } ?: "NULL"; val edadMin = o.optString("EDAD_MINIMA", "").takeIf { it.isNotEmpty() } ?: "NULL"; val edadMax = o.optString("EDAD_MAXIMA", "").takeIf { it.isNotEmpty() } ?: "NULL"; val descripcion = escapar(o.optString("DESCRIPCION_OFERTA_TRABAJO")); db.execSQL("INSERT OR REPLACE INTO OFERTA_TRABAJO (NIT, ID_OFERTA, ID_GRADO_ACADEMICO, TITULO_PUESTO, FECHA_PUBLICACION, FECHA_CADUCIDAD, EXPERIENCIA_ANIOS, EDAD_MINIMA, EDAD_MAXIMA, DESCRIPCION_OFERTA_TRABAJO) VALUES ('$nit', '$idOferta', $idGrado, '$titulo', $fechaPub, $fechaCad, $expAnios, $edadMin, $edadMax, '$descripcion')"); db.execSQL("DELETE FROM DETALLE_REQUISITO WHERE NIT = '$nit' AND ID_OFERTA = '$idOferta'"); val requisitos = o.optJSONArray("requisitos"); if (requisitos != null) for (j in 0 until requisitos.length()) { val r = requisitos.getJSONObject(j); db.execSQL("INSERT INTO DETALLE_REQUISITO (NIT, ID_OFERTA, ID_DETALLE, DESCRIPCION_REQUISITO) VALUES ('$nit', '$idOferta', '${escapar(r.optString("ID_DETALLE"))}', '${escapar(r.optString("DESCRIPCION_REQUISITO"))}')") } }; db.setTransactionSuccessful() }
+        try { val arr = json.getJSONArray("data"); db.beginTransaction(); for (i in 0 until arr.length()) { db.execSQL("SAVEPOINT sp$i"); try { val o = arr.getJSONObject(i); val nit = escapar(o.optString("NIT")); val idOferta = escapar(o.optString("ID_OFERTA")); val idGrado = o.optString("ID_GRADO_ACADEMICO", "").takeIf { it.isNotEmpty() } ?: "NULL"; val titulo = escapar(o.optString("TITULO_PUESTO")); val fechaPub = escaparNullable(o.optString("FECHA_PUBLICACION")); val fechaCad = escaparNullable(o.optString("FECHA_CADUCIDAD")); val expAnios = o.optString("EXPERIENCIA_ANIOS", "").takeIf { it.isNotEmpty() } ?: "NULL"; val edadMin = o.optString("EDAD_MINIMA", "").takeIf { it.isNotEmpty() } ?: "NULL"; val edadMax = o.optString("EDAD_MAXIMA", "").takeIf { it.isNotEmpty() } ?: "NULL"; val descripcion = escapar(o.optString("DESCRIPCION_OFERTA_TRABAJO")); db.execSQL("INSERT OR IGNORE INTO OFERTA_TRABAJO (NIT, ID_OFERTA, ID_GRADO_ACADEMICO, TITULO_PUESTO, FECHA_PUBLICACION, FECHA_CADUCIDAD, EXPERIENCIA_ANIOS, EDAD_MINIMA, EDAD_MAXIMA, DESCRIPCION_OFERTA_TRABAJO) VALUES ('$nit', '$idOferta', $idGrado, '$titulo', $fechaPub, $fechaCad, $expAnios, $edadMin, $edadMax, '$descripcion')"); db.execSQL("UPDATE OFERTA_TRABAJO SET ID_GRADO_ACADEMICO=$idGrado, TITULO_PUESTO='$titulo', FECHA_PUBLICACION=$fechaPub, FECHA_CADUCIDAD=$fechaCad, EXPERIENCIA_ANIOS=$expAnios, EDAD_MINIMA=$edadMin, EDAD_MAXIMA=$edadMax, DESCRIPCION_OFERTA_TRABAJO='$descripcion' WHERE NIT='$nit' AND ID_OFERTA='$idOferta'"); db.execSQL("DELETE FROM DETALLE_REQUISITO WHERE NIT = '$nit' AND ID_OFERTA = '$idOferta'"); val requisitos = o.optJSONArray("requisitos"); if (requisitos != null) for (j in 0 until requisitos.length()) { val r = requisitos.getJSONObject(j); db.execSQL("INSERT INTO DETALLE_REQUISITO (NIT, ID_OFERTA, ID_DETALLE, DESCRIPCION_REQUISITO) VALUES ('$nit', '$idOferta', '${escapar(r.optString("ID_DETALLE"))}', '${escapar(r.optString("DESCRIPCION_REQUISITO"))}')") }; db.execSQL("RELEASE sp$i") } catch (_: Exception) { db.execSQL("ROLLBACK TO sp$i") } }; db.setTransactionSuccessful() }
         finally { db.endTransaction(); db.close() }
     }
 
     private fun syncPostulantes(json: JSONObject) {
         val db = ConnectionHelper(requireContext()).writableDb
-        try { val arr = json.getJSONArray("data"); db.beginTransaction(); for (i in 0 until arr.length()) { val p = arr.getJSONObject(i); val idPost = escapar(p.optString("ID_POSTULANTE")); val idGenero = p.optString("ID_GENERO", "").takeIf { it.isNotEmpty() } ?: "NULL"; val idTipoDoc = p.optString("ID_TIPO_DOCUMENTO", "").takeIf { it.isNotEmpty() } ?: "NULL"; val numDoc = escapar(p.optString("NUM_DOCUMENTO")); val idGrado = p.optString("ID_GRADO_ACADEMICO", "").takeIf { it.isNotEmpty() } ?: "NULL"; val nombre = escapar(p.optString("NOMBRE")); val apellido = escapar(p.optString("APELLIDO")); val fechaNac = escaparNullable(p.optString("FECHA_NACIMIENTO")); val nup = escapar(p.optString("NUP")); val email = escapar(p.optString("EMAIL")); val direccion = escapar(p.optString("DIRECCION_DETALLE")); val telCasa = escapar(p.optString("TELEFONO_CASA")); val telCel = escapar(p.optString("TELEFONO_CELULAR")); val distDepto = p.optString("ID_DISTRITO_DEPTO", "").takeIf { it.isNotEmpty() } ?: "NULL"; val distMuni = p.optString("ID_DISTRITO_MUNICIPIO", "").takeIf { it.isNotEmpty() } ?: "NULL"; val distId = p.optString("ID_DISTRITO_ID", "").takeIf { it.isNotEmpty() } ?: "NULL"
-            db.execSQL("INSERT OR REPLACE INTO POSTULANTE (ID_POSTULANTE, ID_GENERO, ID_TIPO_DOCUMENTO, NUM_DOCUMENTO, ID_GRADO_ACADEMICO, NOMBRE, APELLIDO, FECHA_NACIMIENTO, NUP, EMAIL, DIRECCION_DETALLE, TELEFONO_CASA, TELEFONO_CELULAR, ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID) VALUES ('$idPost', $idGenero, $idTipoDoc, '$numDoc', $idGrado, '$nombre', '$apellido', $fechaNac, '$nup', '$email', '$direccion', '$telCasa', '$telCel', $distDepto, $distMuni, $distId)")
-            db.execSQL("DELETE FROM FORMACION_ACADEMICA WHERE ID_POSTULANTE = '$idPost'"); val formaciones = p.optJSONArray("formaciones"); if (formaciones != null) for (j in 0 until formaciones.length()) { val f = formaciones.getJSONObject(j); db.execSQL("INSERT INTO FORMACION_ACADEMICA (ID_FORMACION, ID_POSTULANTE, ID_OFERTA_ACADEMICA, TITULO_OBTENIDO, FECHA_INICIO, FECHA_FIN, FECHA_OBTENCION) VALUES ('${escapar(f.optString("ID_FORMACION"))}', '$idPost', '${escapar(f.optString("ID_OFERTA_ACADEMICA"))}', '${escapar(f.optString("TITULO_OBTENIDO"))}', ${escaparNullable(f.optString("FECHA_INICIO"))}, ${escaparNullable(f.optString("FECHA_FIN"))}, ${escaparNullable(f.optString("FECHA_OBTENCION"))})") }
-            db.execSQL("DELETE FROM EXPERIENCIA_LABORAL WHERE ID_POSTULANTE = '$idPost'"); val experiencias = p.optJSONArray("experiencias"); if (experiencias != null) for (j in 0 until experiencias.length()) { val e = experiencias.getJSONObject(j); db.execSQL("INSERT INTO EXPERIENCIA_LABORAL (ID_POSTULANTE, NIT, ID_EXPERIENCIA, PUESTO_TRABAJO, FECHA_INICIO, FECHA_FIN, DESCP_EXPERIENCIA_LABORAL, CONTACTO_REFERENCIA) VALUES ('$idPost', '${escapar(e.optString("NIT"))}', '${escapar(e.optString("ID_EXPERIENCIA"))}', '${escapar(e.optString("PUESTO_TRABAJO"))}', ${escaparNullable(e.optString("FECHA_INICIO"))}, ${escaparNullable(e.optString("FECHA_FIN"))}, '${escapar(e.optString("DESCP_EXPERIENCIA_LABORAL"))}', '${escapar(e.optString("CONTACTO_REFERENCIA"))}')") }
-            db.execSQL("DELETE FROM CERTIFICACION WHERE ID_POSTULANTE = '$idPost'"); val certificaciones = p.optJSONArray("certificaciones"); if (certificaciones != null) for (j in 0 until certificaciones.length()) { val c = certificaciones.getJSONObject(j); val idTipo = c.optString("ID_TIPO_CERTIFICACION", "").takeIf { it.isNotEmpty() } ?: "NULL"; db.execSQL("INSERT INTO CERTIFICACION (ID_CERTIFICACION, ID_INSTITUCION, ID_POSTULANTE, ID_TIPO_CERTIFICACION, NOMBRE_CERTIFICACION, FECHA_CERTIFICACION, FECHA_INICIO, FECHA_FIN) VALUES ('${escapar(c.optString("ID_CERTIFICACION"))}', '${escapar(c.optString("ID_INSTITUCION"))}', '$idPost', $idTipo, '${escapar(c.optString("NOMBRE_CERTIFICACION"))}', ${escaparNullable(c.optString("FECHA_CERTIFICACION"))}, ${escaparNullable(c.optString("FECHA_INICIO"))}, ${escaparNullable(c.optString("FECHA_FIN"))})") }
-            db.execSQL("DELETE FROM HABILIDAD_POSTULANTE WHERE ID_POSTULANTE = '$idPost'"); val habilidades = p.optJSONArray("habilidades"); if (habilidades != null) for (j in 0 until habilidades.length()) { val h = habilidades.getJSONObject(j); val idCatHab = h.optString("ID_CATEGORIA_HABILIDAD", "").takeIf { it.isNotEmpty() } ?: "NULL"; val nivel = normalizarNivel(h.optString("NIVEL_DESTREZA", "")); db.execSQL("INSERT INTO HABILIDAD_POSTULANTE (ID_CATEGORIA_HABILIDAD, ID_HABILIDAD, ID_POSTULANTE, NIVEL_DESTREZA) VALUES ($idCatHab, '${escapar(h.optString("ID_HABILIDAD"))}', '$idPost', '${escapar(nivel)}')") }
-            db.execSQL("DELETE FROM RED_SOCIAL_POSTULANTE WHERE ID_POSTULANTE = '$idPost'"); val redes = p.optJSONArray("redes"); if (redes != null) for (j in 0 until redes.length()) { val r = redes.getJSONObject(j); val idRed = r.optString("ID_RED_SOCIAL", "").takeIf { it.isNotEmpty() } ?: "NULL"; db.execSQL("INSERT INTO RED_SOCIAL_POSTULANTE (ID_POSTULANTE, ID_RED_SOCIAL, URL_PERFIL) VALUES ('$idPost', $idRed, '${escapar(r.optString("URL_PERFIL"))}')") } }; db.setTransactionSuccessful() }
-        finally { db.endTransaction(); db.close() }
+        try {
+            val arr = json.getJSONArray("data")
+            db.beginTransaction()
+            for (i in 0 until arr.length()) {
+                db.execSQL("SAVEPOINT sp$i")
+                try {
+                    val p = arr.getJSONObject(i)
+                    val idPost = escapar(p.optString("ID_POSTULANTE"))
+                    val idGenero = p.optString("ID_GENERO", "").takeIf { it.isNotEmpty() } ?: "NULL"
+                    val idTipoDoc = p.optString("ID_TIPO_DOCUMENTO", "").takeIf { it.isNotEmpty() } ?: "NULL"
+                    val numDoc = escapar(p.optString("NUM_DOCUMENTO"))
+                    val idGrado = p.optString("ID_GRADO_ACADEMICO", "").takeIf { it.isNotEmpty() } ?: "NULL"
+                    val nombre = escapar(p.optString("NOMBRE"))
+                    val apellido = escapar(p.optString("APELLIDO"))
+                    val fechaNac = escaparNullable(p.optString("FECHA_NACIMIENTO"))
+                    val nup = escapar(p.optString("NUP"))
+                    val email = escapar(p.optString("EMAIL"))
+                    val direccion = escapar(p.optString("DIRECCION_DETALLE"))
+                    val telCasa = escapar(p.optString("TELEFONO_CASA"))
+                    val telCel = escapar(p.optString("TELEFONO_CELULAR"))
+                    val distDepto = p.optString("ID_DISTRITO_DEPTO", "").takeIf { it.isNotEmpty() } ?: "NULL"
+                    val distMuni = p.optString("ID_DISTRITO_MUNICIPIO", "").takeIf { it.isNotEmpty() } ?: "NULL"
+                    val distId = p.optString("ID_DISTRITO_ID", "").takeIf { it.isNotEmpty() } ?: "NULL"
+                    db.execSQL("INSERT OR REPLACE INTO POSTULANTE (ID_POSTULANTE, ID_GENERO, ID_TIPO_DOCUMENTO, NUM_DOCUMENTO, ID_GRADO_ACADEMICO, NOMBRE, APELLIDO, FECHA_NACIMIENTO, NUP, EMAIL, DIRECCION_DETALLE, TELEFONO_CASA, TELEFONO_CELULAR, ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID) VALUES ('$idPost', $idGenero, $idTipoDoc, '$numDoc', $idGrado, '$nombre', '$apellido', $fechaNac, '$nup', '$email', '$direccion', '$telCasa', '$telCel', $distDepto, $distMuni, $distId)")
+                    db.execSQL("DELETE FROM FORMACION_ACADEMICA WHERE ID_POSTULANTE = '$idPost'")
+                    val formaciones = p.optJSONArray("formaciones")
+                    if (formaciones != null) for (j in 0 until formaciones.length()) {
+                        val f = formaciones.getJSONObject(j)
+                        db.execSQL("INSERT INTO FORMACION_ACADEMICA (ID_FORMACION, ID_POSTULANTE, ID_OFERTA_ACADEMICA, TITULO_OBTENIDO, FECHA_INICIO, FECHA_FIN, FECHA_OBTENCION) VALUES ('${escapar(f.optString("ID_FORMACION"))}', '$idPost', '${escapar(f.optString("ID_OFERTA_ACADEMICA"))}', '${escapar(f.optString("TITULO_OBTENIDO"))}', ${escaparNullable(f.optString("FECHA_INICIO"))}, ${escaparNullable(f.optString("FECHA_FIN"))}, ${escaparNullable(f.optString("FECHA_OBTENCION"))})")
+                    }
+                    db.execSQL("DELETE FROM EXPERIENCIA_LABORAL WHERE ID_POSTULANTE = '$idPost'")
+                    val experiencias = p.optJSONArray("experiencias")
+                    if (experiencias != null) for (j in 0 until experiencias.length()) {
+                        val e = experiencias.getJSONObject(j)
+                        db.execSQL("INSERT INTO EXPERIENCIA_LABORAL (ID_POSTULANTE, NIT, ID_EXPERIENCIA, PUESTO_TRABAJO, FECHA_INICIO, FECHA_FIN, DESCP_EXPERIENCIA_LABORAL, CONTACTO_REFERENCIA) VALUES ('$idPost', '${escapar(e.optString("NIT"))}', '${escapar(e.optString("ID_EXPERIENCIA"))}', '${escapar(e.optString("PUESTO_TRABAJO"))}', ${escaparNullable(e.optString("FECHA_INICIO"))}, ${escaparNullable(e.optString("FECHA_FIN"))}, '${escapar(e.optString("DESCP_EXPERIENCIA_LABORAL"))}', '${escapar(e.optString("CONTACTO_REFERENCIA"))}')")
+                    }
+                    db.execSQL("DELETE FROM CERTIFICACION WHERE ID_POSTULANTE = '$idPost'")
+                    val certificaciones = p.optJSONArray("certificaciones")
+                    if (certificaciones != null) for (j in 0 until certificaciones.length()) {
+                        val c = certificaciones.getJSONObject(j)
+                        val idTipo = c.optString("ID_TIPO_CERTIFICACION", "").takeIf { it.isNotEmpty() } ?: "NULL"
+                        db.execSQL("INSERT INTO CERTIFICACION (ID_CERTIFICACION, ID_INSTITUCION, ID_POSTULANTE, ID_TIPO_CERTIFICACION, NOMBRE_CERTIFICACION, FECHA_CERTIFICACION, FECHA_INICIO, FECHA_FIN) VALUES ('${escapar(c.optString("ID_CERTIFICACION"))}', '${escapar(c.optString("ID_INSTITUCION"))}', '$idPost', $idTipo, '${escapar(c.optString("NOMBRE_CERTIFICACION"))}', ${escaparNullable(c.optString("FECHA_CERTIFICACION"))}, ${escaparNullable(c.optString("FECHA_INICIO"))}, ${escaparNullable(c.optString("FECHA_FIN"))})")
+                    }
+                    db.execSQL("DELETE FROM HABILIDAD_POSTULANTE WHERE ID_POSTULANTE = '$idPost'")
+                    val habilidades = p.optJSONArray("habilidades")
+                    if (habilidades != null) for (j in 0 until habilidades.length()) {
+                        val h = habilidades.getJSONObject(j)
+                        val idCatHab = h.optString("ID_CATEGORIA_HABILIDAD", "").takeIf { it.isNotEmpty() } ?: "NULL"
+                        val nivel = normalizarNivel(h.optString("NIVEL_DESTREZA", ""))
+                        db.execSQL("INSERT INTO HABILIDAD_POSTULANTE (ID_CATEGORIA_HABILIDAD, ID_HABILIDAD, ID_POSTULANTE, NIVEL_DESTREZA) VALUES ($idCatHab, '${escapar(h.optString("ID_HABILIDAD"))}', '$idPost', '${escapar(nivel)}')")
+                    }
+                    db.execSQL("DELETE FROM RED_SOCIAL_POSTULANTE WHERE ID_POSTULANTE = '$idPost'")
+                    val redes = p.optJSONArray("redes")
+                    if (redes != null) for (j in 0 until redes.length()) {
+                        val r = redes.getJSONObject(j)
+                        val idRed = r.optString("ID_RED_SOCIAL", "").takeIf { it.isNotEmpty() } ?: "NULL"
+                        db.execSQL("INSERT INTO RED_SOCIAL_POSTULANTE (ID_POSTULANTE, ID_RED_SOCIAL, URL_PERFIL) VALUES ('$idPost', $idRed, '${escapar(r.optString("URL_PERFIL"))}')")
+                    }
+                    db.execSQL("RELEASE sp$i")
+                } catch (_: Exception) {
+                    db.execSQL("ROLLBACK TO sp$i")
+                }
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+            db.close()
+        }
     }
 
     private fun syncPostulaciones(json: JSONObject) {
         val db = ConnectionHelper(requireContext()).writableDb
-        try { val arr = json.getJSONArray("data"); db.beginTransaction(); for (i in 0 until arr.length()) { val p = arr.getJSONObject(i); db.execSQL("INSERT OR REPLACE INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO) VALUES ('${escapar(p.optString("ID_POSTULACION"))}', '${escapar(p.optString("NIT"))}', '${escapar(p.optString("ID_OFERTA"))}', '${escapar(p.optString("ID_POSTULANTE"))}', '${escapar(p.optString("FECHA_APLICACION"))}', '${escapar(p.optString("ESTADO_PROCESO"))}')") }; db.setTransactionSuccessful() }
+        try { val arr = json.getJSONArray("data"); db.beginTransaction(); for (i in 0 until arr.length()) { db.execSQL("SAVEPOINT sp$i"); try { val p = arr.getJSONObject(i); db.execSQL("INSERT OR IGNORE INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO) VALUES ('${escapar(p.optString("ID_POSTULACION"))}', '${escapar(p.optString("NIT"))}', '${escapar(p.optString("ID_OFERTA"))}', '${escapar(p.optString("ID_POSTULANTE"))}', '${escapar(p.optString("FECHA_APLICACION"))}', '${escapar(p.optString("ESTADO_PROCESO"))}')"); db.execSQL("RELEASE sp$i") } catch (_: Exception) { db.execSQL("ROLLBACK TO sp$i") } }; db.setTransactionSuccessful() }
         finally { db.endTransaction(); db.close() }
     }
 
