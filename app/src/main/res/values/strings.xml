@@ -635,7 +635,7 @@
     <string name="s5_descarga_completa">Descarga completa</string>
     <string name="s5_titulo_catalogos">Catálogos</string>
     <string name="s5_desc_catalogos">Categorías, géneros, departamentos, municipios, distritos, instituciones, grados, redes sociales, tipos de certificación, habilidades y ofertas académicas</string>
-    <string name="s5_titulo_empresas">Empresas</string>
+    <string name="s5_titulo_empresas">Empresas Postuladas</string>
     <string name="s5_desc_empresas">Todas las empresas registradas con su información de contacto</string>
     <string name="s5_titulo_ofertas">Ofertas de Trabajo</string>
     <string name="s5_desc_ofertas">Ofertas laborales publicadas con sus requisitos</string>

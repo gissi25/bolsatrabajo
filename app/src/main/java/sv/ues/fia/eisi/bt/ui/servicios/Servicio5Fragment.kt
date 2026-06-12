@@ -50,31 +50,14 @@ class Servicio5Fragment : Fragment() {
 
     private lateinit var cardOfertas: MaterialCardView
     private lateinit var tvBadgeOfertas: TextView
-    private lateinit var tvStatusOfertas: TextView
     private lateinit var rvOfertas: RecyclerView
     private lateinit var btnVerMasOfertas: MaterialButton
     private val ofertasList = mutableListOf<PreviewItem>()
-
-    private lateinit var cardPostulaciones: MaterialCardView
-    private lateinit var tvBadgePostulaciones: TextView
-    private lateinit var tvStatusPostulaciones: TextView
-    private lateinit var rvPostulaciones: RecyclerView
-    private lateinit var btnVerMasPostulaciones: MaterialButton
-    private val postulacionesList = mutableListOf<PreviewItem>()
-
-    private lateinit var cardEmpresas: MaterialCardView
-    private lateinit var tvBadgeEmpresas: TextView
-    private lateinit var tvStatusEmpresas: TextView
-    private lateinit var rvEmpresas: RecyclerView
-    private lateinit var btnVerMasEmpresas: MaterialButton
-    private val empresasList = mutableListOf<PreviewItem>()
 
     private lateinit var cardPerfil: MaterialCardView
     private lateinit var tvPerfilNombre: TextView
     private lateinit var tvPerfilEmail: TextView
     private lateinit var tvPerfilTelefono: TextView
-    private lateinit var tvPerfilGrado: TextView
-    private lateinit var tvPerfilUbicacion: TextView
 
     private var role = Constants.ROLE_POSTULANTE
     private var idPostulanteSeleccionado: String? = null
@@ -111,20 +94,12 @@ class Servicio5Fragment : Fragment() {
         view.findViewById<View>(R.id.btnReintentar).visibility = View.GONE
 
         cardOfertas = view.findViewById(R.id.cardOfertas)
-        tvBadgeOfertas = view.findViewById(R.id.tvBadgeOfertas); tvStatusOfertas = view.findViewById(R.id.tvStatusOfertas)
+        tvBadgeOfertas = view.findViewById(R.id.tvBadgeOfertas)
         rvOfertas = view.findViewById(R.id.rvOfertas); btnVerMasOfertas = view.findViewById(R.id.btnVerMasOfertas)
-        cardPostulaciones = view.findViewById(R.id.cardPostulaciones)
-        tvBadgePostulaciones = view.findViewById(R.id.tvBadgePostulaciones); tvStatusPostulaciones = view.findViewById(R.id.tvStatusPostulaciones)
-        rvPostulaciones = view.findViewById(R.id.rvPostulaciones); btnVerMasPostulaciones = view.findViewById(R.id.btnVerMasPostulaciones)
-        cardEmpresas = view.findViewById(R.id.cardEmpresas)
-        tvBadgeEmpresas = view.findViewById(R.id.tvBadgeEmpresas); tvStatusEmpresas = view.findViewById(R.id.tvStatusEmpresas)
-        rvEmpresas = view.findViewById(R.id.rvEmpresas); btnVerMasEmpresas = view.findViewById(R.id.btnVerMasEmpresas)
         cardPerfil = view.findViewById(R.id.cardPerfil)
         tvPerfilNombre = view.findViewById(R.id.tvPerfilNombre)
         tvPerfilEmail = view.findViewById(R.id.tvPerfilEmail)
         tvPerfilTelefono = view.findViewById(R.id.tvPerfilTelefono)
-        tvPerfilGrado = view.findViewById(R.id.tvPerfilGrado)
-        tvPerfilUbicacion = view.findViewById(R.id.tvPerfilUbicacion)
 
         toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
         setupRecyclerViews()
@@ -133,8 +108,6 @@ class Servicio5Fragment : Fragment() {
 
     private fun setupRecyclerViews() {
         rvOfertas.layoutManager = LinearLayoutManager(requireContext())
-        rvPostulaciones.layoutManager = LinearLayoutManager(requireContext())
-        rvEmpresas.layoutManager = LinearLayoutManager(requireContext())
     }
 
     private fun verificarSeleccion() {
@@ -312,51 +285,14 @@ class Servicio5Fragment : Fragment() {
 
         val arrOf = ofertasApiData
         if (arrOf != null) {
-            tvStatusOfertas.text = getString(R.string.s5_descargado)
-            tvStatusOfertas.setTextColor(0xFF2E7D32.toInt())
             ofertasList.clear()
             ofertasList.addAll(queryOfertasFromApiData(arrOf))
             tvBadgeOfertas.text = ofertasList.size.toString()
-        } else {
-            tvStatusOfertas.text = "Error"
-            tvStatusOfertas.setTextColor(0xFFC62828.toInt())
         }
         rvOfertas.adapter = PreviewAdapter(ofertasList) { item -> mostrarDetalleOferta(item.nit, item.idOferta) }
         btnVerMasOfertas.text = getString(R.string.s5_ver_mas, ofertasList.size)
         btnVerMasOfertas.setOnClickListener { mostrarTodosOfertas() }
         btnVerMasOfertas.visibility = if (ofertasList.isNotEmpty()) View.VISIBLE else View.GONE
-
-        val arrPost = postulacionesApiData
-        if (arrPost != null) {
-            tvStatusPostulaciones.text = getString(R.string.s5_descargado)
-            tvStatusPostulaciones.setTextColor(0xFF2E7D32.toInt())
-            postulacionesList.clear()
-            postulacionesList.addAll(queryPostulacionesFromApiData(arrPost))
-            tvBadgePostulaciones.text = postulacionesList.size.toString()
-        } else {
-            tvStatusPostulaciones.text = "Error"
-            tvStatusPostulaciones.setTextColor(0xFFC62828.toInt())
-        }
-        rvPostulaciones.adapter = PreviewAdapter(postulacionesList) { item -> mostrarDetallePostulacion(item.idPostulacion) }
-        btnVerMasPostulaciones.text = getString(R.string.s5_ver_mas, postulacionesList.size)
-        btnVerMasPostulaciones.setOnClickListener { mostrarTodasPostulaciones(null, null) }
-        btnVerMasPostulaciones.visibility = if (postulacionesList.isNotEmpty()) View.VISIBLE else View.GONE
-
-        val arrEmp = empresasApiData
-        if (arrEmp != null) {
-            tvStatusEmpresas.text = getString(R.string.s5_descargado)
-            tvStatusEmpresas.setTextColor(0xFF2E7D32.toInt())
-            empresasList.clear()
-            empresasList.addAll(queryEmpresasFromApiData(arrEmp))
-            tvBadgeEmpresas.text = empresasList.size.toString()
-        } else {
-            tvStatusEmpresas.text = "Error"
-            tvStatusEmpresas.setTextColor(0xFFC62828.toInt())
-        }
-        rvEmpresas.adapter = PreviewAdapter(empresasList) {}
-        btnVerMasEmpresas.text = getString(R.string.s5_ver_mas, empresasList.size)
-        btnVerMasEmpresas.setOnClickListener { mostrarTodasEmpresas() }
-        btnVerMasEmpresas.visibility = if (empresasList.isNotEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun queryOfertasFromApiData(arr: JSONArray): List<PreviewItem> {
@@ -398,66 +334,12 @@ class Servicio5Fragment : Fragment() {
         return lista
     }
 
-    private fun queryPostulacionesFromApiData(arr: JSONArray): List<PreviewItem> {
-        val lista = mutableListOf<PreviewItem>()
-        val limit = minOf(arr.length(), 5)
-        for (i in 0 until limit) {
-            val p = arr.getJSONObject(i)
-            val id = p.optString("ID_POSTULACION", "")
-            val estado = p.optString("ESTADO_PROCESO", "")
-            val fecha = p.optString("FECHA_APLICACION", "")
-            val nit = p.optString("NIT", "")
-            val idOf = p.optString("ID_OFERTA", "")
-            var ofertaTitulo = idOf
-            ofertasApiData?.let { ofArr ->
-                for (j in 0 until ofArr.length()) {
-                    val o = ofArr.getJSONObject(j)
-                    if (o.optString("NIT") == nit && o.optString("ID_OFERTA") == idOf) {
-                        ofertaTitulo = o.optString("TITULO_PUESTO", idOf)
-                        break
-                    }
-                }
-            }
-            lista.add(PreviewItem("$id - $ofertaTitulo", "$estado - $fecha", idPostulacion = id))
-        }
-        return lista
-    }
-
-    private fun queryEmpresasFromApiData(arr: JSONArray): List<PreviewItem> {
-        val lista = mutableListOf<PreviewItem>()
-        val nitSet = if (!idPostulanteSeleccionado.isNullOrBlank()) {
-            val set = mutableSetOf<String>()
-            postulacionesApiData?.let { postArr ->
-                for (i in 0 until postArr.length()) {
-                    set.add(postArr.getJSONObject(i).getString("NIT"))
-                }
-            }
-            set
-        } else null
-
-        val limit = minOf(arr.length(), 5)
-        var added = 0
-        for (i in 0 until arr.length()) {
-            val e = arr.getJSONObject(i)
-            val nit = e.optString("NIT", "")
-            if (nitSet != null && nit !in nitSet) continue
-            val nombre = e.optString("NOMBRE_EMPRESA", "")
-            val contacto = e.optString("CONTACTO_DIRECTO", "")
-            lista.add(PreviewItem("$nombre - $nit", if (contacto.isNotBlank()) contacto else "-", nit = nit))
-            added++
-            if (added >= limit) break
-        }
-        return lista
-    }
-
     private fun mostrarPerfil() {
         val idPost = idPostulanteSeleccionado
         if (idPost.isNullOrBlank()) {
             tvPerfilNombre.text = getString(R.string.s5_sin_perfil)
             tvPerfilEmail.text = ""
             tvPerfilTelefono.text = ""
-            tvPerfilGrado.text = ""
-            tvPerfilUbicacion.text = ""
             return
         }
         val arr = postulantesApiData ?: run {
@@ -469,14 +351,10 @@ class Servicio5Fragment : Fragment() {
                 val p = arr.getJSONObject(i)
                 if (p.getString("ID_POSTULANTE") == idPost) {
                     tvPerfilNombre.text = "${p.optString("NOMBRE", "")} ${p.optString("APELLIDO", "")}"
-                    tvPerfilEmail.text = p.optString("EMAIL", "").takeIf { it.isNotBlank() } ?: "-"
-                    tvPerfilTelefono.text = p.optString("TELEFONO_CELULAR", "").takeIf { it.isNotBlank() } ?: "-"
-                    val idGrado = p.optString("ID_GRADO_ACADEMICO", "")
-                    tvPerfilGrado.text = if (idGrado.isNotBlank()) buscarNombreGrado(idGrado) else "-"
-                    val distDepto = p.optString("ID_DISTRITO_DEPTO", "")
-                    val distMuni = p.optString("ID_DISTRITO_MUNICIPIO", "")
-                    val distId = p.optString("ID_DISTRITO_ID", "")
-                    tvPerfilUbicacion.text = if (distDepto.isNotBlank()) buscarUbicacion(distDepto, distMuni, distId) else "-"
+                    val email = p.optString("EMAIL", "").takeIf { it.isNotBlank() } ?: "-"
+                    tvPerfilEmail.text = "Correo: $email"
+                    val tel = p.optString("TELEFONO_CELULAR", "").takeIf { it.isNotBlank() } ?: "-"
+                    tvPerfilTelefono.text = "Tel\u00E9fono: $tel"
                     break
                 }
             }
@@ -491,18 +369,6 @@ class Servicio5Fragment : Fragment() {
             c.close(); db.close()
             return nombre ?: idGrado
         } catch (_: Exception) { return idGrado }
-    }
-
-    private fun buscarUbicacion(distDepto: String, distMuni: String, distId: String): String {
-        try {
-            val db = ConnectionHelper(requireContext()).readableDatabase
-            val c = db.rawQuery("SELECT IFNULL(d.NOMBRE_DISTRITO,''), IFNULL(m.NOMBRE_MUNICIPIO,''), IFNULL(dep.NOMBRE_DEPARTAMENTO,'') FROM DISTRITO d LEFT JOIN MUNICIPIO m ON d.ID_DEPARTAMENTO = m.ID_DEPARTAMENTO AND d.ID_MUNICIPIO = m.ID_MUNICIPIO LEFT JOIN DEPARTAMENTO dep ON d.ID_DEPARTAMENTO = dep.ID_DEPARTAMENTO WHERE d.ID_DEPARTAMENTO = ? AND d.ID_MUNICIPIO = ? AND d.ID_DISTRITO = ?", arrayOf(distDepto, distMuni, distId))
-            val ubicacion = if (c.moveToFirst()) {
-                listOfNotNull(c.getString(0)?.takeIf { it.isNotBlank() }, c.getString(1)?.takeIf { it.isNotBlank() }, c.getString(2)?.takeIf { it.isNotBlank() }).joinToString(", ")
-            } else ""
-            c.close(); db.close()
-            return ubicacion.ifBlank { "-" }
-        } catch (_: Exception) { return "-" }
     }
 
     // =========================================================================
@@ -682,63 +548,6 @@ class Servicio5Fragment : Fragment() {
         return null
     }
 
-    private fun mostrarDetallePostulacion(idPostulacion: String) {
-        lifecycleScope.launch {
-            try {
-                var datos = mutableMapOf<String, String>()
-                postulacionesApiData?.let { arr ->
-                    for (i in 0 until arr.length()) {
-                        val p = arr.getJSONObject(i)
-                        if (p.optString("ID_POSTULACION") == idPostulacion) {
-                            datos["id"] = p.optString("ID_POSTULACION", "")
-                            datos["estado"] = p.optString("ESTADO_PROCESO", "")
-                            datos["fecha"] = p.optString("FECHA_APLICACION", "")
-                            datos["postulante"] = p.optString("ID_POSTULANTE", "")
-                            val nit = p.optString("NIT", "")
-                            val idOf = p.optString("ID_OFERTA", "")
-                            datos["oferta"] = idOf
-                            datos["empresa"] = nit
-                            ofertasApiData?.let { ofArr ->
-                                for (j in 0 until ofArr.length()) {
-                                    val o = ofArr.getJSONObject(j)
-                                    if (o.optString("NIT") == nit && o.optString("ID_OFERTA") == idOf) {
-                                        datos["oferta"] = o.optString("TITULO_PUESTO", idOf)
-                                        break
-                                    }
-                                }
-                            }
-                            empresasApiData?.let { empArr ->
-                                for (j in 0 until empArr.length()) {
-                                    val e = empArr.getJSONObject(j)
-                                    if (e.optString("NIT") == nit) {
-                                        datos["empresa"] = e.optString("NOMBRE_EMPRESA", nit)
-                                        break
-                                    }
-                                }
-                            }
-                            break
-                        }
-                    }
-                }
-
-                if (datos.isEmpty()) { Snackbar.make(requireView(), "Postulacion no encontrada", Snackbar.LENGTH_SHORT).show(); return@launch }
-                val context = requireContext()
-                val sv = ScrollView(context).apply { setPadding(24, 16, 24, 16) }
-                val container = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
-                val tvTitulo = TextView(context).apply { text = datos["id"] ?: ""; textSize = 18f; setTextColor(0xFF0D1A4A.toInt()); setTypeface(null, android.graphics.Typeface.BOLD) }
-                container.addView(tvTitulo)
-                container.addView(View(context).apply { layoutParams = LinearLayout.LayoutParams(48, 3.toDp(context)).apply { topMargin = 6; bottomMargin = 12 }; setBackgroundColor(0xFF3366FF.toInt()) })
-                addSectionHeader(context, container, getString(R.string.s5_titulo_postulaciones))
-                addDetailRow(context, container, getString(R.string.s5_oferta), "${datos["oferta"]} (${datos["empresa"]})")
-                addDetailRow(context, container, getString(R.string.s5_estado), datos["estado"] ?: "-")
-                addDetailRow(context, container, getString(R.string.s5_fecha), datos["fecha"] ?: "-")
-                addDetailRow(context, container, "ID Postulante", datos["postulante"] ?: "-")
-                sv.addView(container)
-                AlertDialog.Builder(context).setView(sv).setPositiveButton(getString(R.string.cerrar), null).show()
-            } catch (e: Exception) { Snackbar.make(requireView(), "Error: ${e.message}", Snackbar.LENGTH_SHORT).show() }
-        }
-    }
-
     // =========================================================================
     // DIALOGOS "VER MAS"
     // =========================================================================
@@ -751,23 +560,60 @@ class Servicio5Fragment : Fragment() {
         val sv = ScrollView(context).apply { setPadding(24, 16, 24, 16) }
         val container = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
         var dialog: AlertDialog? = null
-        if (lista.isEmpty()) {
-            val tv = TextView(context).apply { text = getString(R.string.s3_sin_datos); textSize = 14f; gravity = Gravity.CENTER; setPadding(0, 24, 0, 24) }
-            container.addView(tv)
-        } else {
-            for (item in lista) {
-                val itemView = LayoutInflater.from(context).inflate(R.layout.card_preview_fila, container, false)
-                val tv1 = itemView.findViewById<TextView>(R.id.tvLinea1)
-                val tv2 = itemView.findViewById<TextView>(R.id.tvLinea2)
-                tv1.text = item.linea1; tv2.text = item.linea2
-                if (item.yaPostulado) tv1.setTextColor(0xFF2E7D32.toInt()) else tv1.setTextColor(0xFF0D1A4A.toInt())
-                itemView.setOnClickListener { dialog?.dismiss(); mostrarDetalleOferta(item.nit, item.idOferta) }
-                container.addView(itemView)
-                container.addView(View(context).apply { layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1); setBackgroundColor(0x11000000) })
+
+        val radioGroup = RadioGroup(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, 0, 0, 8)
+        }
+        val filtros = listOf("Todas", "Postuladas", "No postuladas")
+        val radioButtons = filtros.mapIndexed { idx, label ->
+            RadioButton(context).apply {
+                text = label; tag = idx; this.id = View.generateViewId()
+                setPadding(8, 4, 16, 4); setTextColor(0xDD000000.toInt())
             }
         }
+        radioButtons.forEach { radioGroup.addView(it) }
+        radioGroup.check(radioButtons.first().id)
+        container.addView(radioGroup)
+        container.addView(View(context).apply { layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1).apply { topMargin = 4; bottomMargin = 8 }; setBackgroundColor(0x22000000) })
+
+        val itemsContainer = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+
+        fun poblarItems(seleccion: Int) {
+            itemsContainer.removeAllViews()
+            val filtradas = when (seleccion) {
+                1 -> lista.filter { it.yaPostulado }
+                2 -> lista.filter { !it.yaPostulado }
+                else -> lista
+            }
+            if (filtradas.isEmpty()) {
+                val tv = TextView(context).apply { text = getString(R.string.s3_sin_datos); textSize = 14f; gravity = Gravity.CENTER; setPadding(0, 24, 0, 24) }
+                itemsContainer.addView(tv)
+            } else {
+                for (item in filtradas) {
+                    val itemView = LayoutInflater.from(context).inflate(R.layout.card_preview_fila, itemsContainer, false)
+                    val tv1 = itemView.findViewById<TextView>(R.id.tvLinea1)
+                    val tv2 = itemView.findViewById<TextView>(R.id.tvLinea2)
+                    tv1.text = item.linea1; tv2.text = item.linea2
+                    if (item.yaPostulado) tv1.setTextColor(0xFF2E7D32.toInt()) else tv1.setTextColor(0xFF0D1A4A.toInt())
+                    itemView.setOnClickListener { dialog?.dismiss(); mostrarDetalleOferta(item.nit, item.idOferta) }
+                    itemsContainer.addView(itemView)
+                    itemsContainer.addView(View(context).apply { layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1); setBackgroundColor(0x11000000) })
+                }
+            }
+        }
+
+        poblarItems(0)
+        container.addView(itemsContainer)
+
+        radioGroup.setOnCheckedChangeListener { _, checkedId ->
+            val rb = radioGroup.findViewById<RadioButton>(checkedId)
+            val idx = rb?.tag as? Int ?: 0
+            poblarItems(idx)
+        }
+
         sv.addView(container)
-        dialog = AlertDialog.Builder(context).setTitle("Todas las Ofertas - ${lista.size} registros").setView(sv).setPositiveButton(getString(R.string.cerrar), null).create()
+        dialog = AlertDialog.Builder(context).setTitle("Ofertas - ${lista.size} registros").setView(sv).setPositiveButton(getString(R.string.cerrar), null).create()
         dialog.show()
     }
 
@@ -807,95 +653,6 @@ class Servicio5Fragment : Fragment() {
             ))
         }
         return lista
-    }
-
-    private fun mostrarTodasEmpresas() {
-        val arr = empresasApiData
-        if (arr == null) { Snackbar.make(requireView(), "No hay datos de empresas", Snackbar.LENGTH_SHORT).show(); return }
-        val nitSet = if (!idPostulanteSeleccionado.isNullOrBlank()) {
-            val set = mutableSetOf<String>()
-            postulacionesApiData?.let { postArr ->
-                for (i in 0 until postArr.length()) {
-                    set.add(postArr.getJSONObject(i).getString("NIT"))
-                }
-            }
-            set
-        } else null
-
-        val lista = mutableListOf<PreviewItem>()
-        for (i in 0 until arr.length()) {
-            val e = arr.getJSONObject(i)
-            val nit = e.optString("NIT", "")
-            if (nitSet != null && nit !in nitSet) continue
-            val nombre = e.optString("NOMBRE_EMPRESA", "")
-            val contacto = e.optString("CONTACTO_DIRECTO", "")
-            lista.add(PreviewItem("$nombre - $nit", if (contacto.isNotBlank()) contacto else "-", nit = nit))
-        }
-
-        val context = requireContext()
-        val sv = ScrollView(context).apply { setPadding(24, 16, 24, 16) }
-        val container = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
-        if (lista.isEmpty()) {
-            val tv = TextView(context).apply { text = getString(R.string.s3_sin_datos); textSize = 14f; gravity = Gravity.CENTER; setPadding(0, 24, 0, 24) }
-            container.addView(tv)
-        } else {
-            for (item in lista) {
-                val itemView = LayoutInflater.from(context).inflate(R.layout.card_preview_fila, container, false)
-                itemView.findViewById<TextView>(R.id.tvLinea1).text = item.linea1
-                itemView.findViewById<TextView>(R.id.tvLinea2).text = item.linea2
-                container.addView(itemView)
-                container.addView(View(context).apply { layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1); setBackgroundColor(0x11000000) })
-            }
-        }
-        sv.addView(container)
-        AlertDialog.Builder(context).setTitle("Empresas - ${lista.size} registros").setView(sv).setPositiveButton(getString(R.string.cerrar), null).show()
-    }
-
-    private fun mostrarTodasPostulaciones(filtro: String?, args: Array<String>?) {
-        val arr = postulacionesApiData
-        val lista = mutableListOf<PreviewItem>()
-        if (arr != null) {
-            for (i in 0 until arr.length()) {
-                val p = arr.getJSONObject(i)
-                val id = p.optString("ID_POSTULACION", "")
-                val estado = p.optString("ESTADO_PROCESO", "")
-                val fecha = p.optString("FECHA_APLICACION", "")
-                val nit = p.optString("NIT", "")
-                val idOf = p.optString("ID_OFERTA", "")
-                var ofertaTitulo = idOf
-                ofertasApiData?.let { ofArr ->
-                    for (j in 0 until ofArr.length()) {
-                        val o = ofArr.getJSONObject(j)
-                        if (o.optString("NIT") == nit && o.optString("ID_OFERTA") == idOf) {
-                            ofertaTitulo = o.optString("TITULO_PUESTO", idOf)
-                            break
-                        }
-                    }
-                }
-                lista.add(PreviewItem("$id - $ofertaTitulo", "$estado - $fecha", idPostulacion = id))
-            }
-        }
-
-        val context = requireContext()
-        val sv = ScrollView(context).apply { setPadding(24, 16, 24, 16) }
-        val container = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
-        var dialog: AlertDialog? = null
-        if (lista.isEmpty()) {
-            val tv = TextView(context).apply { text = getString(R.string.s3_sin_datos); textSize = 14f; gravity = Gravity.CENTER; setPadding(0, 24, 0, 24) }
-            container.addView(tv)
-        } else {
-            for (item in lista) {
-                val itemView = LayoutInflater.from(context).inflate(R.layout.card_preview_fila, container, false)
-                itemView.findViewById<TextView>(R.id.tvLinea1).text = item.linea1
-                itemView.findViewById<TextView>(R.id.tvLinea2).text = item.linea2
-                itemView.setOnClickListener { dialog?.dismiss(); mostrarDetallePostulacion(item.idPostulacion) }
-                container.addView(itemView)
-                container.addView(View(context).apply { layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1); setBackgroundColor(0x11000000) })
-            }
-        }
-        sv.addView(container)
-        dialog = AlertDialog.Builder(context).setTitle("Todas las Postulaciones - ${lista.size} registros").setView(sv).setPositiveButton(getString(R.string.cerrar), null).create()
-        dialog.show()
     }
 
     // =========================================================================

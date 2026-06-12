@@ -559,7 +559,7 @@
     <string name="s5_descarga_completa">Download complete</string>
     <string name="s5_titulo_catalogos">Catalogs</string>
     <string name="s5_desc_catalogos">Categories, genders, departments, municipalities, districts, institutions, degrees, social networks, certification types, skills and academic offers</string>
-    <string name="s5_titulo_empresas">Companies</string>
+    <string name="s5_titulo_empresas">Applied Companies</string>
     <string name="s5_desc_empresas">All registered companies with contact information</string>
     <string name="s5_titulo_ofertas">Job Offers</string>
     <string name="s5_desc_ofertas">Published job offers with their requirements</string>
