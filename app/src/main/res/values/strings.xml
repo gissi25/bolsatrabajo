@@ -679,6 +679,9 @@
     <string name="s5_seleccionar_empresa">Selecciona tu empresa</string>
     <string name="s5_sin_perfil">No tienes un perfil. Créalo primero desde el dashboard.</string>
     <string name="s5_confirmar">Confirmar</string>
+    <string name="s5_sin_postulantes_servidor">No hay postulantes en el servidor</string>
+    <string name="s5_error_conexion">Error de conexion: %s</string>
+    <string name="s5_recargar">Recargar</string>
 
     <!-- Servicio 6 - Filtro de ofertas por ubicacion y postulantes por empresa -->
     <string name="s6_titulo">Filtrado de Ofertas por Ubicación</string>
