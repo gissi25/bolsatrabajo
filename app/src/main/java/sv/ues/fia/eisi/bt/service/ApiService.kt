@@ -296,10 +296,20 @@ object ApiService {
         fetch("municipios_por_depto&id_departamento=${java.net.URLEncoder.encode(idDepartamento, "UTF-8")}")
     }
 
-    suspend fun filtrarOfertasPorUbicacion(idDepartamento: String, idMunicipio: String? = null): JSONObject = withContext(Dispatchers.Main) {
-        var action = "filtrar_ofertas_ubicacion&id_departamento=${java.net.URLEncoder.encode(idDepartamento, "UTF-8")}"
+    suspend fun getDistritosPorMunicipio(idDepartamento: String, idMunicipio: String): JSONObject = withContext(Dispatchers.Main) {
+        fetch("distritos_por_municipio&id_departamento=${java.net.URLEncoder.encode(idDepartamento, "UTF-8")}&id_municipio=${java.net.URLEncoder.encode(idMunicipio, "UTF-8")}")
+    }
+
+    suspend fun filtrarOfertasPorUbicacion(idDepartamento: String? = null, idMunicipio: String? = null, idDistrito: String? = null): JSONObject = withContext(Dispatchers.Main) {
+        var action = "filtrar_ofertas_ubicacion"
+        if (!idDepartamento.isNullOrBlank()) {
+            action += "&id_departamento=${java.net.URLEncoder.encode(idDepartamento, "UTF-8")}"
+        }
         if (!idMunicipio.isNullOrBlank()) {
             action += "&id_municipio=${java.net.URLEncoder.encode(idMunicipio, "UTF-8")}"
+        }
+        if (!idDistrito.isNullOrBlank()) {
+            action += "&id_distrito=${java.net.URLEncoder.encode(idDistrito, "UTF-8")}"
         }
         fetch(action)
     }

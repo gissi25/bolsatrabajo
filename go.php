@@ -26,7 +26,7 @@ $route = [
     // Servicio 5: descargar datos del servidor
     'catalogos' => 5, 'empresas_full' => 5, 'ofertas_full' => 5, 'postulantes_full' => 5, 'postulaciones_full' => 5, 'insertar_postulacion' => 5,
     // Servicio 6: filtrar por ubicacion y postulantes por empresa
-    'departamentos' => 6, 'municipios_por_depto' => 6,
+    'departamentos' => 6, 'municipios_por_depto' => 6, 'distritos_por_municipio' => 6,
     'filtrar_ofertas_ubicacion' => 6, 'filtrar_postulantes_empresa' => 6,
     'filtrar_postulantes_empresa_estado' => 6,
     // Servicio 7: busqueda de ofertas y postulacion

@@ -39,23 +39,44 @@ switch ($action) {
         break;
 
     // ============================================================
-    // FILTRAR OFERTAS POR UBICACION (departamento / municipio)
+    // DISTRITOS POR MUNICIPIO
+    // ============================================================
+    case 'distritos_por_municipio':
+        $idDepto = $_GET['id_departamento'] ?? '';
+        $idMuni  = $_GET['id_municipio'] ?? '';
+        if (empty($idDepto) || empty($idMuni)) {
+            http_response_code(400);
+            die(json_encode(["error" => "id_departamento e id_municipio son requeridos"]));
+        }
+        $idDeptoSafe = $conn->real_escape_string($idDepto);
+        $idMuniSafe  = $conn->real_escape_string($idMuni);
+        $rs = $conn->query("SELECT ID_DISTRITO, NOMBRE_DISTRITO FROM DISTRITO WHERE ID_DEPARTAMENTO = '$idDeptoSafe' AND ID_MUNICIPIO = '$idMuniSafe' ORDER BY NOMBRE_DISTRITO");
+        $data = $rs->fetch_all(MYSQLI_ASSOC);
+        echo json_encode(["exito" => true, "data" => $data], JSON_UNESCAPED_UNICODE);
+        break;
+
+    // ============================================================
+    // FILTRAR OFERTAS POR UBICACION (departamento / municipio / distrito opcionales)
     // ============================================================
     case 'filtrar_ofertas_ubicacion':
         $idDepto = $_GET['id_departamento'] ?? '';
         $idMuni  = $_GET['id_municipio'] ?? '';
+        $idDist  = $_GET['id_distrito'] ?? '';
 
-        if (empty($idDepto)) {
-            http_response_code(400);
-            die(json_encode(["error" => "id_departamento es requerido"]));
+        $where = [];
+        if (!empty($idDepto)) {
+            $idDeptoSafe = $conn->real_escape_string($idDepto);
+            $where[] = "e.ID_DISTRITO_DEPTO = '$idDeptoSafe'";
         }
-
-        $idDeptoSafe = $conn->real_escape_string($idDepto);
-        $whereMuni = '';
         if (!empty($idMuni)) {
             $idMuniSafe = $conn->real_escape_string($idMuni);
-            $whereMuni = " AND e.ID_DISTRITO_MUNICIPIO = '$idMuniSafe'";
+            $where[] = "e.ID_DISTRITO_MUNICIPIO = '$idMuniSafe'";
         }
+        if (!empty($idDist)) {
+            $idDistSafe = $conn->real_escape_string($idDist);
+            $where[] = "e.ID_DISTRITO_ID = '$idDistSafe'";
+        }
+        $whereSql = count($where) > 0 ? "WHERE " . implode(" AND ", $where) : "";
 
         $sql = "
             SELECT o.NIT, o.ID_OFERTA, o.ID_GRADO_ACADEMICO, o.TITULO_PUESTO,
@@ -74,8 +95,7 @@ switch ($action) {
                 AND e.ID_DISTRITO_MUNICIPIO = m.ID_MUNICIPIO
             LEFT JOIN DEPARTAMENTO dep ON e.ID_DISTRITO_DEPTO = dep.ID_DEPARTAMENTO
             LEFT JOIN GRADO_ACADEMICO g ON o.ID_GRADO_ACADEMICO = g.ID_GRADO_ACADEMICO
-            WHERE e.ID_DISTRITO_DEPTO = '$idDeptoSafe'
-            $whereMuni
+            $whereSql
             ORDER BY o.FECHA_PUBLICACION DESC
         ";
 

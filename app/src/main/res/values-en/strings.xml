@@ -552,14 +552,14 @@
     <string name="req_btn_agregar">+ Add requirement</string>
 
     <!-- Servicio 5 -->
-    <string name="s5_titulo">Service 5 — Data Sync and Offer Application</string>
+    <string name="s5_titulo">Job Offer Application</string>
     <string name="s5_btn_descargar">Download</string>
     <string name="s5_btn_descargar_todo">Download All</string>
     <string name="s5_descargado">Downloaded</string>
     <string name="s5_descarga_completa">Download complete</string>
     <string name="s5_titulo_catalogos">Catalogs</string>
     <string name="s5_desc_catalogos">Categories, genders, departments, municipalities, districts, institutions, degrees, social networks, certification types, skills and academic offers</string>
-    <string name="s5_titulo_empresas">Companies</string>
+    <string name="s5_titulo_empresas">Applied Companies</string>
     <string name="s5_desc_empresas">All registered companies with contact information</string>
     <string name="s5_titulo_ofertas">Job Offers</string>
     <string name="s5_desc_ofertas">Published job offers with their requirements</string>
