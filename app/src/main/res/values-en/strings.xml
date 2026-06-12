@@ -552,7 +552,7 @@
     <string name="req_btn_agregar">+ Add requirement</string>
 
     <!-- Servicio 5 -->
-    <string name="s5_titulo">Service 5 — Data Sync and Offer Application</string>
+    <string name="s5_titulo">Job Offer Application</string>
     <string name="s5_btn_descargar">Download</string>
     <string name="s5_btn_descargar_todo">Download All</string>
     <string name="s5_descargado">Downloaded</string>

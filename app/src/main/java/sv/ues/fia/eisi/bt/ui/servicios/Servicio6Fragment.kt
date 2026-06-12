@@ -81,6 +81,10 @@ class Servicio6Fragment : Fragment() {
 
     private var role = Constants.ROLE_POSTULANTE
     private var idPostulanteSeleccionado: String? = null
+    private var deptoIdSeleccionado: String = ""
+    private var municipioIdSeleccionado: String = ""
+    private var distritoIdSeleccionado: String = ""
+    private var distritoPendientePreseleccion: String? = null
 
     private val departamentos = mutableListOf<DeptoItem>()
     private val municipios = mutableListOf<MuniItem>()
@@ -120,6 +124,9 @@ class Servicio6Fragment : Fragment() {
 
         toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
         rvResultados.layoutManager = LinearLayoutManager(requireContext())
+        configurarDropdown(spDepartamento)
+        configurarDropdown(spMunicipio)
+        configurarDropdown(spDistrito)
 
         toolbar.menu.clear()
         toolbar.menu.add("Recargar").setOnMenuItemClickListener {
@@ -139,6 +146,11 @@ class Servicio6Fragment : Fragment() {
         cardFiltros.visibility = View.VISIBLE
         btnBuscar.setOnClickListener { buscarOfertas() }
         cargarDepartamentos()
+    }
+
+    private fun configurarDropdown(dropdown: MaterialAutoCompleteTextView) {
+        dropdown.setOnClickListener { dropdown.showDropDown() }
+        dropdown.setOnFocusChangeListener { _, hasFocus -> if (hasFocus) dropdown.showDropDown() }
     }
 
     private fun cambiarPerfil() {
@@ -184,19 +196,24 @@ class Servicio6Fragment : Fragment() {
                 val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, departamentos)
                 spDepartamento.setAdapter(adapter)
                 spDepartamento.setThreshold(0)
-                spDepartamento.setOnItemClickListener { _, _, pos, _ ->
-                    if (pos >= 0 && pos < departamentos.size) {
-                        val item = departamentos[pos]
+                spDepartamento.setOnItemClickListener { parent, _, pos, _ ->
+                    val item = parent.getItemAtPosition(pos) as? DeptoItem
+                    if (item != null) {
+                        deptoIdSeleccionado = item.id
+                        municipioIdSeleccionado = ""
+                        distritoIdSeleccionado = ""
+                        distritoPendientePreseleccion = null
                         spDepartamento.setTag(item.id)
+                        spMunicipio.setText("", false); spMunicipio.setTag("")
+                        spDistrito.setText("", false); spDistrito.setTag("")
                         if (item.id.isNotBlank()) {
                             cargarMunicipios(item.id)
                         } else {
                             municipios.clear(); distritos.clear()
-                            spMunicipio.setText("", false); spMunicipio.setTag("")
                             spMunicipio.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, emptyList<MuniItem>()))
-                            spDistrito.setText("", false); spDistrito.setTag("")
                             spDistrito.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, emptyList<DistItem>()))
                         }
+                        buscarOfertas()
                     }
                 }
                 tilDepartamento.setOnClickListener { spDepartamento.showDropDown() }
@@ -226,19 +243,25 @@ class Servicio6Fragment : Fragment() {
                 val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, municipios)
                 spMunicipio.setAdapter(adapter)
                 spMunicipio.setThreshold(0)
-                spMunicipio.setOnItemClickListener { _, _, pos, _ ->
-                    if (pos >= 0 && pos < municipios.size) {
-                        spMunicipio.setTag(municipios[pos].id)
-                        val deptoId = spDepartamento.tag?.toString() ?: ""
-                        val muniId = municipios[pos].id
+                spMunicipio.setOnItemClickListener { parent, _, pos, _ ->
+                    val item = parent.getItemAtPosition(pos) as? MuniItem
+                    if (item != null) {
+                        municipioIdSeleccionado = item.id
+                        distritoIdSeleccionado = ""
+                        distritoPendientePreseleccion = null
+                        spMunicipio.setTag(item.id)
+                        spDistrito.setText("", false)
+                        spDistrito.setTag("")
+                        val muniId = item.id
                         if (muniId.isNotBlank()) {
-                            cargarDistritos(deptoId, muniId)
+                            cargarDistritos(idDepartamento, muniId)
                         } else {
                             distritos.clear()
                             spDistrito.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, distritos))
                             spDistrito.setText("", false)
                             spDistrito.setTag("")
                         }
+                        buscarOfertas()
                     }
                 }
                 tilMunicipio.setOnClickListener { spMunicipio.showDropDown() }
@@ -247,28 +270,56 @@ class Servicio6Fragment : Fragment() {
     }
 
     // =========================================================================
-    // CARGAR DISTRITOS DESDE BD LOCAL (sin endpoint API aun)
+    // CARGAR DISTRITOS DESDE API
     // =========================================================================
 
     private fun cargarDistritos(idDepartamento: String, idMunicipio: String) {
         lifecycleScope.launch {
             try {
-                withContext(Dispatchers.IO) {
-                    distritos.clear()
-                    val db = ConnectionHelper(requireContext()).writableDb
-                    distritos.add(DistItem("", "Todos"))
-                    val c = db.rawQuery("SELECT ID_DISTRITO, NOMBRE_DISTRITO FROM DISTRITO WHERE ID_DEPARTAMENTO = ? AND ID_MUNICIPIO = ? ORDER BY NOMBRE_DISTRITO", arrayOf(idDepartamento, idMunicipio))
-                    while (c.moveToNext()) distritos.add(DistItem(c.getString(0), c.getString(1)))
-                    c.close(); db.close()
+                val json = ApiService.getDistritosPorMunicipio(idDepartamento, idMunicipio)
+                val arr = json.getJSONArray("data")
+                distritos.clear()
+                distritos.add(DistItem("", "Todos"))
+                for (i in 0 until arr.length()) {
+                    val d = arr.getJSONObject(i)
+                    distritos.add(DistItem(d.getString("ID_DISTRITO"), d.getString("NOMBRE_DISTRITO")))
                 }
                 val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, distritos)
                 spDistrito.setAdapter(adapter)
                 spDistrito.setThreshold(0)
-                spDistrito.setOnItemClickListener { _, _, pos, _ ->
-                    if (pos >= 0 && pos < distritos.size) spDistrito.setTag(distritos[pos].id)
+                spDistrito.setOnItemClickListener { parent, _, pos, _ ->
+                    val item = parent.getItemAtPosition(pos) as? DistItem
+                    if (item != null) {
+                        distritoIdSeleccionado = item.id
+                        spDistrito.setTag(item.id)
+                    }
+                    buscarOfertas()
                 }
                 tilDistrito.setOnClickListener { spDistrito.showDropDown() }
-            } catch (_: Exception) {}
+                val pendiente = distritoPendientePreseleccion
+                if (!pendiente.isNullOrBlank()) {
+                    val idx = distritos.indexOfFirst { it.id == pendiente }
+                    if (idx >= 0) {
+                        val item = distritos[idx]
+                        distritoIdSeleccionado = item.id
+                        spDistrito.setText(item.nombre, false)
+                        spDistrito.setTag(item.id)
+                    }
+                    distritoPendientePreseleccion = null
+                } else {
+                    distritoIdSeleccionado = ""
+                    spDistrito.setText(distritos.first().nombre, false)
+                    spDistrito.setTag("")
+                }
+            } catch (e: Exception) {
+                distritos.clear()
+                distritos.add(DistItem("", "Todos"))
+                spDistrito.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, distritos))
+                spDistrito.setText("", false)
+                spDistrito.setTag("")
+                distritoIdSeleccionado = ""
+                Snackbar.make(requireView(), "Error al cargar distritos: ${e.message}", Snackbar.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -298,6 +349,7 @@ class Servicio6Fragment : Fragment() {
                     if (idxDepto >= 0) {
                         spDepartamento.setText(departamentos[idxDepto].nombre, false)
                         spDepartamento.setTag(deptoId)
+                        deptoIdSeleccionado = deptoId
                         cargarMunicipios(deptoId)
                         if (muniId != null) {
                             spMunicipio.postDelayed({
@@ -305,11 +357,11 @@ class Servicio6Fragment : Fragment() {
                                 if (idxMuni >= 0) {
                                     spMunicipio.setText(municipios[idxMuni].nombre, false)
                                     spMunicipio.setTag(muniId)
+                                    municipioIdSeleccionado = muniId
+                                    distritoPendientePreseleccion = distId
                                     cargarDistritos(deptoId, muniId)
                                     if (distId != null) {
                                         spDistrito.postDelayed({
-                                            val idxDist = distritos.indexOfFirst { it.id == distId }
-                                            if (idxDist >= 0) { spDistrito.setText(distritos[idxDist].nombre, false); spDistrito.setTag(distId) }
                                             buscarOfertas()
                                         }, 400)
                                     } else {
@@ -331,25 +383,23 @@ class Servicio6Fragment : Fragment() {
     // =========================================================================
 
     private fun buscarOfertas() {
-        val deptoId = spDepartamento.tag?.toString() ?: ""
+        val deptoId = deptoIdSeleccionado
         progressBar.visibility = View.VISIBLE
         cardResultados.visibility = View.GONE
         tvSinResultados.visibility = View.GONE
 
         lifecycleScope.launch {
             try {
-                val muniId = spMunicipio.tag?.toString()
-                val distId = spDistrito.tag?.toString()
+                val muniId = municipioIdSeleccionado.takeIf { it.isNotBlank() }
+                val distId = distritoIdSeleccionado.takeIf { it.isNotBlank() }
 
                 var ofertasArr: JSONArray? = null
                 coroutineScope {
                     val jobOfertas = async {
-                        if (deptoId.isNotBlank()) {
-                            try {
-                                val json = ApiService.filtrarOfertasPorUbicacion(deptoId, muniId)
-                                ofertasArr = json.getJSONArray("data")
-                            } catch (e: Exception) { Log.e("Servicio6", "Error fetch ofertas", e) }
-                        }
+                        try {
+                            val json = ApiService.filtrarOfertasPorUbicacion(deptoId, muniId, distId)
+                            ofertasArr = json.getJSONArray("data")
+                        } catch (e: Exception) { Log.e("Servicio6", "Error fetch ofertas", e) }
                     }
                     val jobPostulaciones = async {
                         try {
@@ -378,8 +428,6 @@ class Servicio6Fragment : Fragment() {
                         val idOf = o.optString("ID_OFERTA", "")
                         val key = "$nit|$idOf"
                         val yaPost = postulacionesSet.contains(key)
-                        val empresaDistrito = o.optString("NOMBRE_DISTRITO", "")
-                        if (!distId.isNullOrBlank() && o.optString("ID_DISTRITO_ID", "") != distId) continue
                         resultados.add(ResultadoOferta(
                             nit = nit, idOferta = idOf,
                             titulo = o.optString("TITULO_PUESTO", ""),

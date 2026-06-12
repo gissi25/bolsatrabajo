@@ -550,7 +550,7 @@
     <string name="req_btn_agregar">+ Adicionar requisito</string>
 
     <!-- Servicio 5 -->
-    <string name="s5_titulo">Baixar do Servidor</string>
+    <string name="s5_titulo">Candidatura a Ofertas de Trabalho</string>
     <string name="s5_btn_descargar">Baixar</string>
     <string name="s5_btn_descargar_todo">Baixar Tudo</string>
     <string name="s5_descargado">Baixado</string>
