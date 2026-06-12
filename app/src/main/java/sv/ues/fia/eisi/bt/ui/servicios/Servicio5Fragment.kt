@@ -526,6 +526,8 @@ class Servicio5Fragment : Fragment() {
                     }
                     return@launch
                 }
+                val jsonPost = ApiService.getPostulacionesFull(idPostulante)
+                postulacionesApiData = jsonPost.getJSONArray("data")
                 val yaPostulado = postulacionesApiData?.let { postArr ->
                     (0 until postArr.length()).any { i ->
                         val p = postArr.getJSONObject(i)
@@ -533,23 +535,10 @@ class Servicio5Fragment : Fragment() {
                     }
                 } ?: false
                 if (yaPostulado) { Snackbar.make(requireView(), getString(R.string.s5_error_ya_postulado), Snackbar.LENGTH_LONG).show(); return@launch }
-                val idPostulacion = run {
-                    var maxNum = 0
-                    postulacionesApiData?.let { postArr ->
-                        for (i in 0 until postArr.length()) {
-                            val pid = postArr.getJSONObject(i).optString("ID_POSTULACION", "")
-                            if (pid.startsWith("POS")) {
-                                val num = pid.substring(3).toIntOrNull() ?: 0
-                                if (num > maxNum) maxNum = num
-                            }
-                        }
-                    }
-                    "POS${(maxNum + 1).toString().padStart(3, '0')}"
-                }
                 val fecha = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
                 try {
                     val json = JSONObject().apply {
-                        put("id_postulacion", idPostulacion); put("nit", nit); put("id_oferta", idOferta)
+                        put("nit", nit); put("id_oferta", idOferta)
                         put("id_postulante", idPostulante); put("fecha_aplicacion", fecha); put("estado_proceso", "en proceso")
                     }
                     ApiService.insertarPostulacion(json)
@@ -587,7 +576,6 @@ class Servicio5Fragment : Fragment() {
                     idPostulanteSeleccionado = lista[idx].first
                     requireContext().getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
                         .edit { putString(Constants.KEY_ID_POSTULANTE, idPostulanteSeleccionado) }
-                    cargarDatosDesdeAPI()
                     postularse(nit, idOferta)
                 }
             }

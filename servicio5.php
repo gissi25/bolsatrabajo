@@ -216,22 +216,49 @@
             }
 
             $p = json_decode(file_get_contents('php://input'), true);
-            if (!$p || empty($p['id_postulacion'])) {
+            if (!$p || empty($p['nit']) || empty($p['id_oferta']) || empty($p['id_postulante'])) {
                 http_response_code(400);
-                die(json_encode(["error" => "Datos de postulacion incompletos"]));
+                die(json_encode(["error" => "Datos de postulacion incompletos (nit, id_oferta, id_postulante requeridos)"]));
             }
 
-            $idPostulacion = $conn->real_escape_string($p['id_postulacion']);
             $nit = $conn->real_escape_string($p['nit'] ?? '');
             $idOferta = $conn->real_escape_string($p['id_oferta'] ?? '');
             $idPostulante = $conn->real_escape_string($p['id_postulante'] ?? '');
             $fecha = $conn->real_escape_string($p['fecha_aplicacion'] ?? '');
             $estado = $conn->real_escape_string($p['estado_proceso'] ?? 'activo');
 
+            $rs = $conn->query("SELECT ID_POSTULANTE FROM POSTULANTE WHERE ID_POSTULANTE = '$idPostulante'");
+            if ($rs->num_rows == 0) {
+                http_response_code(404);
+                die(json_encode(["error" => "El postulante $idPostulante no existe"]));
+            }
+
+            $rs = $conn->query("SELECT FECHA_CADUCIDAD FROM OFERTA_TRABAJO WHERE NIT = '$nit' AND ID_OFERTA = '$idOferta'");
+            if ($rs->num_rows == 0) {
+                http_response_code(404);
+                die(json_encode(["error" => "La oferta $nit/$idOferta no existe"]));
+            }
+            $oferta = $rs->fetch_assoc();
+            if (!empty($oferta['FECHA_CADUCIDAD']) && $oferta['FECHA_CADUCIDAD'] < date('Y-m-d')) {
+                http_response_code(400);
+                die(json_encode(["error" => "La oferta ha caducado el {$oferta['FECHA_CADUCIDAD']}"]));
+            }
+
+            $rs = $conn->query("SELECT ID_POSTULACION FROM POSTULACION WHERE ID_POSTULANTE = '$idPostulante' AND NIT = '$nit' AND ID_OFERTA = '$idOferta'");
+            if ($rs->num_rows > 0) {
+                $existente = $rs->fetch_assoc();
+                http_response_code(409);
+                die(json_encode(["error" => "Ya existe una postulacion ({$existente['ID_POSTULACION']}) para esta oferta"]));
+            }
+
+            $rs = $conn->query("SELECT IFNULL(MAX(CAST(SUBSTRING(ID_POSTULACION, 4) AS UNSIGNED)), 0) + 1 AS nextNum FROM POSTULACION");
+            $row = $rs->fetch_assoc();
+            $nextNum = (int) $row['nextNum'];
+            $idPostulacion = 'POS' . str_pad($nextNum, 3, '0', STR_PAD_LEFT);
+
             $conn->query("
                 INSERT INTO POSTULACION (ID_POSTULACION, NIT, ID_OFERTA, ID_POSTULANTE, FECHA_APLICACION, ESTADO_PROCESO)
                 VALUES ('$idPostulacion', '$nit', '$idOferta', '$idPostulante', '$fecha', '$estado')
-                ON DUPLICATE KEY UPDATE ESTADO_PROCESO = '$estado', FECHA_APLICACION = '$fecha'
             ");
 
             if ($conn->error) {
