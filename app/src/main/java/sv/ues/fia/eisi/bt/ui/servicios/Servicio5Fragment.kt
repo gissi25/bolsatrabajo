@@ -191,9 +191,37 @@ class Servicio5Fragment : Fragment() {
 
         val lista = queryPostulantesParaSeleccion()
         if (lista.isEmpty()) {
-            iniciarDescarga()
+            descargarPostulantesParaSeleccion()
         } else {
             mostrarDialogoSeleccionPostulante(lista, idPostulanteSeleccionado)
+        }
+    }
+
+    private fun descargarPostulantesParaSeleccion() {
+        progressBar.visibility = View.VISIBLE
+        tvEstadoDescarga.visibility = View.VISIBLE
+        tvEstadoDescarga.text = getString(R.string.s5_descargando)
+        scrollView.visibility = View.GONE
+
+        lifecycleScope.launch {
+            try {
+                val json = ApiService.getPostulantesFull()
+                withContext(Dispatchers.IO) { syncPostulantes(json) }
+            } catch (e: Exception) {
+                Log.e("Servicio5", "Error descargando postulantes para seleccion", e)
+            }
+
+            val lista = queryPostulantesParaSeleccion()
+            withContext(Dispatchers.Main) {
+                progressBar.visibility = View.GONE
+                tvEstadoDescarga.visibility = View.GONE
+
+                if (lista.isEmpty()) {
+                    iniciarDescarga()
+                } else {
+                    mostrarDialogoSeleccionPostulante(lista, idPostulanteSeleccionado)
+                }
+            }
         }
     }
 
