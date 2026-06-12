@@ -80,8 +80,8 @@ class EditorDialogFragment : DialogFragment() {
         tableName = it.getString(Constants.BUNDLE_TABLE_NAME, "")
         isEditMode = it.getBoolean(Constants.BUNDLE_IS_EDIT_MODE, false)
         isViewMode = it.getBoolean(Constants.BUNDLE_IS_VIEW_MODE, false)
-        val dataString = it.getString(Constants.BUNDLE_TABLE_DATA, "")
-            itemData = if (dataString.isNotBlank()) dataString.split(",") else emptyList()
+        val dataString = it.getStringArrayList(Constants.BUNDLE_TABLE_DATA)
+            itemData = dataString ?: emptyList()
         }
         columns = getColumnsForTable(tableName)
         fkRefs = viewModel.getFkReferences(tableName)

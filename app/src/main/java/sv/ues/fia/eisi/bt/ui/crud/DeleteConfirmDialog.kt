@@ -24,7 +24,7 @@ import sv.ues.fia.eisi.bt.viewmodel.Resource
 class DeleteConfirmDialog : DialogFragment() {
 
     private val viewModel: CrudViewModel by viewModels({ requireParentFragment() })
-    private var itemData: String = ""
+    private var itemData: List<String> = emptyList()
     private var tableName: String = ""
     private var isLoading = false
 
@@ -32,7 +32,7 @@ class DeleteConfirmDialog : DialogFragment() {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NORMAL, R.style.AestheticDialog)
         arguments?.let {
-            itemData = it.getString("itemData", "")
+            itemData = it.getStringArrayList("itemData") ?: emptyList()
             tableName = it.getString(Constants.BUNDLE_TABLE_NAME, "")
         }
     }
@@ -140,7 +140,7 @@ class DeleteConfirmDialog : DialogFragment() {
             }
         }
 
-        val dataList = itemData.split(",")
+        val dataList = itemData
         if (dataList.isNotEmpty()) {
             val needsComposite = tableName in listOf(
                 "MUNICIPIO", "DISTRITO",
@@ -246,7 +246,7 @@ class DeleteConfirmDialog : DialogFragment() {
             return
         }
 
-        val dataList = itemData.split(",").map { it.trim() }
+        val dataList = itemData.map { it.trim() }
         val idToDelete = dataList.firstOrNull()
 
         if (tableName == Constants.TABLE_USUARIO && idToDelete != null) {

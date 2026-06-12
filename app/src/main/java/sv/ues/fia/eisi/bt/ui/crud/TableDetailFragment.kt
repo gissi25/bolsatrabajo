@@ -481,7 +481,7 @@ class TableDetailFragment : Fragment() {
         val bundle = Bundle().apply {
             putString(Constants.BUNDLE_TABLE_NAME, tableName)
             putBoolean(Constants.BUNDLE_IS_EDIT_MODE, isEditMode)
-            putString(Constants.BUNDLE_TABLE_DATA, itemData.joinToString(","))
+            putStringArrayList(Constants.BUNDLE_TABLE_DATA, ArrayList(itemData.map { it.toString() }))
         }
         dialog.arguments = bundle
         dialog.show(childFragmentManager, "editor")
@@ -497,7 +497,7 @@ class TableDetailFragment : Fragment() {
         }
         val dialog = DeleteConfirmDialog()
         val bundle = Bundle().apply {
-            putString("itemData", itemData.joinToString(","))
+            putStringArrayList("itemData", ArrayList(itemData.map { it.toString() }))
             putInt("position", position)
             putString(Constants.BUNDLE_TABLE_NAME, tableName)
         }
@@ -510,7 +510,7 @@ class TableDetailFragment : Fragment() {
         val bundle = Bundle().apply {
             putString(Constants.BUNDLE_TABLE_NAME, tableName)
             putBoolean(Constants.BUNDLE_IS_VIEW_MODE, true)
-            putString(Constants.BUNDLE_TABLE_DATA, itemData.joinToString(","))
+            putStringArrayList(Constants.BUNDLE_TABLE_DATA, ArrayList(itemData.map { it.toString() }))
         }
         dialog.arguments = bundle
         dialog.show(childFragmentManager, "editor")

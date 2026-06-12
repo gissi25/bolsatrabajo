@@ -254,6 +254,7 @@ class Servicio4Fragment : Fragment() {
                 val dir = postulante.optString("direccion", "").lowercase()
                 val telCasa = postulante.optString("telefono_casa", "")
                 val telCel = postulante.optString("telefono_celular", "")
+                Log.d("Servicio4", "guardarEnLocal: id=$idPost, email=[$email], telCasa=[$telCasa], telCel=[$telCel]")
                 val depto = postulante.opt("id_distrito_depto")?.let {
                     if (it is Int) it else it.toString().toIntOrNull()
                 }
@@ -269,15 +270,16 @@ class Servicio4Fragment : Fragment() {
                 db.execSQL("""
                     INSERT OR IGNORE INTO POSTULANTE
                     (ID_POSTULANTE, ID_GENERO, ID_TIPO_DOCUMENTO, NUM_DOCUMENTO,
-                     ID_GRADO_ACADEMICO, NOMBRE, APELLIDO, FECHA_NACIMIENTO, NUP, EMAIL,
-                     ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID,
-                     DIRECCION_DETALLE, TELEFONO_CASA, TELEFONO_CELULAR)
+                     ID_GRADO_ACADEMICO, ID_DISTRITO_DEPTO, ID_DISTRITO_MUNICIPIO, ID_DISTRITO_ID,
+                     NOMBRE, APELLIDO, FECHA_NACIMIENTO, NUP,
+                     DIRECCION_DETALLE, TELEFONO_CASA, TELEFONO_CELULAR, EMAIL)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                             ?, ?, ?, ?, ?, ?)
                 """, arrayOf(
                     idPost, idGenero, idTipoDoc, numDoc, idGrado,
-                    nombre, apellido, fechaNac, nup, email,
-                    depto, muni, dist, dir, telCasa, telCel
+                    depto, muni, dist,
+                    nombre, apellido, fechaNac, nup,
+                    dir, telCasa, telCel, email
                 ))
 
                 db.execSQL("""

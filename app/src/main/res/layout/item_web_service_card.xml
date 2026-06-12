@@ -33,14 +33,6 @@
             android:layout_marginBottom="8dp"
             android:background="?attr/colorPrimary" />
 
-        <TextView
-            android:id="@+id/tvServiceBadge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/service_pending"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="14sp" />
-
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
